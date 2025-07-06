@@ -21,3 +21,11 @@ declare module 'fastify' {
     prisma: PrismaClient;
   }
 }
+
+declare global {
+  // Prevent multiple instances in development
+  var prisma: PrismaClient | undefined;
+}
+
+export const prisma =
+  global.prisma ?? new PrismaClient(); // no logging

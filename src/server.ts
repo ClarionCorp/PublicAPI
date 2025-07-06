@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
-import requestLogger from '@plugins/logger';
+import routeLogger from '@plugins/logger';
 import prismaPlugin from '@plugins/prisma';
+import cronPlugin from '@plugins/cron';
 import v1Routes from './routes/v1';
 
 const fastify = Fastify({
@@ -20,7 +21,8 @@ const fastify = Fastify({
 const start = async () => {
   console.clear();
   try {
-    await fastify.register(requestLogger);
+    await fastify.register(routeLogger);
+    await fastify.register(cronPlugin);
     await fastify.register(prismaPlugin);
 
     await fastify.register(v1Routes, { prefix: '/v1' });

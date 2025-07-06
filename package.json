@@ -7,18 +7,23 @@
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.11.1",
+    "axios": "^1.10.0",
     "bcrypt": "^6.0.0",
     "chalk": "4",
     "fastify": "^5.4.0",
     "fastify-plugin": "^5.0.1",
+    "node-cron": "^4.2.0",
     "pino-pretty": "^13.0.0",
     "prisma": "^6.11.1",
-    "sanitize-html": "^2.17.0"
+    "sanitize-html": "^2.17.0",
+    "steam-user": "^5.2.3",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^24.0.10",
     "@types/sanitize-html": "^2.16.0",
+    "@types/steam-user": "^5.0.5",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"
