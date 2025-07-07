@@ -33,7 +33,7 @@ export async function updateTwitch() {
   // Filter live streams and prepare data for database insertion
   const liveStreams = streams.filter((stream) => stream.type === 'live')
 
-    // Build matcher with the English blacklist and recommended transforms
+  // Build matcher with the English blacklist and recommended transforms
   const matcher = new RegExpMatcher({
     ...englishDataset.build(),
     ...englishRecommendedTransformers,

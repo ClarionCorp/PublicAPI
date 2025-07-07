@@ -15,3 +15,33 @@ export type TwitchStreams = {
   tags: string[];
   is_mature: boolean;
 }
+
+export type YouTubeStreams = {
+  kind: string;
+  etag: string;
+  id: {
+    kind: string;
+    channelId: string;
+    videoId?: string;
+  };
+  snippet: {
+    publishedAt: Date;
+    channelId: string;
+    title: string;
+    description: string;
+    thumbnails: {
+      default: {
+        url: string;
+      };
+      medium: {
+        url: string;
+      };
+      high: {
+        url: string;
+      };
+    };
+    channelTitle: string;
+    liveBroadcastContent: string;
+    publishTime: Date;
+  }
+}

@@ -3,6 +3,7 @@ import cron from 'node-cron';
 import { FastifyPluginAsync } from 'fastify';
 import steamRefresh from '../core/cronjobs/steam';
 import { updateTwitch } from '../core/cronjobs/twitch';
+import { updateYouTube } from '../core/cronjobs/youtube';
 
 const cronPlugin: FastifyPluginAsync = async (fastify) => {
   
@@ -11,10 +12,21 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     await steamRefresh();
   });
 
-  // [TwitchStreams] Every minute
-  cron.schedule('*/1 * * * *', async () => {
-    await updateTwitch();
-  })
+
+  // Only enables the rest in production.
+  if (process.env.MODE === 'PRODUCTION') {
+
+    // [TwitchStreams] Every minute
+    cron.schedule('*/1 * * * *', async () => {
+      await updateTwitch();
+    })
+
+    // [YouTubeStreams] Every 15 minutes
+    cron.schedule('*/15 * * * *', async () => {
+      await updateYouTube();
+    })
+
+  }
 
   fastify.log.info('[+] Cronjobs Initialized!');
 };
