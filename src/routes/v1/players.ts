@@ -1,0 +1,346 @@
+import { checkDiscord, checkUpdatePlayer, createPlayer, fixMismatch, usernameChanges } from '../../core/players/databaseEdits';
+import { handleCorestrike } from '../../core/players/ghostPlayers';
+import { fetchCachedPlayer, shouldUpdateUser, UpdateRequirements } from '../../core/players/misc';
+import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
+import { getTypeOfInput } from '../../core/utils';
+import { PROMETHEUS } from '../../types/prometheus';
+import { appLogger } from '../../plugins/logger';
+import { FastifyPluginAsync } from 'fastify';
+import { Gamemode } from '../../../prisma/client';
+import dayjs from 'dayjs';
+
+const ensureLogger = appLogger('PlayerEnsuring')
+const APILogger = appLogger('Analytics')
+
+const players: FastifyPluginAsync = async (fastify) => {
+  fastify.get('/:input', async (req, reply) => {
+    const { input } = req.params as { input: string };
+    const { region, cached } = req.query as { region?: string; cached?: boolean };
+    const inType = getTypeOfInput(input);
+
+    // Support IDs in the future.
+    if (inType == 'id') {
+
+    }
+
+
+    // Existing Username Fetching.
+    const decodedUser = decodeURI(input.toLocaleLowerCase());
+    const name = input;
+    let cachedPlayer = undefined;
+    
+    // Make region default to Global.
+    ensureLogger.info(`Requesting data for: ${decodedUser} in region ${region || 'Global'}.`);
+
+    // We do get the cachedPlayer, but we do not return him by himself because we need to check if he needs to be updated.
+    // If he needs to be updated, we will return the updated player based on the cachedPlayerData instead of making multiple odyssey requests.
+    cachedPlayer = await fetchCachedPlayer(decodedUser);
+
+    if (cachedPlayer) { 
+      ensureLogger.debug(`Found Cached Data for: '${decodeURI(cachedPlayer?.username)}' with ${cachedPlayer?.ratings?.length} rating points.`);
+    
+      // If cached argument is true, return HERE.
+      if (cached && cachedPlayer) {
+        ensureLogger.info('Cached Player Requested. Returning cached data...');
+        const teams = await fastify.teamsService.getTeamsForPlayer(decodedUser);
+        return {
+          ...cachedPlayer,
+          ratings: cachedPlayer.ratings,
+          teams: teams.map((team: any) => ({
+            teamId: team.teamId,
+            teamName: team.teamName,
+            logo: team.logo,
+          })),
+        }
+      }
+    } else { 
+      ensureLogger.warn(`Failed to find cached data for: '${decodedUser}'. Continuing...`);
+    }
+
+    
+
+    // Automatically swaps protocols if the username is 1 character long.
+    // Also `name` takes priority since it is set.
+    const odysseyPlayer = await fetchOdyPlayer(name, cachedPlayer);
+
+    if (!odysseyPlayer) {
+      return reply.status(404).send({ error: 'User could not be found' });
+    }
+
+    // Will probably just leave this here tbh.
+    let ensuredRegion =
+      await prometheusService.ranked.leaderboard.ensureRegion(
+        odysseyPlayer.playerId,
+        region || (cachedPlayer?.region as PROMETHEUS.RAW.Regions) || undefined,
+      )
+    if (ensuredRegion) {
+      if (ensuredRegion?.region == undefined) {
+        ensuredRegion.region = 'Global';
+        ensureLogger.warn(`Could not find (${decodeURI(name)})'s region. Using ${ensuredRegion?.region} instead.`);
+      } else {
+        ensureLogger.debug(`Found (${decodeURI(name)})'s region: ${ensuredRegion?.region}`);
+      }
+    } else {
+      ensureLogger.error(`Failed to find a valid region for (${decodeURI(name)}). Do they even play ranked?`);
+    }
+    
+
+    // (Player and Character Stats)
+
+    // Add fallback for ID search using Odyssey Player.
+    if (!cachedPlayer) {
+      cachedPlayer = await fetchCachedPlayer(undefined, odysseyPlayer.playerId)
+
+      // No players exist in database with that username or that userId.
+      // BUT they do exist in Odyssey's database.
+      // This means we need to create a new player on our end.
+
+      if (!cachedPlayer) {
+        const ensuredRegion = await prometheusService.ranked.leaderboard.ensureRegion(
+          odysseyPlayer.playerId,
+          region || undefined,
+        )
+
+        const playerStats = await prometheusService.stats.player(odysseyPlayer.playerId)
+        ensureLogger.debug(`Obtained Advanced Stats for New Player '${decodedUser}'`);
+
+        const createdPlayer = await createPlayer({odysseyPlayer, ensuredRegion, playerStats});
+        const teams = await fastify.teamsService.getTeamsForPlayer(name);
+
+        return {
+          ...createdPlayer,
+          teams: teams.map((team: any) => ({
+            teamId: team.teamId,
+            teamName: team.teamName,
+            logo: team.logo,
+          })),
+        };
+      }
+    }
+
+
+    // Handle this before release. It works, but I'm not entirely sure what it does.
+    // Like why is it so complicated?
+    if (cachedPlayer && cachedPlayer.id.includes('NOTSET')) {
+      cachedPlayer = await handleCorestrike(cachedPlayer, odysseyPlayer);
+    }
+    
+
+    // The odyssey API changed or returned unexpected player data.
+    // The data now mismatches the cached player.
+    // This should never happen, but if it does, we need to know about it.
+    if (cachedPlayer && odysseyPlayer.playerId !== cachedPlayer.id) {
+      ensureLogger.error(`Player ID mismatch!! (${odysseyPlayer.username}) CachedID: ${cachedPlayer.id}, OdysseyID: ${odysseyPlayer.playerId}`);
+      
+      cachedPlayer = await fixMismatch(cachedPlayer, odysseyPlayer);
+
+      if (cachedPlayer == null) {
+        return;
+      }
+    }
+
+    // If the usernames are different, but the userID is the same, update the saved username.
+    if (cachedPlayer && cachedPlayer.username != odysseyPlayer.username.toLocaleLowerCase() && cachedPlayer.id == odysseyPlayer.playerId) {
+      ensureLogger.warn(`Player Username Changed! (${cachedPlayer.username}) -> (${odysseyPlayer.username.toLocaleLowerCase()}), Matching ID: ${odysseyPlayer.playerId}`);
+
+      cachedPlayer = await usernameChanges(cachedPlayer, odysseyPlayer);
+    }
+
+
+    // Check if player is Ghost or not.
+    // (Profiles have not been fully filled out yet, but have one or more ratings attached.)
+
+    const isGhostProfile = cachedPlayer && (!cachedPlayer.characterRatings || !cachedPlayer.emoticonId);
+
+    // Check if player needs updating.
+    const playerMastery = await prometheusService.mastery.player(odysseyPlayer.playerId || cachedPlayer?.id)
+    const updateParams: UpdateRequirements = {
+      cachedPlayer,
+      playerMastery,
+      ensuredRegion,
+      isGhostProfile,
+    }
+
+    const ignoreUpdates = shouldUpdateUser(updateParams);
+
+    // Player has not played the game since their last update.
+    if (ignoreUpdates) {
+      ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`);
+
+      const teams = await fastify.teamsService.getTeamsForPlayer(name);
+      return {
+        ...cachedPlayer,
+        teams: teams.map((team: any) => ({
+          teamId: team.teamId,
+          teamName: team.teamName,
+          logo: team.logo,
+        })),
+      }
+    }
+
+    // AKA, (ignoreUpdates) is FALSE, and we need to update them now.
+    // Can use odysseyPlayer as much as you want now. (Depending on context)
+    // Also cachedPlayer definitely exists (by this point) and matches odysseyPlayer.
+
+    if (odysseyPlayer.platformIds.discord) {
+      await checkDiscord(odysseyPlayer, odysseyPlayer.platformIds.discord.discordId);
+    }
+    
+    ensureLogger.info(`Updating profile of '${decodedUser}'...`);
+      
+    // namehistory function
+
+    const basicUpdate = await prisma.player.update({
+      where: {
+        id: cachedPlayer.id,
+      },
+      data: {
+        currentXp: playerMastery.currentLevelXp,
+        emoticonId: odysseyPlayer.emoticonId,
+        logoId: odysseyPlayer.logoId,
+        titleId: odysseyPlayer.titleId,
+        nameplateId: odysseyPlayer.nameplateId,
+        socialUrl: odysseyPlayer.socialUrl,
+        tags: odysseyPlayer.tags,
+      },
+    })
+
+    await checkUpdatePlayer({cachedPlayer, ensuredRegion, mastery: playerMastery});
+    const teams = await fastify.teamsService.getTeamsForPlayer(name);
+
+    // advanced stats (beginning)
+    // Only runs if it needs to update.
+    if (!ignoreUpdates) {
+      const playerStats = await prometheusService.stats.player(odysseyPlayer.playerId)
+      ensureLogger.debug(`Obtained Advanced Stats for '${decodedUser}'`);
+      
+      if (playerStats) {
+        ensureLogger.debug(`Checking existing player stats for player (${name})`);
+      
+        const existingCharacterRatings = await prisma.playerCharacterRating.findMany({
+          where: { playerId: odysseyPlayer.playerId },
+        });
+      
+        const existingCharacterRatingsMap = new Map(
+          existingCharacterRatings.map((rating) => [
+            `${rating.playerId}|${rating.character}|${rating.role}|${rating.gamemode}`,
+            rating,
+          ])
+        );
+        
+        const newCharacterRatings: any = [];
+        const updateCharacterRatings: any = [];
+        
+        ensureLogger.debug(`Generating current keys for player (${odysseyPlayer.username})`);
+        playerStats.characterStats.forEach((cs: any) => {
+          if (cs.ratingName === 'None') return;
+        
+          const forwardKey = `${odysseyPlayer.playerId}|${cs.characterId}|Forward|${cs.ratingName}`;
+          const goalieKey = `${odysseyPlayer.playerId}|${cs.characterId}|Goalie|${cs.ratingName}`;
+  
+          const createRoleData = (role: 'Forward' | 'Goalie') => ({
+            character: cs.characterId,
+            wins: cs.roleStats[role].wins,
+            losses: cs.roleStats[role].losses,
+            knockouts: cs.roleStats[role].knockouts,
+            scores: cs.roleStats[role].scores,
+            mvp: cs.roleStats[role].mvp,
+            role,
+            saves: cs.roleStats[role].saves,
+            assists: cs.roleStats[role].assists,
+            games: cs.roleStats[role].games,
+            gamemode: cs.ratingName as Gamemode,
+            playerId: odysseyPlayer.playerId,
+            createdAt: dayjs().toISOString(),
+          });
+          
+          const forwardData = createRoleData('Forward');
+          const goalieData = createRoleData('Goalie');
+  
+        
+          if (!existingCharacterRatingsMap.has(forwardKey)) {
+            newCharacterRatings.push(forwardData);
+          } else {
+            updateCharacterRatings.push(forwardData);
+          }
+        
+          if (!existingCharacterRatingsMap.has(goalieKey)) {
+            newCharacterRatings.push(goalieData);
+          } else {
+            updateCharacterRatings.push(goalieData);
+          }
+        });
+      
+        if (newCharacterRatings.length > 0) {
+          ensureLogger.debug(`Creating new player stats for player (${name})`);
+          await prisma.playerCharacterRating.createMany({
+            data: newCharacterRatings,
+          });
+        }
+        
+        for (const rating of updateCharacterRatings) {
+          await prisma.playerCharacterRating.upsert({
+            where: {
+              player_character_role_game_unique: {
+                playerId: rating.playerId,
+                character: rating.character,
+                role: rating.role,
+                gamemode: rating.gamemode,
+              },
+            },
+            update: {
+              games: rating.games,
+              assists: rating.assists,
+              knockouts: rating.knockouts,
+              losses: rating.losses,
+              mvp: rating.mvp,
+              saves: rating.saves,
+              scores: rating.scores,
+              wins: rating.wins,
+              createdAt: rating.createdAt,
+            },
+            create: rating,
+          });
+        }
+      
+        const fullyUpdated = await prisma.player.update({
+          data: {
+            tags: odysseyPlayer.tags,
+            username: odysseyPlayer.username.toLocaleLowerCase(),
+            emoticonId: odysseyPlayer.emoticonId,
+            nameplateId: odysseyPlayer.nameplateId,
+            socialUrl: odysseyPlayer.socialUrl,
+            logoId: odysseyPlayer.logoId,
+            region: ensuredRegion?.region || 'Global',
+            titleId: odysseyPlayer.titleId,
+            updatedAt: dayjs().toISOString(),
+          },
+          where: {
+            id: odysseyPlayer.playerId,
+          },
+        });
+
+        return {
+          ...fullyUpdated,
+          teams: teams.map((team: any) => ({
+            teamId: team.teamId,
+            teamName: team.teamName,
+            logo: team.logo,
+          })),
+        }
+      }
+    }
+    
+    // Return partial updates since player does not need full updating
+    return {
+      ...basicUpdate,
+      teams: teams.map((team: any) => ({
+        teamId: team.teamId,
+        teamName: team.teamName,
+        logo: team.logo,
+      })),
+    }
+  });
+};
+
+export default players;

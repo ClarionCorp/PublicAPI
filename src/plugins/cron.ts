@@ -1,8 +1,7 @@
 import fp from 'fastify-plugin';
 import cron from 'node-cron';
 import { FastifyPluginAsync } from 'fastify';
-import steamRefresh from '@/core/steam';
-import { sleep } from '@/core/utils';
+import steamRefresh from '../core/steam';
 
 const cronPlugin: FastifyPluginAsync = async (fastify) => {
   

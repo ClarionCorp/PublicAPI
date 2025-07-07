@@ -1,7 +1,7 @@
 import fp from 'fastify-plugin'
 import type { FastifyPluginAsync } from 'fastify'
-import { prisma } from '@/plugins/prisma'
-import { PrometheusService } from '@/core/prometheus'
+import { prisma } from '../plugins/prisma'
+import { PrometheusService } from '../core/prometheus'
 import { appLogger } from './logger'
 
 const odyLogger = appLogger('PrometheusService');
@@ -19,18 +19,21 @@ const prometheusPlugin: FastifyPluginAsync = async (fastify) => {
   }
 
   // Wire up Prometheus Service
-  const prometheus = new PrometheusService({
-    token:   row.token,
-    refresh: row.refreshToken,
-    save: async ({ token, refresh }) => {
-      await prisma.token.update({
-        where: { service: 'ODYSSEY' },
-        data : { token, refreshToken: refresh, updatedAt: new Date() },
-      })
-    },
-  })
+  const instance =
+    globalThis.prometheusService ??
+    new PrometheusService({
+      token:   row.token,
+      refresh: row.refreshToken,
+      save: async ({ token, refresh }) => {
+        await prisma.token.update({
+          where: { service: 'ODYSSEY' },
+          data : { token, refreshToken: refresh, updatedAt: new Date() },
+        })
+      },
+    })
 
-  fastify.decorate('prometheus', prometheus)
+  globalThis.prometheusService = instance
+  fastify.decorate('prometheus', instance)
   fastify.log.info('[+] Prometheus Service started! (Pulled tokens from DB)');
 }
 

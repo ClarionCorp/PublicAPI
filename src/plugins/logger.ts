@@ -39,27 +39,35 @@ const routeLogger: FastifyPluginAsync = async (fastify) => {
 export default fp(routeLogger);
 
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = 'verbose' | 'debug' | 'info' | 'warn' | 'error';
 
-export function appLogger(name: string) {
+// in ascending order of “loudness”
+const levels: LogLevel[] = ['verbose', 'debug', 'info', 'warn', 'error'];
+
+const levelColor: Record<LogLevel, (txt: string) => string> = {
+  verbose: chalk.magenta,
+  debug:   chalk.gray,
+  info:    chalk.cyan,
+  warn:    chalk.yellow,
+  error:   chalk.red,
+};
+
+export function appLogger(name: string, minLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'debug') {
   const prefix = `[${name}]`;
+  const minIndex = levels.indexOf(minLevel);
 
   const log = (level: LogLevel, message: any, ...args: any[]) => {
-    const colorMap = {
-      debug: '\x1b[90m', // gray
-      info: '\x1b[36m',  // cyan
-      warn: '\x1b[33m',  // yellow
-      error: '\x1b[31m', // red
-    };
+    if (levels.indexOf(level) < minIndex) return;        // filtered out
 
-    const reset = '\x1b[0m';
-    console.log(`${colorMap[level]}${prefix} [${level.toUpperCase()}]${reset} ${message}`, ...args);
+    const tag = levelColor[level] (`[${level.toUpperCase()}]`);
+    console.log(`${chalk.gray(prefix)} ${tag}`, message, ...args);
   };
 
   return {
-    debug: (msg: any, ...a: any[]) => log('debug', msg, ...a),
-    info: (msg: any, ...a: any[]) => log('info', msg, ...a),
-    warn: (msg: any, ...a: any[]) => log('warn', msg, ...a),
-    error: (msg: any, ...a: any[]) => log('error', msg, ...a),
+    verbose: (msg: any, ...a: any[]) => log('verbose', msg, ...a),
+    debug:   (msg: any, ...a: any[]) => log('debug',   msg, ...a),
+    info:    (msg: any, ...a: any[]) => log('info',    msg, ...a),
+    warn:    (msg: any, ...a: any[]) => log('warn',    msg, ...a),
+    error:   (msg: any, ...a: any[]) => log('error',   msg, ...a),
   };
 }

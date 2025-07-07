@@ -1,8 +1,9 @@
 import Fastify from 'fastify';
-import routeLogger from '@plugins/logger';
-import prismaPlugin from '@plugins/prisma';
-import cronPlugin from '@plugins/cron';
-import prometheusPlugin from '@plugins/odyssey';
+import routeLogger from './plugins/logger';
+import prismaPlugin from './plugins/prisma';
+import cronPlugin from './plugins/cron';
+import prometheusPlugin from './plugins/odyssey';
+import teamsPlugin from './plugins/teams';
 import v1Routes from './routes/v1';
 
 const fastify = Fastify({
@@ -26,6 +27,7 @@ const start = async () => {
     await fastify.register(cronPlugin);
     await fastify.register(prismaPlugin);
     await fastify.register(prometheusPlugin);
+    await fastify.register(teamsPlugin);
 
     await fastify.register(v1Routes, { prefix: '/v1' });
 

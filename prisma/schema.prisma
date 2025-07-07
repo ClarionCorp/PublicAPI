@@ -14,6 +14,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Not all caps to match Ody
+enum Role {
+  Forward
+  Goalie
+}
+
 enum ServiceToken {
   ODYSSEY
   STEAM
@@ -28,19 +34,8 @@ model Token {
   updatedAt         DateTime                @default(now())
 }
 
-model User {
-  id                Int                     @id @default(autoincrement())
-  username          String                  @unique
-  password          String
-  email             String                  @unique
-  isStaff           Boolean                 @default(false)
-  guides            Guide[]
-  player            Player?
-}
-
 model Player {
   id               String                   @unique
-  userId           Int?                     @unique
   username         String                   @unique
   region           String
   logoId           String?
@@ -53,9 +48,7 @@ model Player {
   tags             String[]                 @default([])
   updatedAt        DateTime?                @default(now()) @updatedAt
   currentXp        Int                      @default(0)
-  user             User?                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   characterRatings PlayerCharacterRating[]
-  matches          PlayerMatch[]
   ratings          PlayerRating[]
   playerStatus     String                   @default("Offline")
 }
@@ -77,78 +70,23 @@ model PlayerRating {
 }
 
 model PlayerCharacterRating {
-  id        Int      @id @default(autoincrement())
-  playerId  String
-  character String
-  role      String
-  games     Int
-  assists   Int
-  knockouts Int
-  losses    Int
-  mvp       Int
-  saves     Int
-  scores    Int
-  wins      Int
-  gamemode  Gamemode
-  createdAt DateTime @default(now())
-  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  id           Int      @id @default(autoincrement())
+  playerId     String
+  character    String
+  role         Role
+  games        Int
+  assists      Int
+  knockouts    Int
+  losses       Int
+  mvp          Int
+  saves        Int
+  scores       Int
+  wins         Int
+  gamemode     Gamemode
+  createdAt    DateTime @default(now())
+  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, character, gamemode, role], name: "player_character_role_game_unique")
-}
-
-
-model Match {
-  id        Int          @id @default(autoincrement())
-  map       String
-  gamemode  String
-  startTime DateTime
-  endTime   DateTime
-  players   PlayerMatch?
-}
-
-model PlayerMatch {
-  matchId   Int     @id @default(autoincrement())
-  playerId  String
-  character String  @default("Unknown")
-  censored  Boolean @default(false)
-  save      Int     @default(0)
-  score     Int     @default(0)
-  ko        Int     @default(0)
-  assist    Int     @default(0)
-  damage    Int?    @default(-1)
-  shots     Int?    @default(-1)
-  redirects Int?    @default(-1)
-  orbs      Int?    @default(-1)
-  match     Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player    Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
-
-  @@unique([matchId, playerId])
-}
-
-model Guide {
-  id              Int      @id @default(autoincrement())
-  title           String
-  content         String
-  character       String?
-  role            String?
-  authorId        Int
-  locale          String   @default("en")
-  pref_awakenings String[] @default([])
-  situ_awakenings String[] @default([])
-  nogo_awakenings String[] @default([])
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-}
-
-model Esport {
-  id     Int      @id @default(autoincrement())
-  name   String
-  detail String
-  image  String
-  url    String?
-  stream String?
-  region String[]
 }
 
 model Leaderboard {

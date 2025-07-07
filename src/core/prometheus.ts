@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
-import { PROMETHEUS } from '@/types/prometheus'
-import { appLogger } from '@plugins/logger'
+import { PROMETHEUS } from '../types/prometheus'
+import { appLogger } from '../plugins/logger'
 
 type TokenStore = {
   token: string
