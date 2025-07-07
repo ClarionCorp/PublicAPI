@@ -7,6 +7,7 @@ import { PROMETHEUS } from '../../types/prometheus';
 import { appLogger } from '../../plugins/logger';
 import { FastifyPluginAsync } from 'fastify';
 import { Gamemode } from '../../../prisma/client';
+import { prisma } from '../../plugins/prisma';
 import dayjs from 'dayjs';
 
 const ensureLogger = appLogger('PlayerEnsuring')
@@ -43,7 +44,7 @@ const players: FastifyPluginAsync = async (fastify) => {
       if (cached && cachedPlayer) {
         ensureLogger.info('Cached Player Requested. Returning cached data...');
         const teams = await fastify.teamsService.getTeamsForPlayer(decodedUser);
-        return {
+        return reply.status(200).send({
           ...cachedPlayer,
           ratings: cachedPlayer.ratings,
           teams: teams.map((team: any) => ({
@@ -51,7 +52,7 @@ const players: FastifyPluginAsync = async (fastify) => {
             teamName: team.teamName,
             logo: team.logo,
           })),
-        }
+        })
       }
     } else { 
       ensureLogger.warn(`Failed to find cached data for: '${decodedUser}'. Continuing...`);
@@ -107,14 +108,14 @@ const players: FastifyPluginAsync = async (fastify) => {
         const createdPlayer = await createPlayer({odysseyPlayer, ensuredRegion, playerStats});
         const teams = await fastify.teamsService.getTeamsForPlayer(name);
 
-        return {
+        return reply.status(201).send({
           ...createdPlayer,
           teams: teams.map((team: any) => ({
             teamId: team.teamId,
             teamName: team.teamName,
             logo: team.logo,
           })),
-        };
+        });
       }
     }
 
@@ -135,7 +136,7 @@ const players: FastifyPluginAsync = async (fastify) => {
       cachedPlayer = await fixMismatch(cachedPlayer, odysseyPlayer);
 
       if (cachedPlayer == null) {
-        return;
+        return reply.status(500).send({ error: "Player ID mismatch. Please notify administrators."});
       }
     }
 
@@ -168,14 +169,14 @@ const players: FastifyPluginAsync = async (fastify) => {
       ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`);
 
       const teams = await fastify.teamsService.getTeamsForPlayer(name);
-      return {
+      return reply.status(200).send({
         ...cachedPlayer,
         teams: teams.map((team: any) => ({
           teamId: team.teamId,
           teamName: team.teamName,
           logo: team.logo,
         })),
-      }
+      });
     }
 
     // AKA, (ignoreUpdates) is FALSE, and we need to update them now.
@@ -320,26 +321,26 @@ const players: FastifyPluginAsync = async (fastify) => {
           },
         });
 
-        return {
+        return reply.status(200).send({
           ...fullyUpdated,
           teams: teams.map((team: any) => ({
             teamId: team.teamId,
             teamName: team.teamName,
             logo: team.logo,
           })),
-        }
+        });
       }
     }
     
     // Return partial updates since player does not need full updating
-    return {
+    return reply.status(200).send({
       ...basicUpdate,
       teams: teams.map((team: any) => ({
         teamId: team.teamId,
         teamName: team.teamName,
         logo: team.logo,
       })),
-    }
+    });
   });
 };
 
