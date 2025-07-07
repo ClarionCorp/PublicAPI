@@ -2,7 +2,9 @@ import { FastifyPluginAsync } from 'fastify';
 
 const hello: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (req, reply) => {
-    return reply.status(201).send('hello world!');
+
+    const userQuery = await fastify.prometheus.player.usernameQuery('blals');
+    return reply.status(200).send(userQuery);
   });
 };
 
