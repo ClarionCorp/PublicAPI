@@ -1,8 +1,8 @@
-import { appLogger } from '../plugins/logger';
+import { appLogger } from '../../plugins/logger';
 import SteamUser from 'steam-user';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '../plugins/prisma';
+import { prisma } from '../../plugins/prisma';
 
 const steamLogger = appLogger('Steam');
 

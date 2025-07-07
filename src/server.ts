@@ -37,7 +37,7 @@ const start = async () => {
     const PORT = Number(process.env.SERVER_PORT || 12200);
 
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
-    fastify.log.info(`Server listening at http://localhost:${PORT}`);
+    fastify.log.info(`Server Started Completed.`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
