@@ -5,10 +5,11 @@ import cronPlugin from './plugins/cron';
 import prometheusPlugin from './plugins/odyssey';
 import teamsPlugin from './plugins/teams';
 import v1Routes from './routes/v1';
+import chalk from 'chalk';
 
 const fastify = Fastify({
   logger: {
-    level: 'info',
+    level: 'error',
     transport: {
       target: 'pino-pretty',
       options: {
@@ -44,7 +45,9 @@ const start = async () => {
     const PORT = Number(process.env.SERVER_PORT || 12200);
 
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
-    fastify.log.info(`Server Startup Completed.`);
+    console.log('');
+    console.log(chalk.greenBright(`[>] Server Startup Completed.`));
+    console.log('');
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

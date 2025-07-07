@@ -52,15 +52,42 @@ const levelColor: Record<LogLevel, (txt: string) => string> = {
   error:   chalk.red,
 };
 
-export function appLogger(name: string, minLevel: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'debug') {
-  const prefix = `[${name}]`;
-  const minIndex = levels.indexOf(minLevel);
+export function appLogger(
+  name: string,
+  minLevel: LogLevel = (process.env.LOG_LEVEL.toLowerCase() as LogLevel) || 'debug'
+) {
+  const levels: LogLevel[] = ['verbose', 'debug', 'info', 'warn', 'error']
+  const levelColor: Record<LogLevel, (txt: string) => string> = {
+    verbose: chalk.magenta,
+    debug: chalk.gray,
+    info: chalk.cyan,
+    warn: chalk.yellow,
+    error: chalk.red,
+  }
+
+  const minIndex = levels.indexOf(minLevel)
+
+  const paddedPrefix = `[${name}]`.padEnd(20)
+  const formatLevel = (level: LogLevel) => {
+    const raw = `[${level.toUpperCase()}]`.padEnd(8)
+    return levelColor[level](raw)
+  }
 
   const log = (level: LogLevel, message: any, ...args: any[]) => {
-    if (levels.indexOf(level) < minIndex) return;        // filtered out
+    if (levels.indexOf(level) < minIndex) return;
 
-    const tag = levelColor[level] (`[${level.toUpperCase()}]`);
-    console.log(`${chalk.gray(prefix)} ${tag}`, message, ...args);
+    const tag = formatLevel(level);
+    const prefix = chalk.gray(paddedPrefix);
+
+    // If debug, make message and args gray
+    const isDebug = level === 'debug';
+    const format = (x: any) =>
+      typeof x === 'string' ? chalk.gray(x) : x;
+
+    const msg = isDebug ? format(message) : message;
+    const rest = isDebug ? args.map(format) : args;
+
+    console.log(`${prefix} ${tag}`, msg, ...rest);
   };
 
   return {
@@ -69,5 +96,5 @@ export function appLogger(name: string, minLevel: LogLevel = (process.env.LOG_LE
     info:    (msg: any, ...a: any[]) => log('info',    msg, ...a),
     warn:    (msg: any, ...a: any[]) => log('warn',    msg, ...a),
     error:   (msg: any, ...a: any[]) => log('error',   msg, ...a),
-  };
+  }
 }

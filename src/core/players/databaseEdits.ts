@@ -61,8 +61,6 @@ export async function checkUpdatePlayer(data: PassiveUpdate) {
   const ensuredRegion = data.ensuredRegion;
   const mostRecentRating = cachedPlayer.ratings!.length > 0 ? cachedPlayer.ratings![0].rating : null;
 
-  console.log(`MRR: ${mostRecentRating}`)
-
   // Check if Player's Rating changed, OR if their rank changed.
   if (ensuredRegion?.player.rating != mostRecentRating || ensuredRegion?.player.rank != cachedPlayer.ratings![0].rank) {
     // Update the most recent rating point with the new rank if rating stayed the same.

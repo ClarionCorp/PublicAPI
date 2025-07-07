@@ -2,6 +2,9 @@ import { PlayerWithTeams, Team } from '../types/teams';
 import { prisma } from './prisma';
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin'
+import { appLogger } from './logger';
+
+const logger = appLogger('Teams');
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -149,7 +152,7 @@ const teamsPlugin: FastifyPluginAsync = async (fastify) => {
 
   globalThis.teamsService = instance
   fastify.decorate('teamsService', instance)
-  fastify.log.info('[+] Teams service initialised')
+  logger.info('[+] Teams service initialised')
 }
 
 export default fp(teamsPlugin, { name: 'teamsService' })

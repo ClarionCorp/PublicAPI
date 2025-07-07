@@ -77,11 +77,11 @@ export function shouldUpdateUser(data: UpdateRequirements): boolean {
   // If ANY are false, force full updates.
   // Could probably localize this in the future for speed.
 
-  console.log(`2: ${playerMastery.currentLevelXp === cachedPlayer.currentXp}`);
-  console.log(`3: ${playerMastery.currentLevel === cachedPlayer.ratings[0]?.masteryLevel}`);
-  console.log(`4: ${data.ensuredRegion?.player.rating === cachedPlayer.ratings[0]?.rating}`);
-  console.log(`5: ${data.isGhostProfile === false}`);
-  console.log(`Override: ${cachedPlayer.characterRatings.length == 0 && cachedPlayer.ratings.length > 0}`);
+  // console.log(`2: ${playerMastery.currentLevelXp === cachedPlayer.currentXp}`);
+  // console.log(`3: ${playerMastery.currentLevel === cachedPlayer.ratings[0]?.masteryLevel}`);
+  // console.log(`4: ${data.ensuredRegion?.player.rating === cachedPlayer.ratings[0]?.rating}`);
+  // console.log(`5: ${data.isGhostProfile === false}`);
+  // console.log(`Override: ${cachedPlayer.characterRatings.length == 0 && cachedPlayer.ratings.length > 0}`);
 
   let ignoreUpdates =
     cachedPlayer &&

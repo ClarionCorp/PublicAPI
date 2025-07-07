@@ -10,7 +10,7 @@ import { Gamemode } from '../../../prisma/client';
 import { prisma } from '../../plugins/prisma';
 import dayjs from 'dayjs';
 
-const ensureLogger = appLogger('PlayerEnsuring')
+const ensureLogger = appLogger('PlayerRoute')
 const APILogger = appLogger('Analytics')
 
 const players: FastifyPluginAsync = async (fastify) => {
@@ -29,9 +29,11 @@ const players: FastifyPluginAsync = async (fastify) => {
     const decodedUser = decodeURI(input.toLocaleLowerCase());
     const name = input;
     let cachedPlayer = undefined;
+    let regText = '';
+    if (region) { regText = ` in region ${region}.` };
     
     // Make region default to Global.
-    ensureLogger.info(`Requesting data for: ${decodedUser} in region ${region || 'Global'}.`);
+    ensureLogger.info(`Requesting data for: '${decodedUser}'${regText}`);
 
     // We do get the cachedPlayer, but we do not return him by himself because we need to check if he needs to be updated.
     // If he needs to be updated, we will return the updated player based on the cachedPlayerData instead of making multiple odyssey requests.
@@ -79,7 +81,7 @@ const players: FastifyPluginAsync = async (fastify) => {
         ensuredRegion.region = 'Global';
         ensureLogger.warn(`Could not find (${decodeURI(name)})'s region. Using ${ensuredRegion?.region} instead.`);
       } else {
-        ensureLogger.debug(`Found (${decodeURI(name)})'s region: ${ensuredRegion?.region}`);
+        ensureLogger.info(`Found ${decodeURI(name)}'s region: ${ensuredRegion?.region}`);
       }
     } else {
       ensureLogger.error(`Failed to find a valid region for (${decodeURI(name)}). Do they even play ranked?`);

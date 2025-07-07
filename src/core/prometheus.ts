@@ -9,7 +9,7 @@ type TokenStore = {
 }
 
 export class PrometheusService {
-  private readonly log = appLogger('PrometheusService')
+  private readonly log = appLogger('Prometheus')
   private readonly client: AxiosInstance
   private token: string
   private refresh: string
@@ -164,7 +164,7 @@ export class PrometheusService {
       },
 
       ensureRegion: async (playerId: string, specificRegion?: string) => {
-        console.log('Ensuring region...')
+        this.log.info('Ensuring region...')
         for (const region of [
           ...(specificRegion === 'Global' || !specificRegion
             ? [
@@ -183,7 +183,7 @@ export class PrometheusService {
             return
           }
           try {
-            console.log(`Checking ${region}...`, playerId)
+            this.log.debug(`Checking ${region}...`)
             const { players } = await this.ranked.leaderboard.search(
               playerId,
               0,
@@ -192,7 +192,7 @@ export class PrometheusService {
             )
             // If you are below 100 in global, you are most likely wanting to see your regional first.
             if (region === 'Global' && players[0].rank > 100) {
-              console.log('Not what the user expects')
+              this.log.warn('Not what the user expects')
               continue
             }
 

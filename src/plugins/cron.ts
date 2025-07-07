@@ -4,6 +4,9 @@ import { FastifyPluginAsync } from 'fastify';
 import steamRefresh from '../core/cronjobs/steam';
 import { updateTwitch } from '../core/cronjobs/twitch';
 import { updateYouTube } from '../core/cronjobs/youtube';
+import { appLogger } from './logger';
+
+const logger = appLogger('Cron');
 
 const cronPlugin: FastifyPluginAsync = async (fastify) => {
   
@@ -28,7 +31,7 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
 
   }
 
-  fastify.log.info('[+] Cronjobs Initialized!');
+  logger.info('[+] Cronjobs Initialized!');
 };
 
 export default fp(cronPlugin);

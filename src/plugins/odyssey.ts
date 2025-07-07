@@ -4,7 +4,7 @@ import { prisma } from '../plugins/prisma'
 import { PrometheusService } from '../core/prometheus'
 import { appLogger } from './logger'
 
-const odyLogger = appLogger('PrometheusService');
+const odyLogger = appLogger('Prometheus');
 
 const prometheusPlugin: FastifyPluginAsync = async (fastify) => {
   // Fetch current tokens from the database
@@ -34,7 +34,7 @@ const prometheusPlugin: FastifyPluginAsync = async (fastify) => {
 
   globalThis.prometheusService = instance
   fastify.decorate('prometheus', instance)
-  fastify.log.info('[+] Prometheus Service started! (Pulled tokens from DB)');
+  odyLogger.info('[+] Prometheus Service started! (Pulled tokens from DB)');
 }
 
 declare module 'fastify' {
