@@ -20,6 +20,12 @@ enum Role {
   Goalie
 }
 
+enum Gamemode {
+  None
+  NormalInitial
+  RankedInitial
+}
+
 enum ServiceToken {
   ODYSSEY
   STEAM
@@ -91,28 +97,22 @@ model PlayerCharacterRating {
 }
 
 model Leaderboard {
+  rank         Int
+  region       String
+  rating       Int
   username     String
   playerId     String
-  region       String
   emoticonId   String?
   titleId      String?
   tags         String[]
   masteryLevel Int      @default(0)
   socialUrl    String?
-  rank         Int
   wins         Int
   losses       Int
-  rating       Int
   topRole      String
   createdAt    DateTime @default(now())
 
   @@id([playerId, region])
-}
-
-enum Gamemode {
-  None
-  NormalInitial
-  RankedInitial
 }
 
 model RegionCounters {

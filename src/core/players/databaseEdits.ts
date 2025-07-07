@@ -141,7 +141,7 @@ export async function fixMismatch(cachedPlayer: PlayerObjectType, odysseyPlayer:
   } catch { // Failed to save due to uniqueness
     dbLogger.error(' ')
     dbLogger.error('///////////')
-    dbLogger.error(`Failed to fix USERID MISMATCH for Player '${odysseyPlayer.username}'.`)
+    dbLogger.error(`Failed to fix USER ID MISMATCH for Player '${odysseyPlayer.username}'.`)
     dbLogger.error(`Please investigate manually in Prisma Studio.`)
     dbLogger.error(' ')
     dbLogger.error(`Cached ID: ${cachedPlayer.id}`)
@@ -221,7 +221,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
     const createdPlayer = await prisma.player.create({
       data: {
         id: odysseyPlayer.playerId,
-        username: decodeURI(odysseyPlayer.username.toLocaleLowerCase()),
+        username: decodeURI(odysseyPlayer.username),
         region: data.ensuredRegion?.region || 'Global',
         emoticonId: odysseyPlayer.emoticonId,
         logoId: odysseyPlayer.logoId,
@@ -307,7 +307,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
       },
     })
 
-    dbLogger.info(`Created new Player successfully. (${odysseyPlayer.username})`);
+    dbLogger.info(`Created new Player successfully.`);
 
     return createdPlayer;
 
@@ -342,8 +342,8 @@ export async function checkDiscord(player: PROMETHEUS.RAW.Player, discordId: str
     }
     });
   
-    discordLogger.info(`Set ${player.username}'s Discord ID to ${discordId}!`);
+    discordLogger.debug(`Set ${player.username}'s Discord ID to ${discordId}!`);
   } catch {
     discordLogger.error(`Failed to set ${player.username}'s Discord ID!`);
   }
-  }
+}

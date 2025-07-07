@@ -192,7 +192,7 @@ export class PrometheusService {
             )
             // If you are below 100 in global, you are most likely wanting to see your regional first.
             if (region === 'Global' && players[0].rank > 100) {
-              this.log.warn('Not what the user expects')
+              // this.log.warn('Not what the user expects')
               continue
             }
 

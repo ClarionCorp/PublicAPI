@@ -26,7 +26,7 @@ const players: FastifyPluginAsync = async (fastify) => {
 
 
     // Existing Username Fetching.
-    const decodedUser = decodeURI(input.toLocaleLowerCase());
+    const decodedUser = decodeURI(input);
     const name = input;
     let cachedPlayer = undefined;
     let regText = '';
@@ -45,7 +45,7 @@ const players: FastifyPluginAsync = async (fastify) => {
       // If cached argument is true, return HERE.
       if (cached && cachedPlayer) {
         ensureLogger.info('Cached Player Requested. Returning cached data...');
-        const teams = await fastify.teamsService.getTeamsForPlayer(decodedUser);
+        const teams = await fastify.teamsService.getTeamsForPlayer(decodedUser.toLocaleLowerCase());
         return reply.status(200).send({
           ...cachedPlayer,
           ratings: cachedPlayer.ratings,
@@ -143,10 +143,23 @@ const players: FastifyPluginAsync = async (fastify) => {
     }
 
     // If the usernames are different, but the userID is the same, update the saved username.
-    if (cachedPlayer && cachedPlayer.username != odysseyPlayer.username.toLocaleLowerCase() && cachedPlayer.id == odysseyPlayer.playerId) {
+    if (cachedPlayer && cachedPlayer.username.toLocaleLowerCase() != odysseyPlayer.username.toLocaleLowerCase() && cachedPlayer.id == odysseyPlayer.playerId) {
       ensureLogger.warn(`Player Username Changed! (${cachedPlayer.username}) -> (${odysseyPlayer.username.toLocaleLowerCase()}), Matching ID: ${odysseyPlayer.playerId}`);
 
       cachedPlayer = await usernameChanges(cachedPlayer, odysseyPlayer);
+    }
+
+    // If the stored copy has different casing, just update it and move on.
+    if (cachedPlayer && cachedPlayer.username != odysseyPlayer.username && cachedPlayer.id == odysseyPlayer.playerId) {
+      try {
+        await prisma.player.update({
+          where: { id: odysseyPlayer.playerId },
+          data: { username: odysseyPlayer.username },
+        });
+        cachedPlayer.username = odysseyPlayer.username; // Update for rest of script
+      } catch (error) {
+        ensureLogger.error(`Failed Update Player's Username Casing:`, error);
+      }
     }
 
 
@@ -309,7 +322,7 @@ const players: FastifyPluginAsync = async (fastify) => {
         const fullyUpdated = await prisma.player.update({
           data: {
             tags: odysseyPlayer.tags,
-            username: odysseyPlayer.username.toLocaleLowerCase(),
+            username: odysseyPlayer.username,
             emoticonId: odysseyPlayer.emoticonId,
             nameplateId: odysseyPlayer.nameplateId,
             socialUrl: odysseyPlayer.socialUrl,

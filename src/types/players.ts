@@ -1,6 +1,15 @@
 import { Role } from "../../prisma/client"
 import { Team } from "./teams"
 
+export type OurRegions =
+  | 'Global'
+  | 'NorthAmerica'
+  | 'Europe'
+  | 'Asia'
+  | 'SouthAmerica'
+  | 'Oceania'
+  | 'JapaneseLanguageText'
+
 export type PlayerMasteryObjectType = {
   createdAt: string
   playerId: string
