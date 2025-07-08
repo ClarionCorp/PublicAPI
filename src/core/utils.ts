@@ -1,3 +1,4 @@
+import { formatDistanceToNow } from "date-fns";
 import dayjs from "dayjs";
 
 export async function sleep(ms: number): Promise<void> {
@@ -21,4 +22,9 @@ export function areDifferentDays(dateString1: string, dateString2: string) {
   const isDifferentDays = !date1.isSame(date2, 'day')
 
   return isDifferentDays
+}
+
+// Relative time. e.g. "3 hours ago"
+export function timeAgo(date: Date): string {
+  return formatDistanceToNow(date, { addSuffix: true });
 }

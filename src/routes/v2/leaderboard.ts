@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
 import { OurRegions } from '../../types/players';
+import { timeAgo } from '../../core/utils';
 
 interface LBProps {
   page: number;
@@ -59,17 +60,20 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
     ]);
 
     const totalPages = Math.ceil(totalItems / perPage);
+    const lastUpdated = data[0]?.createdAt ? timeAgo(new Date(data[0].createdAt)) : null;
+    const strippedData = data.map(({ createdAt, ...rest }) => rest);
 
     return reply.status(200).send({
       page,
       perPage,
       totalItems,
       totalPages,
+      lastUpdated,
       sortKey,
       sortDirection,
       region,
-      rank,
-      data,
+      rankFilter: rank,
+      data: strippedData,
     });
   });
 };
