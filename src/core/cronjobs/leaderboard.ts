@@ -27,6 +27,8 @@ export async function updateLeaderboard() {
     updates.push(populateByBoardOffset(0, 25, region as OurRegions))
   }
   await Promise.all(updates)
+
+  leaderboardLogger.info('Successfully updated leaderboard for all regions.');
 }
 
 let playersCounted = 0;
@@ -61,11 +63,12 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
         data: {
           playerId: player.playerId,
           region: region,
-          losses: player.losses,
           rank: player.rank,
           rating: player.rating,
           topRole: player.topRole,
           wins: player.wins,
+          losses: player.losses,
+          winrate: Number(((player.wins / player.games)*100).toFixed(1)),
           emoticonId: player.emoticonId,
           masteryLevel: player.masteryLevel,
           socialUrl: player.socialUrl,

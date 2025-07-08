@@ -110,6 +110,7 @@ model Leaderboard {
   socialUrl    String?
   wins         Int
   losses       Int
+  winrate      Float    @default(0)
   topRole      String
   topCharacter String?
   createdAt    DateTime @default(now())
