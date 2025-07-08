@@ -98,7 +98,7 @@ export namespace PROMETHEUS {
               mostPlayedCharacters: {
                 characterId: string
                 gamesPlayed: number
-              }
+              }[]
               currentDivistionId: string
               progressToNext: number
             }

@@ -99,8 +99,9 @@ model PlayerCharacterRating {
 model Leaderboard {
   rank         Int
   region       String
-  rating       Int
   username     String
+  rating       Int
+  rankName     String?
   playerId     String
   emoticonId   String?
   titleId      String?
@@ -110,6 +111,7 @@ model Leaderboard {
   wins         Int
   losses       Int
   topRole      String
+  topCharacter String?
   createdAt    DateTime @default(now())
 
   @@id([playerId, region])

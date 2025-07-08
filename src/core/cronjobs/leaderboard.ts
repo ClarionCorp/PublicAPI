@@ -5,6 +5,8 @@ import { handleCorestrike } from '../players/ghostPlayers';
 import { areDifferentDays, sleep } from '../utils';
 import { Player } from '../../../prisma/client';
 import { checkDiscord, usernameChanges } from '../players/databaseEdits';
+import { PROMETHEUS } from '@/types/prometheus';
+import { getRankFromLP } from '../ranks';
 
 const leaderboardLogger = appLogger('Leaderboard')
 const maxRanks = 9999; // Never set to 10K or above, it'll stall and error out :monkaS:
@@ -33,7 +35,7 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
   leaderboardLogger.info(
     `Updating leaderboard for ${region} with > Offset:${offset} Step: ${count}`,
   )
-  const leaderboardPlayers = await prometheusService.ranked.leaderboard.players(
+  const leaderboardPlayers: PROMETHEUS.API.RANKED.LEADERBOARD.Players = await prometheusService.ranked.leaderboard.players(
     offset,
     count,
     region === 'Global' ? undefined : region,
@@ -51,6 +53,10 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
       `(${playersCounted}/${maxRanks * 7}) Updating player ${player.playerId} #${player.rank} @ ${region}`,
     )
     try {
+      const topChar = player.mostPlayedCharacters.reduce((max, curr) => {
+        return curr.gamesPlayed > max.gamesPlayed ? curr : max;
+      })
+
       await prisma.leaderboard.create({
         data: {
           playerId: player.playerId,
@@ -66,6 +72,8 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
           tags: player.tags,
           titleId: player.titleId,
           username: player.username,
+          topCharacter: topChar.characterId,
+          rankName: getRankFromLP(player.rating).rankObject.name,
         },
       })
 
@@ -160,7 +168,7 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
         } else {
           // If there is no rating history or the new rating is different, insert it
           if (!latestRating || latestRating.rating !== newRating) {
-            leaderboardLogger.info(`Player '${player.playerId}' (#${player.rank} @ ${region}) has changed rating. Updating now.`);
+            leaderboardLogger.debug(`Player '${player.playerId}' (#${player.rank} @ ${region}) has changed rating. Updating now.`);
       
             await prisma.playerRating.create({
               data: {

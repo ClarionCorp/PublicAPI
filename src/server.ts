@@ -51,8 +51,8 @@ const start = async () => {
     console.log(chalk.greenBright(`[>] Server Startup Completed.`));
     console.log('');
 
-    sleep(2000);
-    await updateLeaderboard();
+    // sleep(2000);
+    // await updateLeaderboard();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
