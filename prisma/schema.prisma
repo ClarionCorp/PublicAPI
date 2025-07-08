@@ -125,7 +125,6 @@ model RegionCounters {
 }
 
 model CharacterLeaderboard {
-  id         Int     @id @default(autoincrement())
   character  String
   gamemode   String
   role       String
@@ -133,8 +132,9 @@ model CharacterLeaderboard {
   losses     Float
   games      Int
   region     String
+  createdAt  DateTime  @default(now())
 
-  @@unique([character, gamemode, region, role])
+  @@id([character, gamemode, region, role])
   @@map("character_wr_leaderboard")
 }
 
