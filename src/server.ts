@@ -8,6 +8,7 @@ import v2Routes from './routes/v2';
 import chalk from 'chalk';
 import { sleep } from './core/utils';
 import { updateCharacterBoard } from './core/cronjobs/charboard';
+import fastifyJWT from '@fastify/jwt';
 
 const fastify = Fastify({
   logger: {
@@ -33,6 +34,25 @@ const fastify = Fastify({
 const start = async () => {
   console.clear();
   try {
+    // JWT Setup
+    await fastify.register(fastifyJWT, {
+      secret: process.env.JWT_SECRET || 'super-secret' // use env in prod!
+    });
+
+    // Auth middleware for authenticating servers.
+    fastify.decorate(
+      'authenticate',
+      async function (request, reply) {
+        try {
+          await request.jwtVerify();
+          if (!request.user) throw new Error();
+        } catch (e) {
+          reply.code(401).send({ error: 'This endpoint requires authorization. Please visit https://docs.clarioncorp.net/authentication.' });
+        }
+      }
+    )
+
+
     await fastify.register(routeLogger);
     await fastify.register(cronPlugin);
     await fastify.register(prismaPlugin);
