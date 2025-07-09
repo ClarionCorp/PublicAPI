@@ -13,8 +13,11 @@ import dayjs from 'dayjs';
 const ensureLogger = appLogger('PlayerRoute')
 const APILogger = appLogger('Analytics')
 
+// Users must have a valid JWT to use this endpoint.
+// I hate doing this but we cannot gamble someone abusing it.
+// (If we get rate limited it could shutdown CC)
 const players: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/:input', async (req, reply) => {
+  fastify.get('/:input', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { input } = req.params as { input: string };
     const { region, cached } = req.query as { region?: string; cached?: boolean };
     const inType = getTypeOfInput(input);

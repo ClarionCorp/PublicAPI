@@ -45,9 +45,12 @@ const start = async () => {
       async function (request, reply) {
         try {
           await request.jwtVerify();
-          if (!request.user) throw new Error();
+          const entry = await fastify.prisma.userAccessToken.findUnique({ where: { id: request.user.id } });
+
+          if (!entry || !entry.active) throw new Error('No entry');
+          if (!request.user) throw new Error('No token');
         } catch (e) {
-          reply.code(401).send({ error: 'This endpoint requires authorization. Please visit https://docs.clarioncorp.net/authentication.' });
+          reply.code(401).send({ error: `This endpoint requires authorization. Please visit ${process.env.DOCS_BASE_URL}/authentication.` });
         }
       }
     )
