@@ -8,8 +8,8 @@ import { appLogger } from '../../plugins/logger';
 import { FastifyPluginAsync } from 'fastify';
 import { Gamemode } from '../../../prisma/client';
 import { prisma } from '../../plugins/prisma';
+import { sendToAnalytics } from '../../core/analytics';
 import dayjs from 'dayjs';
-import sendToAnalytics from '../../core/analytics';
 
 const ensureLogger = appLogger('PlayerRoute')
 

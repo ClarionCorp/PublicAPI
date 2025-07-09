@@ -34,6 +34,7 @@ enum ServiceToken {
 }
 
 enum AnalyticServices {
+  V2_ADMIN                                  //                                      /v2/admin
   V1_PLAYERS                                //                                      /v1/players
   V2_PLAYERS                                //                                      /v2/players
   V2_PLAYERS_CACHED                         //                                      /v2/players?cached=true
@@ -68,6 +69,16 @@ model UserAccessToken {
   requests                                  Analytics[]
 
   createdAt                                 DateTime                                @default(now())
+}
+
+// For blocking IPs that are snooping where they shouldn't be lol
+model LoginAttempts {
+  id                                        Int                                     @id @unique @default(autoincrement())
+  service                                   AnalyticServices
+  address                                   String
+  note                                      String?
+  uat                                       Int?
+  loggedAt                                  DateTime                                @default(now())
 }
 
 // Analytics
@@ -287,7 +298,7 @@ model Communities {
   weight                                   Int                                      @default(0)
   region                                   String
   yearEst                                  Int
-  addedAt                                  DateTime
+  addedAt                                  DateTime                                 @default(now())
   iconUrl                                  String
   bannerUrl                                String
 

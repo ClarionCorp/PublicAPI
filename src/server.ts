@@ -7,6 +7,7 @@ import teamsPlugin from './plugins/teams';
 import v2Routes from './routes/v2';
 import chalk from 'chalk';
 import { sleep } from './core/utils';
+import { updateLeaderboard } from './core/cronjobs/leaderboard';
 import { updateCharacterBoard } from './core/cronjobs/charboard';
 import fastifyJWT from '@fastify/jwt';
 
@@ -75,7 +76,7 @@ const start = async () => {
     console.log('');
 
     // sleep(2000);
-    // await updateCharacterBoard();
+    // await updateLeaderboard();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
