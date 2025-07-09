@@ -35,248 +35,250 @@ enum ServiceToken {
 
 // Internal Service Tokens
 model Token {
-  service           ServiceToken            @id @unique
-  token             String?                 // JWT
-  refreshToken      String?
-  expires           DateTime?
-  updatedAt         DateTime                @default(now())
+  service                                   ServiceToken                            @id @unique
+  token                                     String?                                 // JWT
+  refreshToken                              String?
+  expires                                   DateTime?
+  updatedAt                                 DateTime                                @default(now())
 }
 
 // User Access Tokens
 model UserAccessToken {
-  id               Int                      @id @unique @default(autoincrement())
-  name             String
-  owner            String
-  token            String?
-  tier             Int                      @default(1)
-  active           Boolean                  @default(true)
+  id                                        Int                                     @id @unique @default(autoincrement())
+  name                                      String
+  owner                                     String
+  token                                     String?
+  tier                                      Int                                     @default(1)
+  active                                    Boolean                                 @default(true)
 
-  createdAt        DateTime                 @default(now())
+  createdAt                                 DateTime                                @default(now())
+}
+
 }
 
 model Player {
-  id               String                   @unique
-  username         String                   @unique
-  region           String
-  logoId           String?
-  nameplateId      String?
-  emoticonId       String?
-  titleId          String?
-  socialUrl        String?
-  discordId        String?
-  createdAt        DateTime?                @default(now())
-  tags             String[]                 @default([])
-  updatedAt        DateTime?                @default(now()) @updatedAt
-  currentXp        Int                      @default(0)
-  characterRatings PlayerCharacterRating[]
-  ratings          PlayerRating[]
-  playerStatus     String                   @default("Offline")
+  id                                        String                                  @unique
+  username                                  String                                  @unique
+  region                                    String
+  logoId                                    String?
+  nameplateId                               String?
+  emoticonId                                String?
+  titleId                                   String?
+  socialUrl                                 String?
+  discordId                                 String?
+  createdAt                                 DateTime?                               @default(now())
+  tags                                      String[]                                @default([])
+  updatedAt                                 DateTime?                               @default(now()) @updatedAt
+  currentXp                                 Int                                     @default(0)
+  characterRatings                          PlayerCharacterRating[]
+  ratings                                   PlayerRating[]
+  playerStatus                              String                                  @default("Offline")
 }
 
 model PlayerRating {
-  id           Int      @id @default(autoincrement())
-  playerId     String
-  rating       Int      @default(0)
-  rank         Int      @default(10001)
-  wins         Int      @default(0)
-  losses       Int      @default(0)
-  masteryLevel Int      @default(0)
-  games        Int      @default(0)
-  createdAt    DateTime @default(now())
-  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  season       Int      @default(1)
+  id                                        Int                                     @id @default(autoincrement())
+  playerId                                  String
+  rating                                    Int                                     @default(0)
+  rank                                      Int                                     @default(10001)
+  wins                                      Int                                     @default(0)
+  losses                                    Int                                     @default(0)
+  masteryLevel                              Int                                     @default(0)
+  games                                     Int                                     @default(0)
+  createdAt                                 DateTime                                @default(now())
+  player                                    Player                                  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  season                                    Int                                     @default(1)
 
   @@index([playerId, createdAt])
 }
 
 model PlayerCharacterRating {
-  id           Int      @id @default(autoincrement())
-  playerId     String
-  character    String
-  role         Role
-  games        Int
-  assists      Int
-  knockouts    Int
-  losses       Int
-  mvp          Int
-  saves        Int
-  scores       Int
-  wins         Int
-  gamemode     Gamemode
-  createdAt    DateTime @default(now())
-  player       Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  id                                        Int                                     @id @default(autoincrement())
+  playerId                                  String
+  character                                 String
+  role                                      Role
+  games                                     Int
+  assists                                   Int
+  knockouts                                 Int
+  losses                                    Int
+  mvp                                       Int
+  saves                                     Int
+  scores                                    Int
+  wins                                      Int
+  gamemode                                  Gamemode
+  createdAt                                 DateTime                                @default(now())
+  player                                    Player                                  @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, character, gamemode, role], name: "player_character_role_game_unique")
 }
 
 model Leaderboard {
-  rank         Int
-  region       String
-  username     String
-  rating       Int
-  rankName     String?
-  playerId     String
-  emoticonId   String?
-  titleId      String?
-  tags         String[]
-  masteryLevel Int      @default(0)
-  socialUrl    String?
-  wins         Int
-  losses       Int
-  winrate      Float    @default(0)
-  topRole      String
-  topCharacter String?
-  createdAt    DateTime @default(now())
+  rank                                      Int
+  region                                    String
+  username                                  String
+  rating                                    Int
+  rankName                                  String?
+  playerId                                  String
+  emoticonId                                String?
+  titleId                                   String?
+  tags                                      String[]
+  masteryLevel                              Int                                     @default(0)
+  socialUrl                                 String?
+  wins                                      Int
+  losses                                    Int
+  winrate                                   Float                                   @default(0)
+  topRole                                   String
+  topCharacter                              String?
+  createdAt                                 DateTime                                @default(now())
 
   @@id([playerId, region])
 }
 
 model RegionCounters {
-  id           Int    @id @default(autoincrement())
-  region       String @unique
-  counter      Int    @default(0)
+  id                                        Int                                     @id @default(autoincrement())
+  region                                    String                                  @unique
+  counter                                   Int                                     @default(0)
 }
 
 model CharacterLeaderboard {
-  character  String
-  gamemode   String
-  role       String
-  wins       Float
-  losses     Float
-  games      Int
-  region     String
-  createdAt  DateTime  @default(now())
+  character                                 String
+  gamemode                                  String
+  role                                      String
+  wins                                      Float
+  losses                                    Float
+  games                                     Int
+  region                                    String
+  createdAt                                 DateTime                                @default(now())
 
   @@id([character, gamemode, region, role])
   @@map("character_wr_leaderboard")
 }
 
 model CharBoardHistory {
-  id         Int     @id @default(autoincrement())
-  character  String
-  gamemode   String
-  role       String
-  wins       Float
-  losses     Float
-  games      Int
-  region     String
-  createdAt  DateTime   @default(now())
+  id                                        Int                                     @id @default(autoincrement())
+  character                                 String
+  gamemode                                  String
+  role                                      String
+  wins                                      Float
+  losses                                    Float
+  games                                     Int
+  region                                    String
+  createdAt                                 DateTime                                @default(now())
 
   @@index([createdAt, gamemode, region, role])
 }
 
 model RatingHistory {
-  id        Int      @id @default(autoincrement())
-  playerId  String
-  username  String?
-  rating    Int
-  timestamp DateTime @default(now())
+  id                                        Int                                     @id @default(autoincrement())
+  playerId                                  String
+  username                                  String?
+  rating                                    Int
+  timestamp                                 DateTime                                @default(now())
 
   @@index([playerId, timestamp])
 }
 
 model RegionCounterHistory {
-  id           Int      @id @default(autoincrement())
-  region       String
-  counter      Int      @default(0)
-  timestamp    DateTime @default(now())
+  id                                        Int                                     @id @default(autoincrement())
+  region                                    String
+  counter                                   Int                                     @default(0)
+  timestamp                                 DateTime                                @default(now())
 
   @@index([region, timestamp])
 }
 
 model TwitchStreams {
-  username     String   @id
-  title        String
-  viewers      Int      @default(0)
-  thumbnail    String
+  username                                  String                                  @id
+  title                                     String
+  viewers                                   Int                                     @default(0)
+  thumbnail                                 String
 }
 
 model YouTubeStreams {
-  videoId      String   @id
-  channel      String
-  title        String
-  viewers      Int      @default(0)
-  thumbnail    String
+  videoId                                   String                                  @id
+  channel                                   String
+  title                                     String
+  viewers                                   Int                                     @default(0)
+  thumbnail                                 String
 }
 
 model RateLimitedIPs {
-  address     String   @id
-  violations  Int      @default(0)
-  updatedAt   DateTime @default(now())
+  address                                  String                                   @id
+  violations                               Int                                      @default(0)
+  updatedAt                                DateTime                                 @default(now())
 }
 
 model EsportsPlayers {
-  username    String               @id @unique
-  id          String               @unique
-  teams       EsportsTeamsOnPlayers[]
+  username                                 String                                   @id @unique
+  id                                       String                                   @unique
+  teams                                    EsportsTeamsOnPlayers[]
 }
 
 model EsportsTeams {
-  teamId      String               @id
-  teamName    String
-  logo        String
-  players     EsportsTeamsOnPlayers[]
+  teamId                                   String                                   @id
+  teamName                                 String
+  logo                                     String
+  players                                  EsportsTeamsOnPlayers[]
 }
 
 model EsportsTeamsOnPlayers {
-  player      EsportsPlayers       @relation(fields: [username], references: [username])
-  team        EsportsTeams         @relation(fields: [teamId], references: [teamId])
-  username    String
-  teamId      String
-  series      String               @default("Unknown")
-  gameSeason  String               @default("0")
+  player                                   EsportsPlayers                           @relation(fields: [username], references: [username])
+  team                                     EsportsTeams                             @relation(fields: [teamId], references: [teamId])
+  username                                 String
+  teamId                                   String
+  series                                   String                                   @default("Unknown")
+  gameSeason                               String                                   @default("0")
 
   @@id([username, teamId, gameSeason])
 }
 
 model NameHistory {
-  userId            String
-  newUsername       String
-  oldUsername       String
-  changedAt         DateTime       @default(now())
+  userId                                   String
+  newUsername                              String
+  oldUsername                              String
+  changedAt                                DateTime                                 @default(now())
 
   @@id([userId, changedAt])
   @@index([userId, oldUsername])
 }
 
 model SeasonDates {
-  season            Int            @id
-  startDate         DateTime
-  endDate           DateTime
+  season                                   Int                                      @id
+  startDate                                DateTime
+  endDate                                  DateTime
 
   @@unique([startDate, endDate])
   @@index([season, startDate, endDate])
 }
 
 model Communities {
-  name            String      @unique
-  inviteUrl       String      @id
-  description     String
-  tags            String[]
-  weight          Int         @default(0)
-  region          String
-  yearEst         Int
-  addedAt         DateTime
-  iconUrl         String
-  bannerUrl       String
+  name                                     String                                   @unique
+  inviteUrl                                String                                   @id
+  description                              String
+  tags                                     String[]
+  weight                                   Int                                      @default(0)
+  region                                   String
+  yearEst                                  Int
+  addedAt                                  DateTime
+  iconUrl                                  String
+  bannerUrl                                String
 
   @@index([name, region])
 }
 
 model trackedPlayers {
-  username      String           @id
-  userId        String           @unique
-  startedAt     DateTime         @default(now())
+  username                                 String                                   @id
+  userId                                   String                                   @unique
+  startedAt                                DateTime                                 @default(now())
 
-  tempRatings   tempRating[]     @relation("TrackedToTemp")
+  tempRatings                              tempRating[]                             @relation("TrackedToTemp")
 }
 
 model tempRating {
-  username   String
-  rating     Int
-  loggedAt   DateTime            @default(now())
+  username                                 String
+  rating                                   Int
+  loggedAt                                 DateTime                                 @default(now())
 
-  trackedPlayer trackedPlayers   @relation("TrackedToTemp", fields: [username], references: [username], onDelete: Cascade)
+  trackedPlayer                            trackedPlayers                           @relation("TrackedToTemp", fields: [username], references: [username], onDelete: Cascade)
 
   @@id([username, loggedAt])
 }
