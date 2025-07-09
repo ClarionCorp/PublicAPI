@@ -41,8 +41,8 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
       throw new Error('No search parameters received!');
     }
 
-    const cachedPlayer = await prisma.player.findUnique({
-      where: username ? { username } : { id: userId },
+    const cachedPlayer = await prisma.player.findFirst({
+      where: username ? { username: { equals: username, mode: 'insensitive' } } : { id: userId },
       include: {
         characterRatings: {
           take: 300,

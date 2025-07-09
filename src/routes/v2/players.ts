@@ -9,9 +9,9 @@ import { FastifyPluginAsync } from 'fastify';
 import { Gamemode } from '../../../prisma/client';
 import { prisma } from '../../plugins/prisma';
 import dayjs from 'dayjs';
+import sendToAnalytics from '../../core/analytics';
 
 const ensureLogger = appLogger('PlayerRoute')
-const APILogger = appLogger('Analytics')
 
 // Users must have a valid JWT to use this endpoint.
 // I hate doing this but we cannot gamble someone abusing it.
@@ -48,6 +48,7 @@ const players: FastifyPluginAsync = async (fastify) => {
       // If cached argument is true, return HERE.
       if (cached && cachedPlayer) {
         ensureLogger.info('Cached Player Requested. Returning cached data...');
+        await sendToAnalytics('V2_PLAYERS_CACHED', req.ip, req.user!.id, `${cachedPlayer.username}`);
         const teams = await fastify.teamsService.getTeamsForPlayer(decodedUser.toLocaleLowerCase());
         return reply.status(200).send({
           ...cachedPlayer,
@@ -90,6 +91,8 @@ const players: FastifyPluginAsync = async (fastify) => {
       ensureLogger.error(`Failed to find a valid region for (${decodeURI(name)}). Do they even play ranked?`);
     }
     
+    // Weird casing to be specific to uptime server.
+    if (input !== 'SoveReigN') await sendToAnalytics('V2_PLAYERS', req.ip, req.user!.id, `${odysseyPlayer.username}`);
 
     // (Player and Character Stats)
 

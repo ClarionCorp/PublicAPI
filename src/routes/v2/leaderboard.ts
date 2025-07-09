@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
 import { OurRegions } from '../../types/players';
 import { timeAgo } from '../../core/utils';
+import sendToAnalytics from '../../core/analytics';
 
 interface PlayerProps {
   page: number;
@@ -71,6 +72,8 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
     const totalPages = Math.ceil(totalItems / perPage);
     const lastUpdated = data[0]?.createdAt ? timeAgo(new Date(data[0].createdAt)) : null;
     const strippedData = data.map(({ createdAt, ...rest }) => rest);
+
+    await sendToAnalytics('V2_PLAYER_LEADERBOARD', req.ip);
 
     return reply.status(200).send({
       page,
@@ -142,6 +145,8 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
         return sortDirection === 'asc' ? diff : -diff;
       });
     }
+
+    await sendToAnalytics('V2_CHARACTER_LEADERBOARD', req.ip);
 
     return reply.status(200).send({
       lastUpdated,

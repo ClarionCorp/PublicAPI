@@ -36,6 +36,7 @@ enum ServiceToken {
 enum AnalyticServices {
   V1_PLAYERS                                //                                      /v1/players
   V2_PLAYERS                                //                                      /v2/players
+  V2_PLAYERS_CACHED                         //                                      /v2/players?cached=true
   V2_PLAYER_LEADERBOARD                     //                                      /v2/leaderboard/players
   V2_CHARACTER_LEADERBOARD                  //                                      /v2/leaderboard/characters
   V2_PRESENCE_LEADERBOARD                   //                                      /v2/leaderboard/presence
@@ -76,8 +77,12 @@ model Analytics {
   service                                   AnalyticServices
   accessedAt                                DateTime                                @default(now())
   address                                   String?
-  uat_id                                    Int?
-  accessToken                               UserAccessToken
+  uat                                       Int?                                    // The ID of the UserAccessToken
+  accessToken                               UserAccessToken?                        @relation(fields: [uat], references: [id])
+  notes                                     String?
+
+  @@index([service, accessedAt])
+  @@index([accessedAt, uat])
 }
 
 model Player {
