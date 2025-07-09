@@ -33,6 +33,20 @@ enum ServiceToken {
   TWITCH
 }
 
+enum AnalyticServices {
+  V1_PLAYERS                                //                                      /v1/players
+  V2_PLAYERS                                //                                      /v2/players
+  V2_PLAYER_LEADERBOARD                     //                                      /v2/leaderboard/players
+  V2_CHARACTER_LEADERBOARD                  //                                      /v2/leaderboard/characters
+  V2_PRESENCE_LEADERBOARD                   //                                      /v2/leaderboard/presence
+  V2_COMMUNITIES                            //                                      /v2/communities
+  V2_NAMEHISTORY                            //                                      /v2/namehistory
+  V1_SEASONS                                //                                      /v1/seasons
+  V2_STREAMS                                //                                      /v2/streams
+  V2_TEAMS                                  //                                      /v2/teams
+  V2_LIVERATING                             //                                      /v2/liverating
+}
+
 // Internal Service Tokens
 model Token {
   service                                   ServiceToken                            @id @unique
@@ -50,10 +64,20 @@ model UserAccessToken {
   token                                     String?
   tier                                      Int                                     @default(1)
   active                                    Boolean                                 @default(true)
+  requests                                  Analytics[]
 
   createdAt                                 DateTime                                @default(now())
 }
 
+// Analytics
+// Finally not just using fucking log files lol
+model Analytics {
+  id                                        Int                                     @id @unique @default(autoincrement())
+  service                                   AnalyticServices
+  accessedAt                                DateTime                                @default(now())
+  address                                   String?
+  uat_id                                    Int?
+  accessToken                               UserAccessToken
 }
 
 model Player {
