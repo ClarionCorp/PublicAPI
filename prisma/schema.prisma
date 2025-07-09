@@ -33,12 +33,25 @@ enum ServiceToken {
   TWITCH
 }
 
+// Internal Service Tokens
 model Token {
   service           ServiceToken            @id @unique
   token             String?                 // JWT
   refreshToken      String?
   expires           DateTime?
   updatedAt         DateTime                @default(now())
+}
+
+// User Access Tokens
+model UserAccessToken {
+  id               Int                      @id @unique @default(autoincrement())
+  name             String
+  owner            String
+  token            String?
+  tier             Int                      @default(1)
+  active           Boolean                  @default(true)
+
+  createdAt        DateTime                 @default(now())
 }
 
 model Player {
