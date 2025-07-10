@@ -5,6 +5,7 @@ import steamRefresh from '../core/cronjobs/steam';
 import { updateTwitch } from '../core/cronjobs/twitch';
 import { updateYouTube } from '../core/cronjobs/youtube';
 import { appLogger } from './logger';
+import { checkTrackingUpdates } from '../core/cronjobs/tracking';
 
 const logger = appLogger('Cron');
 
@@ -13,6 +14,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
   // [SteamToken] Every 10 days at 4:00 am
   cron.schedule('0 4 */10 * *', async () => {
     await steamRefresh();
+  });
+
+  // [LiveTracking] Every minute
+  cron.schedule('* * * * *', async () => {
+    await checkTrackingUpdates();
   });
 
 

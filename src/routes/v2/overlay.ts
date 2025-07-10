@@ -1,24 +1,15 @@
 import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
-import { getCharacterFromDevName, getTypeOfInput } from '../../core/utils';
+import { getCharacterFromDevName } from '../../core/utils';
 import { FastifyPluginAsync } from 'fastify';
 import { fetchCachedPlayer } from '../../core/players/misc';
 import { PilotDataType, RankDataType, TeamDataType } from '../../types/overlay';
 import { prisma } from '../../plugins/prisma';
 
 const overlay: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/:input', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-    const { input } = req.params as { input: string };
+  fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    const { username } = req.params as { username: string };
     let { region } = req.query as { region?: string };
-    const inType = getTypeOfInput(input);
 
-    // Support IDs in the future.
-    if (inType == 'id') {
-
-    }
-
-
-    // Existing Username Fetching.
-    const username = input;
     region = region ?? 'Global';
 
     const cachedPlayer = await fetchCachedPlayer(username);
