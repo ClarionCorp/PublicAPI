@@ -1,3 +1,4 @@
+import characters from "../objects/characters";
 import { formatDistanceToNow } from "date-fns";
 import dayjs from "dayjs";
 
@@ -27,4 +28,8 @@ export function areDifferentDays(dateString1: string, dateString2: string) {
 // Relative time. e.g. "3 hours ago"
 export function timeAgo(date: Date): string {
   return formatDistanceToNow(date, { addSuffix: true });
+}
+
+export function getCharacterFromDevName(cd_characterId: string) {
+  return characters.find( character => character.id === cd_characterId)
 }
