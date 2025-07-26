@@ -133,6 +133,21 @@ const history: FastifyPluginAsync = async (fastify) => {
       data: processed,
     });
   });
+
+  fastify.get('/names/:id', async (req, reply) => {
+    const { id } = req.params as { id: string };
+
+    const names = await prisma.nameHistory.findMany({
+      where: { userId: id },
+      orderBy: { changedAt: 'desc' },
+    });
+
+    if (names.length > 0) {
+      await sendToAnalytics('V2_HISTORY_PLAYERS', req.ip);
+      return reply.status(200).send({ message: "If you own this account, and you want any of these removed, contact 'dsit' on Discord.", nameHistory: names });
+    }
+    else { return reply.status(404).send({ error: `No names could be found for ID: ${id}` }) };
+  });
 };
 
 export default history;
