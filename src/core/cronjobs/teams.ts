@@ -1,7 +1,6 @@
 import { google } from 'googleapis';
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
-import data from '../../../googleapis.json';
 import path from 'path';
 
 const teamsLogger = appLogger('UpdateTeams');
@@ -74,11 +73,11 @@ async function fetchTeamsFromSeason(tab: string) {
       // Create the team
       await prisma.esportsTeams.upsert({
         where: { teamName: team.name },
-        update: { teamTag: team.tag, logo: `https://cdn.clarioncorp.net/teams/${series}/${season}/${team.tag}.webp` }, // Always use latest icon for now
+        update: { teamTag: team.tag, logo: `${process.env.CDN_BASE_URL ?? 'https://cdn.clarioncorp.net'}/teams/${series}/${season}/${team.tag}.webp` }, // Always use latest icon for now
         create: {
           teamTag: team.tag,
           teamName: team.name,
-          logo: `https://cdn.clarioncorp.net/teams/${series}/${season}/${team.tag}.webp`
+          logo: `${process.env.CDN_BASE_URL ?? 'https://cdn.clarioncorp.net'}/teams/${series}/${season}/${team.tag}.webp`
         }
       });
 
