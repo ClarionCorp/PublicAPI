@@ -27,6 +27,7 @@ const community: FastifyPluginAsync = async (fastify) => {
   
       return reply.status(200).send(communities);
     } catch (e) {
+      console.error(e);
       return reply.status(500).send({ error: 'Something went wrong' });
     }
   });

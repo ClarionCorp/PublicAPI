@@ -40,6 +40,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "regen": "yarn prisma db push && yarn prisma generate",
-    "token": "tsc && node dist/tokens.js"
+    "token": "tsc && node dist/tokens.js",
+    "setup": "tsc && node dist/setup.js"
   }
 }

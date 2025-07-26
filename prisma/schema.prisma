@@ -246,80 +246,89 @@ model YouTubeStreams {
 }
 
 model RateLimitedIPs {
-  address                                  String                                   @id
-  violations                               Int                                      @default(0)
-  updatedAt                                DateTime                                 @default(now())
+  address                                   String                                   @id
+  violations                                Int                                      @default(0)
+  updatedAt                                 DateTime                                 @default(now())
 }
 
 // v3
 model EsportsTeams {
-  teamTag                                  String
-  teamName                                 String                                   @unique
-  logo                                     String
-  players                                  EsportsPlayers[]
+  teamTag                                   String
+  teamName                                  String                                  @unique
+  logo                                      String
+  players                                   EsportsPlayers[]
 }
 
 model EsportsPlayers {
-  userId                                   String
-  teamName                                 String
-  team                                     EsportsTeams                             @relation(fields: [teamName], references: [teamName])
-  series                                   String                                   @default("Unknown") // e.g. EUSL
-  season                                   String                                   @default("S1")       // e.g. 1, so combined its "EUSL S1"
-  linkedId                                 String?
-  player                                   Player?                                  @relation(fields: [linkedId], references: [id])
+  userId                                    String
+  teamName                                  String
+  team                                      EsportsTeams                            @relation(fields: [teamName], references: [teamName])
+  series                                    String                                  @default("Unknown") // e.g. EUSL
+  season                                    String                                  @default("S1")       // e.g. 1, so combined its "EUSL S1"
+  linkedId                                  String?
+  player                                    Player?                                 @relation(fields: [linkedId], references: [id])
 
   @@unique([userId, teamName, series, season])
 }
 
 
 model NameHistory {
-  userId                                   String
-  newUsername                              String
-  oldUsername                              String
-  changedAt                                DateTime                                 @default(now())
+  userId                                    String
+  newUsername                               String
+  oldUsername                               String
+  changedAt                                 DateTime                                @default(now())
 
   @@id([userId, changedAt])
   @@index([userId, oldUsername])
 }
 
 model SeasonDates {
-  season                                   Int                                      @id
-  startDate                                DateTime
-  endDate                                  DateTime
+  season                                    Int                                     @id
+  startDate                                 DateTime
+  endDate                                   DateTime
 
   @@unique([startDate, endDate])
   @@index([season, startDate, endDate])
 }
 
 model Communities {
-  name                                     String                                   @unique
-  inviteUrl                                String                                   @id
-  description                              String
-  tags                                     String[]
-  weight                                   Int                                      @default(0)
-  region                                   String
-  yearEst                                  Int
-  addedAt                                  DateTime                                 @default(now())
-  iconUrl                                  String
-  bannerUrl                                String
+  name                                      String                                  @unique
+  inviteUrl                                 String                                  @id
+  description                               String
+  tags                                      String[]
+  weight                                    Int                                     @default(0)
+  region                                    String
+  yearEst                                   Int
+  addedAt                                   DateTime                                @default(now())
+  iconUrl                                   String
+  bannerUrl                                 String
 
   @@index([name, region])
 }
 
 model trackedPlayers {
-  username                                 String                                   @id
-  userId                                   String                                   @unique
-  startedAt                                DateTime                                 @default(now())
+  username                                  String                                  @id
+  userId                                    String                                  @unique
+  startedAt                                 DateTime                                @default(now())
 
-  tempRatings                              tempRating[]                             @relation("TrackedToTemp")
+  tempRatings                               tempRating[]                            @relation("TrackedToTemp")
 }
 
 model tempRating {
-  username                                 String
-  rating                                   Int
-  loggedAt                                 DateTime                                 @default(now())
+  username                                   String
+  rating                                     Int
+  loggedAt                                   DateTime                                @default(now())
 
-  trackedPlayer                            trackedPlayers                           @relation("TrackedToTemp", fields: [username], references: [username], onDelete: Cascade)
+  trackedPlayer                              trackedPlayers                          @relation("TrackedToTemp", fields: [username], references: [username], onDelete: Cascade)
 
   @@id([username, loggedAt])
+}
+
+model Awakenings {
+  id                                        String                                  @id @unique
+  name                                      String
+  description                               String
+  image                                     String
+  active                                    Boolean
+  rotatedIn                                 DateTime                                @default(now())
 }
