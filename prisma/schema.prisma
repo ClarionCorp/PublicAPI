@@ -47,6 +47,8 @@ enum AnalyticServices {
   V2_STREAMS                                //                                      /v2/streams
   V2_TEAMS                                  //                                      /v2/teams
   V2_LIVERATING                             //                                      /v2/liverating
+  V2_HISTORY_CHARACTERS                     //                                      /v2/history/characters
+  V2_HISTORY_PLAYERS                        //                                      /v2/history/players
 }
 
 // Internal Service Tokens

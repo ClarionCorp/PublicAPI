@@ -5,16 +5,6 @@ import { timeAgo } from '../../core/utils';
 import { sendToAnalytics } from '../../core/analytics';
 import { getRankGroup, Rank } from '../../core/ranks';
 
-interface PlayerProps {
-  page: number;
-  sort: 'rank' | 'rating' | 'wins' | 'losses' | 'winrate';
-  rank?: string;
-  character?: string;
-  role?: 'Forward' | 'Goalie'
-  direction?: 'asc' | 'desc';
-  region: OurRegions;
-}
-
 interface CharProps {
   sort: 'character' | 'games' | 'wins' | 'losses' | 'winrate';
   character?: string;
@@ -23,76 +13,12 @@ interface CharProps {
   region: OurRegions | 'All';
   gamemode?: 'Normal' | 'Ranked' | 'NormalInitial' | 'RankedInitial';
   rank?: string | string[]
+  date?: string
 }
 
-const leaderboard: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/players', async (req, reply) => {
-    let { page, sort, rank, character, role, region, direction } = req.query as PlayerProps;
-
-    const perPage = 100;
-    page = Number(page) || 1;
-    region = region || 'Global';
-
-    const validSortings = ['rank', 'rating', 'wins', 'losses', 'winrate'] as const;
-    const sortKey = validSortings.includes(sort) ? sort : 'rank';
-
-    const defaultDirections: Record<typeof sortKey, 'asc' | 'desc'> = {
-      rank: 'asc',
-      rating: 'desc',
-      wins: 'desc',
-      losses: 'desc',
-      winrate: 'desc',
-    };
-
-    const sortDirection =
-      direction === 'asc' || direction === 'desc'
-        ? direction
-        : defaultDirections[sortKey];
-
-    const where: any = {
-      region,
-      ...(character && { topCharacter: character }),
-      ...(role && { topRole: role }),
-      ...(rank && { rankName: rank }),
-    };
-
-    const skip = (page - 1) * perPage;
-
-    const [data, totalItems] = await Promise.all([
-      prisma.leaderboard.findMany({
-        where,
-        orderBy: {
-          [sortKey]: sortDirection,
-        },
-        skip,
-        take: perPage,
-      }),
-
-      prisma.leaderboard.count({ where }),
-    ]);
-
-    const totalPages = Math.ceil(totalItems / perPage);
-    const lastUpdated = data[0]?.createdAt ? timeAgo(new Date(data[0].createdAt)) : null;
-    const strippedData = data.map(({ createdAt, ...rest }) => rest);
-
-    await sendToAnalytics('V2_PLAYER_LEADERBOARD', req.ip, undefined, region);
-
-    return reply.status(200).send({
-      page,
-      perPage,
-      totalItems,
-      totalPages,
-      lastUpdated,
-      sortKey,
-      sortDirection,
-      region,
-      rankFilter: rank,
-      data: strippedData,
-    });
-  });
-
+const history: FastifyPluginAsync = async (fastify) => {
   fastify.get('/characters', async (req, reply) => {
-    let { sort, role, region, gamemode, direction, character, rank } = req.query as CharProps;
+    let { sort, role, region, gamemode, direction, character, rank, date } = req.query as CharProps;
 
     region = region || 'Global';
     gamemode = gamemode || 'Ranked';
@@ -136,8 +62,43 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       where.rankGroup = { in: rankList };
     }
 
+    if (date) {
+      const parts = date.split('-'); // YYYY-MM-DD
+      const [year, month, day] = parts.map(Number);
+    
+      if (!year || !month || !day) {
+        return reply.code(400).send({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+      }
+    
+      const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+      const startOfNextDay = new Date(Date.UTC(year, month - 1, day + 1, 0, 0, 0));
+    
+      where.createdAt = {
+        gte: startOfDay,
+        lt: startOfNextDay,
+      };
+    } else {
+      // If no date is provided, return list of available dates instead
+      const allDates = await prisma.charBoardHistory.findMany({
+        where,
+        select: { createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      });
+    
+      const uniqueDays = Array.from(
+        new Set(
+          allDates.map(entry => new Date(entry.createdAt).toISOString().slice(0, 10)) // YYYY-MM-DD
+        )
+      );
+    
+      return reply.send({
+        message: "Please add parameter 'date' with one of these available dates:",
+        availableDates: uniqueDays,
+      });
+    }
+
     // Don't orderBy if sorting by winrate
-    const data = await prisma.characterLeaderboard.findMany({
+    const data = await prisma.charBoardHistory.findMany({
       where,
       ...(sortKey !== 'winrate' && {
         orderBy: { [sortKey]: sortDirection },
@@ -150,7 +111,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
     let processed = data.map(({ createdAt, wins, losses, ...rest }) => {
       const totalGames = wins + losses;
       const winrate = totalGames > 0 ? Math.round((wins / totalGames) * 1000) / 10 : 0;
-      return { ...rest, wins, losses, winrate };
+      return { ...rest, wins, losses, winrate, from: createdAt };
     });
 
     if (sortKey === 'winrate') {
@@ -160,7 +121,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    await sendToAnalytics('V2_CHARACTER_LEADERBOARD', req.ip);
+    await sendToAnalytics('V2_HISTORY_CHARACTERS', req.ip);
 
     return reply.status(200).send({
       lastUpdated,
@@ -172,12 +133,6 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       data: processed,
     });
   });
-
-  // For World Comparison on CC Profiles
-  fastify.get('/presence', async (req, reply) => {
-    let { page, sort, rank, character, role, region, direction } = req.query as PlayerProps;
-    
-  });
 };
 
-export default leaderboard;
+export default history;
