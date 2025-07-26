@@ -14,6 +14,7 @@ export class PrometheusService {
   private token: string
   private refresh: string
   private readonly save: TokenStore['save']
+  private refreshing: Promise<void> | null = null;
 
   constructor ({ token, refresh, save }: TokenStore) {
     this.token = token
@@ -43,13 +44,20 @@ export class PrometheusService {
   }
 
   /** Gets a fresh pair of tokens and persists them with this.save() */
-  private async refreshTokens () {
-    this.log.debug('Refreshing Prometheus tokens…')
-    const { data } = await this.client.post<PROMETHEUS.API.LOGIN.Token>('/v1/login/token')
-    this.token = data.jwt
-    this.refresh = data.refreshToken
-    await this.save({ token: this.token, refresh: this.refresh })
-    this.log.debug('Tokens refreshed & saved to DB')
+  private async refreshTokens() {
+    if (this.refreshing) return this.refreshing;
+
+    this.refreshing = (async () => {
+      this.log.debug('Refreshing Prometheus tokens…');
+      const { data } = await this.client.post<PROMETHEUS.API.LOGIN.Token>('/v1/login/token');
+      this.token = data.jwt;
+      this.refresh = data.refreshToken;
+      await this.save({ token: this.token, refresh: this.refresh });
+      this.log.debug('Tokens refreshed & saved to DB');
+    })();
+
+    await this.refreshing;
+    this.refreshing = null;
   }
 
 
