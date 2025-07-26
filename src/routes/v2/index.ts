@@ -7,6 +7,7 @@ import adminCommunity from './admin/community';
 import overlay from './overlay';
 import tracking from './tracking';
 import history from './history';
+import community from './community';
 
 const logger = appLogger('Routes');
 
@@ -18,6 +19,7 @@ const v2Routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(tracking, { prefix: '/tracking' });
   fastify.register(adminCommunity, { prefix: '/admin' });
   fastify.register(history, { prefix: '/history' });
+  fastify.register(community, { prefix: '/communities' });
 
   logger.info('[+] Routes v2 Initialized!');
 };
