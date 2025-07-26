@@ -58,34 +58,6 @@ const overlay: FastifyPluginAsync = async (fastify) => {
         name: `Omega Strikers Enjoyer`
       });
     }
-    
-
-    // Retrieve Team Data
-    const rawTeamData = await prisma.esportsTeamsOnPlayers.findMany({
-      where: {
-        username: {
-          equals: username,
-          mode: 'insensitive',
-        },
-      },
-      include: {
-        team: {
-          select: {
-            teamId: true,
-            teamName: true,
-            logo: true,
-          },
-        },
-      },
-    });
-
-    const teamData: TeamDataType[] = rawTeamData.map(team => ({
-      teamName: team.team.teamName,
-      teamId: team.team.teamId,
-      logo: team.team.logo,
-      series: team.series,
-    }));
-
 
     const highestRatingIndex = ratingsByNewest.map(r => r.rating).indexOf(Math.max(...ratingsByNewest.map(r => r.rating)));
     const peakRating = ratingsByNewest[highestRatingIndex];
@@ -102,7 +74,7 @@ const overlay: FastifyPluginAsync = async (fastify) => {
       currentMasteryXp: masteryData.currentLevelXp,
       tags: odysseyPlayer.tags,
       socialUrl: odysseyPlayer.socialUrl,
-      teamData: teamData,
+      teamData: cachedPlayer.teams,
       playerStatus: "Offline",
     };
 

@@ -49,15 +49,9 @@ const players: FastifyPluginAsync = async (fastify) => {
       if (cached && cachedPlayer) {
         ensureLogger.info('Cached Player Requested. Returning cached data...');
         await sendToAnalytics('V2_PLAYERS_CACHED', req.ip, req.user!.id, `${cachedPlayer.username}`);
-        const teams = await fastify.teamsService.getTeamsForPlayer(decodedUser.toLocaleLowerCase());
         return reply.status(200).send({
           ...cachedPlayer,
           ratings: cachedPlayer.ratings,
-          teams: teams.map((team: any) => ({
-            teamId: team.teamId,
-            teamName: team.teamName,
-            logo: team.logo,
-          })),
         })
       }
     } else { 
@@ -114,16 +108,8 @@ const players: FastifyPluginAsync = async (fastify) => {
         ensureLogger.debug(`Obtained Advanced Stats for New Player '${decodedUser}'`);
 
         const createdPlayer = await createPlayer({odysseyPlayer, ensuredRegion, playerStats});
-        const teams = await fastify.teamsService.getTeamsForPlayer(name);
 
-        return reply.status(201).send({
-          ...createdPlayer,
-          teams: teams.map((team: any) => ({
-            teamId: team.teamId,
-            teamName: team.teamName,
-            logo: team.logo,
-          })),
-        });
+        return reply.status(201).send({ createdPlayer });
       }
     }
 
@@ -189,15 +175,7 @@ const players: FastifyPluginAsync = async (fastify) => {
     if (ignoreUpdates) {
       ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`);
 
-      const teams = await fastify.teamsService.getTeamsForPlayer(name);
-      return reply.status(200).send({
-        ...cachedPlayer,
-        teams: teams.map((team: any) => ({
-          teamId: team.teamId,
-          teamName: team.teamName,
-          logo: team.logo,
-        })),
-      });
+      return reply.status(200).send({ cachedPlayer });
     }
 
     // AKA, (ignoreUpdates) is FALSE, and we need to update them now.
@@ -228,7 +206,6 @@ const players: FastifyPluginAsync = async (fastify) => {
     })
 
     await checkUpdatePlayer({cachedPlayer, ensuredRegion, mastery: playerMastery});
-    const teams = await fastify.teamsService.getTeamsForPlayer(name);
 
     // advanced stats (beginning)
     // Only runs if it needs to update.
@@ -344,11 +321,7 @@ const players: FastifyPluginAsync = async (fastify) => {
 
         return reply.status(200).send({
           ...fullyUpdated,
-          teams: teams.map((team: any) => ({
-            teamId: team.teamId,
-            teamName: team.teamName,
-            logo: team.logo,
-          })),
+          teams: cachedPlayer.teams,
         });
       }
     }
@@ -356,11 +329,7 @@ const players: FastifyPluginAsync = async (fastify) => {
     // Return partial updates since player does not need full updating
     return reply.status(200).send({
       ...basicUpdate,
-      teams: teams.map((team: any) => ({
-        teamId: team.teamId,
-        teamName: team.teamName,
-        logo: team.logo,
-      })),
+      teams: cachedPlayer.teams,
     });
   });
 };

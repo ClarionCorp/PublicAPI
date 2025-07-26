@@ -1,5 +1,5 @@
 import { Role } from "../../prisma/client"
-import { Team } from "./teams"
+import { Team, TeamPlayers } from "./teams"
 
 export type OurRegions =
   | 'Global'
@@ -51,7 +51,7 @@ export type PlayerObjectType = {
   tags?: string[]
   characterMastery?: PlayerCharacterMasteryObjectType
   playerStatus: string
-  teams?: Team[];
+  teams?: TeamPlayers[];
   socialUrl?: string | null
   discordId?: string | null
   currentXp?: number

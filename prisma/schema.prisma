@@ -113,6 +113,7 @@ model Player {
   currentXp                                 Int                                     @default(0)
   characterRatings                          PlayerCharacterRating[]
   ratings                                   PlayerRating[]
+  teams                                     EsportsPlayers[]
   playerStatus                              String                                  @default("Offline")
 }
 
@@ -250,29 +251,26 @@ model RateLimitedIPs {
   updatedAt                                DateTime                                 @default(now())
 }
 
-model EsportsPlayers {
-  username                                 String                                   @id @unique
-  id                                       String                                   @unique
-  teams                                    EsportsTeamsOnPlayers[]
-}
-
+// v3
 model EsportsTeams {
-  teamId                                   String                                   @id
-  teamName                                 String
+  teamTag                                  String
+  teamName                                 String                                   @unique
   logo                                     String
-  players                                  EsportsTeamsOnPlayers[]
+  players                                  EsportsPlayers[]
 }
 
-model EsportsTeamsOnPlayers {
-  player                                   EsportsPlayers                           @relation(fields: [username], references: [username])
-  team                                     EsportsTeams                             @relation(fields: [teamId], references: [teamId])
-  username                                 String
-  teamId                                   String
-  series                                   String                                   @default("Unknown")
-  gameSeason                               String                                   @default("0")
+model EsportsPlayers {
+  userId                                   String
+  teamName                                 String
+  team                                     EsportsTeams                             @relation(fields: [teamName], references: [teamName])
+  series                                   String                                   @default("Unknown") // e.g. EUSL
+  season                                   String                                   @default("S1")       // e.g. 1, so combined its "EUSL S1"
+  linkedId                                 String?
+  player                                   Player?                                  @relation(fields: [linkedId], references: [id])
 
-  @@id([username, teamId, gameSeason])
+  @@unique([userId, teamName, series, season])
 }
+
 
 model NameHistory {
   userId                                   String

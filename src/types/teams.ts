@@ -1,3 +1,5 @@
+import { PlayerObjectType } from "./players";
+
 export enum Series {
   EUSL_S1 = 'EUSL S1',
   EUSL_S2 = 'EUSL S2',
@@ -7,10 +9,19 @@ export enum Series {
 }
 
 export type Team = {
-  teamId: string;
+  teamTag: string;
   teamName: string;
   logo: string;
-  series?: string;
+  players?: TeamPlayers[];
+}
+
+export type TeamPlayers = {
+  player?: PlayerObjectType;
+  team: Team;
+  userId?: string;
+  teamName?: string;
+  series: string;
+  season: string; // Not game season, series season. e.g. "EUSL S1"
 }
 
 // Represents a player's teams

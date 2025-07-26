@@ -1,3 +1,5 @@
+import { TeamPlayers } from "./teams";
+
 // Based on Query
 export type TrackedPlayersStructure = {
   username: string;
@@ -34,7 +36,7 @@ export type PilotDataType = {
   currentMasteryXp: number;
   tags: string[];
   socialUrl?: string;
-  teamData?: TeamDataType[];
+  teamData?: TeamPlayers[];
   playerStatus: string;
 }
 

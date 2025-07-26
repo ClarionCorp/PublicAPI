@@ -21,7 +21,6 @@ export async function updateTeams() {
   try {
     await prisma.esportsPlayers.deleteMany()
     await prisma.esportsTeams.deleteMany()
-    await prisma.esportsTeamsOnPlayers.deleteMany()
   } catch (error) {
     teamsLogger.error(`Error clearing teams tables!`, error)
     return;
@@ -50,21 +49,53 @@ async function fetchTeamsFromSeason(tab: string) {
     range: `${tab}!A1:I`,
   });
   const rows = res.data.values || [];
-  const teams = rows.slice(1).map((row) => ({
-    name: row[0]?.trim() || '',
-    tag: row[1]?.trim() || '',
-  }));
-  const tabPath = tab.split(' ').join('/');
+  const teams = rows.slice(1).map(row => {
+    const name = row[0]?.trim() || '';
+    const tag = row[1]?.trim() || '';
+  
+    // Get all player IDs from columns C to G
+    const players = row.slice(2, 7)
+      .filter(Boolean) // Skip empty cells
+      .map(cell => cell.split(':')[1]?.trim()) // Get part after colon
+      .filter(Boolean); // Remove undefined/null
+  
+    return {
+      name,
+      tag,
+      players,
+    };
+  });
+  const [series, season] = tab.split(' ');
+
+  console.log(JSON.stringify(teams, null, 1));
 
   try {
     for (const team of teams) {
-      await prisma.esportsTeams.create({
-        data: {
-          teamId: team.tag,
+      // Create the team
+      await prisma.esportsTeams.upsert({
+        where: { teamName: team.name },
+        update: { teamTag: team.tag, logo: `https://cdn.clarioncorp.net/teams/${series}/${season}/${team.tag}.webp` }, // Always use latest icon for now
+        create: {
+          teamTag: team.tag,
           teamName: team.name,
-          logo: `https://cdn.clarioncorp.net/teams/${tabPath}/${team.tag}.webp`
-        },
+          logo: `https://cdn.clarioncorp.net/teams/${series}/${season}/${team.tag}.webp`
+        }
       });
+
+      // Add the players
+      for (let playerId of team.players) {
+        const playerExists = await prisma.player.findUnique({
+          where: { id: playerId }
+        });
+
+        await prisma.esportsPlayers.create({ data: {
+          userId: playerId,
+          teamName: team.name,
+          series,
+          season,
+          ...(playerExists ? { linkedId: playerId } : {}) // fuckin stupid
+        }});
+      }
     }
   } catch (error) {
     teamsLogger.error(`Error filling out eSports Teams!`, error)

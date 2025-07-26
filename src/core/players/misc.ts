@@ -56,6 +56,19 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
             createdAt: 'desc',
           },
         },
+        teams: {
+          select: {
+            series: true,
+            season: true,
+            team: {
+              select: {
+                teamName: true,
+                teamTag: true,
+                logo: true
+              }
+            }
+          }
+        }
       },
     })
 
