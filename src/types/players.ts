@@ -57,6 +57,37 @@ export type PlayerObjectType = {
   currentXp?: number
 }
 
+export type PlayerLeaderboardType = {
+  username: string
+  playerId: string
+  logoId?: string | null
+  title?: string | null
+  nameplateId?: string | null
+  emoticonId?: string | null
+  titleId?: string | null
+  tags: string[]
+  platformIds: {
+    discord?: {
+      discordId?: string | null
+      hasFullAccount?: boolean
+    }
+  }
+  masteryLevel: number
+  // not including organization cos its useless
+  rank: number, // 10001 if not ranked
+  wins: number,
+  losses: number,
+  games: number,
+  topRole: 'Forward' | 'Goalie',
+  rating: number,
+  mostPlayedCharacters?: {
+    characterId: string,
+    gamesPlayed: number
+  }[]
+  currentDivisionId: string
+  progressToNext: number
+}
+
 export type PlayerRatingObjectType = {
   id: number
   playerId: string

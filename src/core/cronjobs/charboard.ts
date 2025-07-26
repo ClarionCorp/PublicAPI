@@ -2,6 +2,8 @@ import { PROMETHEUS } from "@/types/prometheus";
 import { appLogger } from "../../plugins/logger";
 import { prisma } from '../../plugins/prisma';
 import { sleep } from "../utils";
+import { getRankFromLP, getRankGroup } from "../ranks";
+import { PlayerLeaderboardType } from "../../types/players";
 
 const leaderboardLogger = appLogger('CharacterLeaderboard');
 
@@ -27,7 +29,8 @@ export async function updateCharacterBoard() {
 
   await Promise.all(
     regions.map(async (region) => {
-      for (let i = 0; i < 400; i++) {
+      // for (let i = 0; i < 400; i++) { // ALL RANKS (prod only)
+      for (let i = 0; i < 10; i++) {
         const startRank = i * 25 + 1;
         try {
           const data = await prometheusService.ranked.leaderboard.players(startRank, 25, region);
@@ -35,9 +38,10 @@ export async function updateCharacterBoard() {
 
           // Parallelize only the player processing (your requirement)
           await Promise.all(
-            players.map(async (player: any) => {
+            players.map(async (player: PlayerLeaderboardType) => {
               const playerId = player.playerId;
-              await processPlayerData(playerId, region, globalData);
+              const rankGroup = getRankGroup(player.rating);
+              await processPlayerData(playerId, region, rankGroup, globalData);
               await sleep(50); // still rate-limited per player
             })
           );
@@ -89,7 +93,7 @@ async function clearTable() {
   }
 }
 
-async function processPlayerData(playerId: string, region: PROMETHEUS.RAW.Regions, globalData: { [key: string]: { games: number; wins: number; losses: number; } }) {
+async function processPlayerData(playerId: string, region: PROMETHEUS.RAW.Regions, rankGroup: string, globalData: { [key: string]: { games: number; wins: number; losses: number; } }) {
   try {
     const data = await prometheusService.stats.player(playerId);
     const characterStats = data.characterStats;
@@ -100,8 +104,8 @@ async function processPlayerData(playerId: string, region: PROMETHEUS.RAW.Region
       const ratingName = characterStat.ratingName;
 
       if (ratingName === 'NormalInitial' || ratingName === 'RankedInitial') {
-        await processRoleStats(characterStat.roleStats.Forward, characterId, ratingName, region, 'Forward', globalData);
-        await processRoleStats(characterStat.roleStats.Goalie, characterId, ratingName, region, 'Goalie', globalData);
+        await processRoleStats(characterStat.roleStats.Forward, characterId, ratingName, region, 'Forward', rankGroup, globalData);
+        await processRoleStats(characterStat.roleStats.Goalie, characterId, ratingName, region, 'Goalie', rankGroup, globalData);
       }
     }
   } catch (error) {
@@ -109,12 +113,12 @@ async function processPlayerData(playerId: string, region: PROMETHEUS.RAW.Region
   }
 }
 
-async function processRoleStats(roleStats: any, characterId: string, ratingName: string, region: PROMETHEUS.RAW.Regions, role: string, globalData: { [key: string]: { games: number; wins: number; losses: number; } }) {
+async function processRoleStats(roleStats: any, characterId: string, ratingName: string, region: PROMETHEUS.RAW.Regions, role: string, rankGroup: string, globalData: { [key: string]: { games: number; wins: number; losses: number; } }) {
   if (!roleStats) return;
 
   const { games, wins, losses } = roleStats;
 
-  const key = `${characterId}|${ratingName}|${role}`;
+  const key = `${characterId}|${ratingName}|${role}|${rankGroup}`;
 
   // Aggregate data for Global region
   if (!globalData[key]) {
@@ -127,11 +131,12 @@ async function processRoleStats(roleStats: any, characterId: string, ratingName:
   try {
     await prisma.characterLeaderboard.upsert({
       where: {
-        character_gamemode_region_role: {
+        character_gamemode_region_role_rankGroup: {
           character: characterId,
           gamemode: ratingName,
           region: region,
           role: role,
+          rankGroup
         },
       },
       update: {
@@ -153,6 +158,7 @@ async function processRoleStats(roleStats: any, characterId: string, ratingName:
         losses: losses,
         region: region,
         role: role,
+        rankGroup
       },
     });
 
@@ -164,17 +170,18 @@ async function processRoleStats(roleStats: any, characterId: string, ratingName:
 
 async function insertGlobalData(globalData: { [key: string]: { games: number; wins: number; losses: number; } }) {
   for (const key in globalData) {
-    const [characterId, ratingName, role] = key.split('|');
+    const [characterId, ratingName, role, rankGroup] = key.split('|');
     const { games, wins, losses } = globalData[key];
 
     try {
       await prisma.characterLeaderboard.upsert({
         where: {
-          character_gamemode_region_role: {
+          character_gamemode_region_role_rankGroup: {
             character: characterId,
             gamemode: ratingName,
             region: 'Global',
             role: role,
+            rankGroup
           },
         },
         update: {
@@ -196,6 +203,7 @@ async function insertGlobalData(globalData: { [key: string]: { games: number; wi
           losses: losses,
           region: 'Global',
           role: role,
+          rankGroup
         },
       });
 

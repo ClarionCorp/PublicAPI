@@ -187,9 +187,10 @@ model CharacterLeaderboard {
   losses                                    Float
   games                                     Int
   region                                    String
+  rankGroup                                 String
   createdAt                                 DateTime                                @default(now())
 
-  @@id([character, gamemode, region, role])
+  @@id([character, gamemode, region, role, rankGroup])
   @@map("character_wr_leaderboard")
 }
 
@@ -202,6 +203,7 @@ model CharBoardHistory {
   losses                                    Float
   games                                     Int
   region                                    String
+  rankGroup                                 String?
   createdAt                                 DateTime                                @default(now())
 
   @@index([createdAt, gamemode, region, role])

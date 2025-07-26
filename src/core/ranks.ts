@@ -46,6 +46,24 @@ export function getRankFromLP(lp: number) {
   return { rankObject, prevRankObject, nextRankObject }
 }
 
+export function getRankGroup(input: number | string): string {
+  let rankName: string;
+
+  if (typeof input === 'number') {
+    const { rankObject } = getRankFromLP(input);
+    rankName = rankObject.name;
+  } else {
+    rankName = input;
+  }
+
+  // Collapse subranks into their base group
+  const compressed = rankName
+    .replace(/^Mid /, '')
+    .replace(/^High /, '');
+
+  return compressed;
+}
+
 
 const ranks = [
   {

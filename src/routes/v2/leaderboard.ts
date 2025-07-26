@@ -3,6 +3,7 @@ import { prisma } from '../../plugins/prisma';
 import { OurRegions } from '../../types/players';
 import { timeAgo } from '../../core/utils';
 import { sendToAnalytics } from '../../core/analytics';
+import { getRankGroup, Rank } from '../../core/ranks';
 
 interface PlayerProps {
   page: number;
@@ -21,6 +22,7 @@ interface CharProps {
   direction?: 'asc' | 'desc';
   region: OurRegions | 'All';
   gamemode?: 'Normal' | 'Ranked' | 'NormalInitial' | 'RankedInitial';
+  rank?: string
 }
 
 const leaderboard: FastifyPluginAsync = async (fastify) => {
@@ -90,10 +92,11 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.get('/characters', async (req, reply) => {
-    let { sort, role, region, gamemode, direction, character } = req.query as CharProps;
+    let { sort, role, region, gamemode, direction, character, rank } = req.query as CharProps;
 
     region = region || 'Global';
     gamemode = gamemode || 'Ranked';
+    rank = getRankGroup(rank);
     const mode = gamemode;
 
     const validSortings = ['character', 'games', 'wins', 'losses', 'winrate'] as const;
@@ -120,6 +123,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       ...(character && { character }),
       ...(role && { role }),
       ...(gamemode && { gamemode }),
+      ...(rank && { rankGroup: rank }),
     };
 
     // Don't orderBy if sorting by winrate
