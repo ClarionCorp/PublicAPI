@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
 import { OurRegions } from '../../types/players';
-import { timeAgo } from '../../core/utils';
+import { getTypeOfInput, timeAgo } from '../../core/utils';
 import { sendToAnalytics } from '../../core/analytics';
 import { getRankGroup, Rank } from '../../core/ranks';
 
@@ -134,19 +134,36 @@ const history: FastifyPluginAsync = async (fastify) => {
     });
   });
 
-  fastify.get('/names/:id', async (req, reply) => {
-    const { id } = req.params as { id: string };
+  fastify.get('/names/:input', async (req, reply) => {
+    const { input } = req.params as { input: string };
+    const inType = getTypeOfInput(input);
 
-    const names = await prisma.nameHistory.findMany({
-      where: { userId: id },
-      orderBy: { changedAt: 'desc' },
-    });
+    if (inType == 'id') {
+      const names = await prisma.nameHistory.findMany({
+        where: { userId: input },
+        orderBy: { changedAt: 'desc' },
+      });
 
-    if (names.length > 0) {
-      await sendToAnalytics('V2_HISTORY_PLAYERS', req.ip);
-      return reply.status(200).send({ message: "If you own this account, and you want any of these removed, contact 'dsit' on Discord.", nameHistory: names });
+      if (names.length > 0) {
+        await sendToAnalytics('V2_HISTORY_PLAYERS', req.ip);
+        return reply.status(200).send({ message: "If you own this account, and you want any of these removed, contact 'dsit' on Discord.", nameHistory: names });
+      } else { return reply.status(404).send({ error: `No names could be found for ID: ${input}` }) };
+    } else { // Must be a username.
+      const relations = await prisma.nameHistory.findMany({
+        where: {
+          OR: [
+            { oldUsername: { contains: input, mode: 'insensitive' } },
+            { newUsername: { contains: input, mode: 'insensitive' } }
+          ]
+        },
+        orderBy: { changedAt: 'desc' },
+      });
+
+      if (relations.length > 0) {
+        await sendToAnalytics('V2_HISTORY_PLAYERS', req.ip);
+        return reply.status(200).send({ message: "Username searched, here is a list of all matching accounts. If you own any of these, and you want them removed, contact 'dsit' on Discord.", results: relations });
+      } else { return reply.status(404).send({ error: `No changes could be found for: ${input}` }) };
     }
-    else { return reply.status(404).send({ error: `No names could be found for ID: ${id}` }) };
   });
 };
 
