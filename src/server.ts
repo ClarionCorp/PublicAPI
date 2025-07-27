@@ -10,6 +10,9 @@ import { sleep } from './core/utils';
 import { updateLeaderboard } from './core/cronjobs/leaderboard';
 import { updateCharacterBoard } from './core/cronjobs/charboard';
 import fastifyJWT from '@fastify/jwt';
+import { updateTeams } from './core/cronjobs/teams';
+import { updateTwitch } from './core/cronjobs/twitch';
+import cors from '@fastify/cors'
 
 const fastify = Fastify({
   logger: {
@@ -38,6 +41,19 @@ const start = async () => {
     // JWT Setup
     await fastify.register(fastifyJWT, {
       secret: process.env.JWT_SECRET || 'super-secret' // use env in prod!
+    });
+
+    await fastify.register(cors, {
+      origin: (origin, cb) => {
+        // Accept any origin and echo it back — as long as it's defined (browser request)
+        if (origin) {
+          cb(null, origin); // echo origin back = "fake *"
+        } else {
+          cb(null, true); // SSR, curl, etc.
+        }
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     });
 
     // Auth middleware for authenticating servers.
@@ -76,7 +92,7 @@ const start = async () => {
     console.log('');
 
     // sleep(2000);
-    // await updateLeaderboard();
+    // await updateTeams();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

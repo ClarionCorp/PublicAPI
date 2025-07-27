@@ -171,7 +171,7 @@ export namespace PROMETHEUS {
     }
     export namespace MASTERY {
       export type Player = {
-        timestamp: string
+        timestamp?: string
         playerId: string
         currentLevel: number
         currentLevelXp: number

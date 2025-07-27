@@ -2,6 +2,7 @@
 
 import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
+import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
@@ -27,6 +28,23 @@ const tools: FastifyPluginAsync = async (fastify) => {
       const characters = await prisma.strikers.findMany();
 
       return reply.status(200).send(characters);
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  fastify.get('/metadata/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    const { username } = req.params as { username: string };
+    try {
+      const usernameVerify = await fetchOdyPlayer(username);
+
+      if (!usernameVerify) {
+        return reply.status(404);
+      }
+
+      return reply.status(200).send({ username: usernameVerify.username });
 
     } catch (e) {
       console.error(e);

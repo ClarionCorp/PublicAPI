@@ -173,6 +173,7 @@ model Leaderboard {
   createdAt                                 DateTime                                @default(now())
 
   @@id([playerId, region])
+  @@index([rank, rating])
 }
 
 model RegionCounters {
@@ -194,6 +195,7 @@ model CharacterLeaderboard {
 
   @@id([character, gamemode, region, role, rankGroup])
   @@map("character_wr_leaderboard")
+  @@index([character, gamemode, role, region])
 }
 
 model CharBoardHistory {
@@ -254,15 +256,20 @@ model RateLimitedIPs {
 // v3
 model EsportsTeams {
   teamTag                                   String
-  teamName                                  String                                  @unique
+  teamName                                  String
   logo                                      String
+  series                                    String                                  @default("Unknown") // e.g. EUSL
+  season                                    String                                  @default("S1")       // e.g. 1, so combined its "EUSL S1"
   players                                   EsportsPlayers[]
+
+  @@id([teamName, series, season])
+  @@index([series, season])
 }
 
 model EsportsPlayers {
   userId                                    String
   teamName                                  String
-  team                                      EsportsTeams                            @relation(fields: [teamName], references: [teamName])
+  team                                      EsportsTeams                            @relation(fields: [teamName, series, season], references: [teamName, series, season])
   series                                    String                                  @default("Unknown") // e.g. EUSL
   season                                    String                                  @default("S1")       // e.g. 1, so combined its "EUSL S1"
   linkedId                                  String?

@@ -14,8 +14,23 @@ export type TempRatings = {
   loggedAt: Date;
 }
 
-type PilotBadge = {
-  name: string;
+export type RoleData = {
+  games: number,
+  wins: number,
+  losses: number,
+  scores: number,
+  assists: number,
+  saves: number,
+  knockouts: number,
+  mvp: number,
+  winrate: number,
+}
+
+export type PilotBadge = {
+  forwardStats: RoleData,
+  goalieStats: RoleData,
+  position: 'FORWARD' | 'GOALIE' | 'FLEX',
+  mostPlayedCharacter?: string,
 }
 
 export type TeamDataType = {
@@ -30,7 +45,7 @@ export type PilotDataType = {
   username: string;
   title: string;
   emoticon: string;
-  badges: PilotBadge[];
+  badgeData: PilotBadge;
   masteryLevel: number;
   nextMasteryXp: number;
   currentMasteryXp: number;

@@ -229,6 +229,22 @@ export class PrometheusService {
         )
       ).data
     },
+
+    character: async (playerId: string) => {
+      return (
+        await this.client.get<PROMETHEUS.API.MASTERY.Character>(
+          `/v1/mastery/${playerId}/characters`,
+        )
+      ).data
+    },
+
+    characterV2: async (playerId: string) => {
+      return (
+        await this.client.get<PROMETHEUS.API.MASTERY.Character>(
+          `/v2/mastery/${playerId}/characters`,
+        )
+      ).data
+    },
   }
 
   public player = {

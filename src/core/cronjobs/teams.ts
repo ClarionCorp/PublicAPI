@@ -66,17 +66,21 @@ async function fetchTeamsFromSeason(tab: string) {
   });
   const [series, season] = tab.split(' ');
 
-  console.log(JSON.stringify(teams, null, 1));
+  // console.log(JSON.stringify(teams, null, 1));
+  let debugg = '';
 
   try {
     for (const team of teams) {
+      debugg = team.name;
       // Create the team
       await prisma.esportsTeams.upsert({
-        where: { teamName: team.name },
+        where: { teamName_series_season: { teamName: team.name, series, season } },
         update: { teamTag: team.tag, logo: `${process.env.CDN_BASE_URL ?? 'https://cdn.clarioncorp.net'}/teams/${series}/${season}/${team.tag}.webp` }, // Always use latest icon for now
         create: {
           teamTag: team.tag,
           teamName: team.name,
+          series,
+          season,
           logo: `${process.env.CDN_BASE_URL ?? 'https://cdn.clarioncorp.net'}/teams/${series}/${season}/${team.tag}.webp`
         }
       });
@@ -97,6 +101,6 @@ async function fetchTeamsFromSeason(tab: string) {
       }
     }
   } catch (error) {
-    teamsLogger.error(`Error filling out eSports Teams!`, error)
+    teamsLogger.error(`Error filling out eSports Teams! ${debugg}`, error)
   }
 }

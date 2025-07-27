@@ -2,7 +2,7 @@ import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
 import { getCharacterFromDevName } from '../../core/utils';
 import { FastifyPluginAsync } from 'fastify';
 import { fetchCachedPlayer } from '../../core/players/misc';
-import { PilotDataType, RankDataType, TeamDataType } from '../../types/overlay';
+import { OverlayType, PilotBadge, PilotDataType, RankDataType, TeamDataType } from '../../types/overlay';
 import { prisma } from '../../plugins/prisma';
 
 const overlay: FastifyPluginAsync = async (fastify) => {
@@ -27,36 +27,26 @@ const overlay: FastifyPluginAsync = async (fastify) => {
     const statsObject = await prometheusService.stats.player(odysseyPlayer.playerId);
     const playerStats = statsObject.playerStats[1]; // 0 is None, 1 is Ranked, 2 is Norms
 
-    // Putting the badges together now
-    let pilotBadges: {
-      name: string
-    }[] = []
+    // Other badge data
+    const mainCharacter = lbPlayer.mostPlayedCharacters[0].characterId;
+    const gamesAmt = playerStats.roleStats.Forward.games + playerStats.roleStats.Goalie.games;
+    const forwardRatio = playerStats.roleStats.Forward.games / (gamesAmt) * 100
+    
+    let position: 'FORWARD' | 'GOALIE' | 'FLEX';
 
-    try {
-      // Other badge data
-      const mainCharacter = lbPlayer.mostPlayedCharacters[0].characterId;
-      const gamesAmt = playerStats.roleStats.Forward.games + playerStats.roleStats.Goalie.games;
-      const forwardRatio = playerStats.roleStats.Forward.games / (gamesAmt) * 100
-      const scoresAmt = playerStats.roleStats.Forward.scores + playerStats.roleStats.Goalie.scores;
-      const knockoutsAmt = playerStats.roleStats.Forward.knockouts + playerStats.roleStats.Goalie.knockouts;
-      const assistsAmt = playerStats.roleStats.Forward.assists + playerStats.roleStats.Goalie.assists;
+    if (forwardRatio > 59.9) {
+      position = 'FORWARD';
+    } else if (forwardRatio < 40.1) {
+      position = 'GOALIE';
+    } else {
+      position = 'FLEX';
+    }
 
-      pilotBadges.push({
-        name: `${getCharacterFromDevName(mainCharacter).name || 'Omega Strikers'} Enjoyer`
-      });
-
-      pilotBadges.push({
-        name: forwardRatio > 59.9 ? '🦐 Forward' : forwardRatio < 40.1 ? '🥅 Goalie' : '💫 Flex'
-      });
-
-      if (scoresAmt / gamesAmt >= 3) {pilotBadges.push({name: '🎯 Scorer',})}
-      if (knockoutsAmt / gamesAmt >= 4) {pilotBadges.push({name: '🥊 Brawller',})}
-      if (assistsAmt / gamesAmt >= 3) { pilotBadges.push({ name:  '🤝 Pass King',})}
-    } catch {
-      console.error(`Player (${username}) doesn't have any roleStats data! Returning defaults...`);
-      pilotBadges.push({
-        name: `Omega Strikers Enjoyer`
-      });
+    let pilotBadges: PilotBadge = {
+      forwardStats: playerStats.roleStats.Forward,
+      goalieStats: playerStats.roleStats.Goalie,
+      position,
+      mostPlayedCharacter: mainCharacter,
     }
 
     const highestRatingIndex = ratingsByNewest.map(r => r.rating).indexOf(Math.max(...ratingsByNewest.map(r => r.rating)));
@@ -68,7 +58,7 @@ const overlay: FastifyPluginAsync = async (fastify) => {
       username: username,
       title: odysseyPlayer.titleId,
       emoticon: odysseyPlayer.emoticonId,
-      badges: pilotBadges,
+      badgeData: pilotBadges,
       masteryLevel: masteryData.currentLevel,
       nextMasteryXp: masteryData.xpToNextLevel,
       currentMasteryXp: masteryData.currentLevelXp,

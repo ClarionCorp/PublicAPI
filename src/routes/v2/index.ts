@@ -9,6 +9,8 @@ import tracking from './tracking';
 import history from './history';
 import community from './community';
 import tools from './tools';
+import streams from './streams';
+import teams from './teams';
 
 const logger = appLogger('Routes');
 
@@ -22,6 +24,8 @@ const v2Routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(history, { prefix: '/history' });
   fastify.register(community, { prefix: '/communities' });
   fastify.register(tools, { prefix: '/tools' });
+  fastify.register(streams, { prefix: '/streams' });
+  fastify.register(teams, { prefix: '/teams' });
 
   logger.info('[+] Routes v2 Initialized!');
 };

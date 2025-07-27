@@ -11,6 +11,7 @@ import { prisma } from '../../plugins/prisma';
 import { sendToAnalytics } from '../../core/analytics';
 import { searchByID } from '../../core/players/idSearch';
 import dayjs from 'dayjs';
+import { PlayerMasteryObjectType, PlayerObjectType } from '@/types/players';
 
 const ensureLogger = appLogger('UserSearch')
 
@@ -24,7 +25,6 @@ export interface UserResponse {
 export async function usernameSearch(name: string, req: FastifyRequest, region?: string, cached?: boolean): Promise<UserResponse> {
   // Existing Username Fetching.
   const decodedUser = decodeURI(name);
-  let cachedPlayer = undefined;
   let regText = '';
   if (region) { regText = ` in region ${region}.` };
   
@@ -33,7 +33,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
   // We do get the cachedPlayer, but we do not return him by himself because we need to check if he needs to be updated.
   // If he needs to be updated, we will return the updated player based on the cachedPlayerData instead of making multiple odyssey requests.
-  cachedPlayer = await fetchCachedPlayer(decodedUser);
+  let cachedPlayer = await fetchCachedPlayer(decodedUser);
 
   if (cachedPlayer) { 
     ensureLogger.debug(`Found Cached Data for: '${decodeURI(cachedPlayer?.username)}' with ${cachedPlayer?.ratings?.length} rating points.`);
@@ -195,7 +195,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   const isGhostProfile = cachedPlayer && (!cachedPlayer.characterRatings || !cachedPlayer.emoticonId);
 
   // Check if player needs updating.
-  const playerMastery = await prometheusService.mastery.player(odysseyPlayer.playerId || cachedPlayer?.id)
+  const playerMastery: PlayerMasteryObjectType = await prometheusService.mastery.player(odysseyPlayer.playerId || cachedPlayer?.id)
   const updateParams: UpdateRequirements = {
     cachedPlayer,
     playerMastery,
@@ -210,7 +210,15 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`);
 
     return {
-      data: cachedPlayer,
+      data: {
+        ...cachedPlayer,
+        mastery: {
+          currentLevel: playerMastery.currentLevel,
+          currentLevelXp: playerMastery.currentLevelXp,
+          totalXp: playerMastery.totalXp,
+          xpToNextLevel: playerMastery.xpToNextLevel
+        }
+      },
       status: 200,
       ok: true
     };
@@ -360,7 +368,15 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
       const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username);
 
       return {
-        data: fullyUpdated,
+        data: {
+          ...fullyUpdated,
+          mastery: {
+            currentLevel: playerMastery.currentLevel,
+            currentLevelXp: playerMastery.currentLevelXp,
+            totalXp: playerMastery.totalXp,
+            xpToNextLevel: playerMastery.xpToNextLevel
+          }
+        },
         status: 200,
         ok: true
       };
@@ -374,3 +390,19 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     ok: true
   };
 };
+
+
+export async function fillPlayerMastery(id: string) {
+  try {
+    const playerMastery = await prometheusService.mastery.player(id);
+    return {
+      currentLevel: playerMastery.currentLevel,
+      currentLevelXp: playerMastery.currentLevelXp,
+      xpToNextLevel: playerMastery.xpToNextLevel,
+      totalXp: playerMastery.totalXp
+    }
+  } catch (error) {
+    ensureLogger.error(`Error while filling Player Masteries!`, error);
+    return {};
+  }
+}
