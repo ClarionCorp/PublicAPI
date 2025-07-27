@@ -3,7 +3,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
 
-const utilities: FastifyPluginAsync = async (fastify) => {
+const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
     let { active } = req.query as { active?: string };
 
@@ -21,6 +21,18 @@ const utilities: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({ error: "Something went wrong" });
     }
   });
+
+  fastify.get('/characters', async (req, reply) => {
+    try {
+      const characters = await prisma.strikers.findMany();
+
+      return reply.status(200).send(characters);
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
 };
 
-export default utilities;
+export default tools;

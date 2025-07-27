@@ -332,3 +332,52 @@ model Awakenings {
   active                                    Boolean
   rotatedIn                                 DateTime                                @default(now())
 }
+
+model Strikers {
+  id                                        String                                  @id @unique
+  name                                      String
+  color                                     String                                  // HEX code in the character's theme
+  cost                                      Int
+  portrait                                  String
+  goalScore                                 String
+  bodyShot                                  String
+  timeline                                  String
+  description                               String
+
+  // Base Stats at level 1
+  baseStagger                               Int
+  regenRate                                 Int
+  power                                     Int
+  speed                                     Int
+  size                                      Int
+
+  // Link abilities later
+}
+
+// enum AbilityCast {
+//   STRIKE
+//   PRIMARY
+//   SECONDARY
+//   SPECIAL
+// }
+
+// enum AbilityTypes {
+//   MELEE
+//   IMPACT
+//   DASH
+//   PROJECTILE
+//   CREATION
+//   BUFF
+//   DEBUFF
+// }
+
+// To Do Later lol
+// model StrikerAbilities {
+//   name                                      String                                  @id @unique
+//   place                                     AbilityCast
+//   icon                                      String
+//   damage                                    Int
+//   powerPerc                                 Int
+//   cooldown                                  Int
+//   type                                      AbilityTypes
+// }
