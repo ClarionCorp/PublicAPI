@@ -3,7 +3,7 @@ import { prisma } from '../../plugins/prisma';
 import { OurRegions } from '../../types/players';
 import { timeAgo } from '../../core/utils';
 import { sendToAnalytics } from '../../core/analytics';
-import { getRankGroup, Rank } from '../../core/ranks';
+import { getRankFromLP, getRankGroup, Rank } from '../../core/ranks';
 
 interface PlayerProps {
   page: number;
@@ -32,6 +32,14 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
     const perPage = 100;
     page = Number(page) || 1;
     region = region || 'Global';
+    let rankQuery;
+
+    // Rank is queried
+    if (rank) {
+      if (/^\d+$/.test(rank)) { rankQuery = getRankFromLP(Number(rank)).rankObject.name }   // Rank is digits (rating)
+      else { rankQuery = rank }                                                             // Rank is not digits (rank name)
+    }
+    
 
     const validSortings = ['rank', 'rating', 'wins', 'losses', 'winrate'] as const;
     const sortKey = validSortings.includes(sort) ? sort : 'rank';
@@ -53,7 +61,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       region,
       ...(character && { topCharacter: character }),
       ...(role && { topRole: role }),
-      ...(rank && { rankName: rank }),
+      ...(rank && { rankName: rankQuery }),
     };
 
     const skip = (page - 1) * perPage;
@@ -86,7 +94,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       sortKey,
       sortDirection,
       region,
-      rankFilter: rank,
+      rankFilter: rankQuery,
       data: strippedData,
     });
   });
