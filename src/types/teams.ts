@@ -13,6 +13,8 @@ export type Team = {
   teamName: string;
   logo: string;
   players?: TeamPlayers[];
+  series: string;
+  season: string; // Not game season, series season. e.g. "EUSL S1"
 }
 
 export type TeamPlayers = {

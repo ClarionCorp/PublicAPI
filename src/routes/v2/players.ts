@@ -3,8 +3,9 @@ import { appLogger } from '../../plugins/logger';
 import { FastifyPluginAsync } from 'fastify';
 import { searchByID } from '../../core/players/idSearch';
 import { usernameSearch } from '../../core/players/userSearch';
+import { regions } from '../../types/players';
 
-const ensureLogger = appLogger('PlayerRoute')
+const ensureLogger = appLogger('PlayerRoute/v2')
 
 // Users must have a valid JWT to use this endpoint.
 // I hate doing this but we cannot gamble someone abusing it.
@@ -14,7 +15,6 @@ const players: FastifyPluginAsync = async (fastify) => {
     const { input } = req.params as { input: string };
     let { region, cached } = req.query as { region?: string; cached?: boolean };
     const inType = getTypeOfInput(input);
-    const regions = ['Global', 'NorthAmerica', 'Europe', 'SouthAmerica', 'Asia', 'Oceania', 'JapaneseLanguageText'];
 
     if (region && (!regions.includes(region))) { region = 'Global' };
 

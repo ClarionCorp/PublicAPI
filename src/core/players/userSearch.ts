@@ -2,16 +2,14 @@ import { checkDiscord, checkUpdatePlayer, createPlayer, fixMismatch, usernameCha
 import { handleCorestrike } from '../../core/players/ghostPlayers';
 import { fetchCachedPlayer, shouldUpdateUser, UpdateRequirements } from '../../core/players/misc';
 import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
-import { getTypeOfInput } from '../../core/utils';
 import { PROMETHEUS } from '../../types/prometheus';
 import { appLogger } from '../../plugins/logger';
-import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyRequest } from 'fastify';
 import { Gamemode } from '../../../prisma/client';
 import { prisma } from '../../plugins/prisma';
 import { sendToAnalytics } from '../../core/analytics';
-import { searchByID } from '../../core/players/idSearch';
 import dayjs from 'dayjs';
-import { PlayerMasteryObjectType, PlayerObjectType } from '@/types/players';
+import { PlayerMasteryObjectType } from '@/types/players';
 
 const ensureLogger = appLogger('UserSearch')
 
@@ -133,9 +131,13 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
       };
 
       const newPlayer = await fetchCachedPlayer(odysseyPlayer.username);
+      const mastery = await fillPlayerMastery(odysseyPlayer.playerId);
 
       return {
-        data: newPlayer,
+        data: {
+          ...newPlayer,
+          mastery
+        },
         status: 201,
         ok: true
       };

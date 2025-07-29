@@ -2,6 +2,7 @@ import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
 import { PROMETHEUS } from '../../types/prometheus';
 import { PlayerObjectType } from '../../types/players';
+import { Team } from '../../types/teams';
 
 const miscLogger = appLogger('Players/Misc')
 
@@ -58,13 +59,13 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
         },
         teams: {
           select: {
-            series: true,
-            season: true,
             team: {
               select: {
                 teamName: true,
                 teamTag: true,
-                logo: true
+                logo: true,
+                series: true,
+                season: true
               }
             }
           }
@@ -72,7 +73,18 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
       },
     })
 
-    return cachedPlayer;
+    const teams: Team[] = cachedPlayer?.teams.map(tp => ({
+      teamName: tp.team.teamName,
+      teamTag: tp.team.teamTag,
+      series: tp.team.series,
+      season: tp.team.season,
+      logo: tp.team.logo,
+    }));
+
+    return {
+      ...cachedPlayer,
+      teams
+    };
 
   } catch (e) {
     miscLogger.error(`Error while fetching CACHED PLAYER: `, e);

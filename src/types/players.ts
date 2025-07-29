@@ -10,6 +10,8 @@ export type OurRegions =
   | 'Oceania'
   | 'JapaneseLanguageText'
 
+export const regions = ['Global', 'NorthAmerica', 'Europe', 'SouthAmerica', 'Asia', 'Oceania', 'JapaneseLanguageText'];
+
 export type PlayerMasteryObjectType = {
   createdAt: string
   playerId: string
@@ -51,7 +53,7 @@ export type PlayerObjectType = {
   tags?: string[]
   characterMastery?: PlayerCharacterMasteryObjectType
   playerStatus: string
-  teams?: TeamPlayers[];
+  teams?: Team[];
   socialUrl?: string | null
   discordId?: string | null
   currentXp?: number
@@ -159,4 +161,46 @@ export type PlayerCharacterRatingInputType = {
   scores: number
   wins: number
   gamemode: string
+}
+
+
+export type CorestrikePlayer = {
+  rankedStats: {
+    username: string,
+    rating: number,
+    rating_display: string,
+    rank: number,
+    role: 'Forward' | 'Goalie' | 'Flex',
+    wins: number,
+    losses: number,
+    winpercent: string,
+    toppercent: string,
+    is_ranked: boolean,
+    masteryLevel: number,
+    playerStatus: string,
+    lp_history: [number, number][];
+
+  },
+  characterStats: {
+    forwards: CorestrikeStat[],
+    goalies: CorestrikeStat[]
+  },
+  overallStats: {
+    forwards: CorestrikeStat,
+    goalies: CorestrikeStat
+  },
+  teams: Team[],
+  lastUpdated: Date
+}
+
+type CorestrikeStat = {
+  name: string,
+  display_name: string,
+  wins: number,
+  losses: number,
+  assists: number,
+  mvp: number,
+  knockouts: number,
+  scores: number,
+  saves: number,
 }
