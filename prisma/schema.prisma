@@ -100,7 +100,7 @@ model Analytics {
 model Player {
   id                                        String                                  @unique
   username                                  String                                  @unique
-  region                                    String
+  region                                    String?
   logoId                                    String?
   nameplateId                               String?
   emoticonId                                String?
@@ -121,7 +121,8 @@ model PlayerRating {
   id                                        Int                                     @id @default(autoincrement())
   playerId                                  String
   rating                                    Int                                     @default(0)
-  rank                                      Int                                     @default(10001)
+  rank                                      Int                                     @default(10001) // Can't rename w/o data loss, but this is global rank.
+  regionRanking                             Int                                     @default(10001) // e.g. NorthAmerica, Europe, Japan
   wins                                      Int                                     @default(0)
   losses                                    Int                                     @default(0)
   masteryLevel                              Int                                     @default(0)

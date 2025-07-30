@@ -64,13 +64,20 @@ export async function checkUpdatePlayer(data: PassiveUpdate) {
   // Check if Player's Rating changed, OR if their rank changed.
   if (ensuredRegion?.player.rating != mostRecentRating || ensuredRegion?.player.rank != cachedPlayer.ratings![0].rank) {
     // Update the most recent rating point with the new rank if rating stayed the same.
+
+    // Fetch Global Ranking
+    let globalRank = 10001;
+    const pFetch = await prometheusService.ranked.leaderboard.search(data.cachedPlayer.id, 0, 0, 'Global');
+    globalRank = pFetch.players[0].rank;
+
     if (cachedPlayer.ratings && ensuredRegion?.player.rating == mostRecentRating && ensuredRegion?.player.rank != cachedPlayer.ratings[0].rank) {
       await prisma.playerRating.update({
         where: {
           id: cachedPlayer.ratings[0].id,
         },
         data: {
-          rank: ensuredRegion?.player.rank || 10001,
+          rank: globalRank,
+          regionRanking: ensuredRegion?.player.rank || 10001,
           masteryLevel: data.mastery.currentLevel || 0,
         },
       });
@@ -79,28 +86,29 @@ export async function checkUpdatePlayer(data: PassiveUpdate) {
     } else {
       // Create a new rating point if the rating has changed OR both rank AND rating have changed
       await prisma.playerRating.create({
-      data: {
-        player: {
-        connect: {
-          id: cachedPlayer.id,
+        data: {
+          player: {
+            connect: {
+              id: cachedPlayer.id,
+            },
+          },
+            games: ensuredRegion?.player.games || 0,
+            losses: ensuredRegion?.player.losses || 0,
+            rank: globalRank,
+            regionRanking: ensuredRegion?.player.rank || 10001,
+            rating: ensuredRegion?.player.rating || 0,
+            wins: ensuredRegion?.player.wins || 0,
+            masteryLevel: data.mastery.currentLevel || 0,
         },
-        },
-        games: ensuredRegion?.player.games || 0,
-        losses: ensuredRegion?.player.losses || 0,
-        rank: ensuredRegion?.player.rank || 10001,
-        rating: ensuredRegion?.player.rating || 0,
-        wins: ensuredRegion?.player.wins || 0,
-        masteryLevel: data.mastery.currentLevel || 0,
-      },
       });
     
       if (ensuredRegion?.player.rating) {
       await prisma.ratingHistory.create({
         data: {
-        playerId: cachedPlayer.id,
-        username: ensuredRegion.player.username,
-        rating: ensuredRegion?.player.rating,
-        timestamp: new Date(),
+          playerId: cachedPlayer.id,
+          username: ensuredRegion.player.username,
+          rating: ensuredRegion?.player.rating,
+          timestamp: new Date(),
         },
       });
       playerLogger.info(`Rating or Rank has changed, saving data for (${cachedPlayer.username})`);
@@ -217,6 +225,13 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
 
   dbLogger.info(`Creating New Player: '${odysseyPlayer.username}'.`)
 
+  // Fetch Global Ranking
+  let globalRank = 10001;
+  if (data.ensuredRegion.region !== 'Global') {
+    const pFetch = await prometheusService.ranked.leaderboard.search(data.odysseyPlayer.playerId, 0, 0, 'Global');
+    globalRank = pFetch.players[0].rank;
+  }
+
   try {
     const createdPlayer = await prisma.player.create({
       data: {
@@ -287,7 +302,8 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
                 )
                 .reduce((a, b) => a + b, 0) ||
               0,
-            rank: data.ensuredRegion?.player.rank || 10_001,
+            rank: globalRank,
+            regionRanking: data.ensuredRegion?.player.rank || 10_001,
             rating: data.ensuredRegion?.player.rating,
             wins:
               data.ensuredRegion?.player.wins ||

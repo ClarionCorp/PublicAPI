@@ -45,18 +45,6 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
     const cachedPlayer = await prisma.player.findFirst({
       where: username ? { username: { equals: username, mode: 'insensitive' } } : { id: userId },
       include: {
-        characterRatings: {
-          take: 300,
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        ratings: {
-          take: 1000, // Defaults to 1000 if not set.
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
         teams: {
           select: {
             team: {
@@ -69,9 +57,23 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
               }
             }
           }
+        },
+        ratings: {
+          take: 1000, // Defaults to 1000 if not set.
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+        characterRatings: {
+          take: 300,
+          orderBy: {
+            createdAt: 'desc',
+          },
         }
       },
     })
+
+    if (!cachedPlayer) { return null }
 
     const teams: Team[] = cachedPlayer?.teams.map(tp => ({
       teamName: tp.team.teamName,

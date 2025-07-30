@@ -52,7 +52,6 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   } else { 
     ensureLogger.warn(`Failed to find cached data for: '${decodedUser}'. Continuing...`);
   }
-
   
 
   // Automatically swaps protocols if the username is 1 character long.
@@ -69,23 +68,31 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   }
 
   // Will probably just leave this here tbh.
-  let ensuredRegion =
-    await prometheusService.ranked.leaderboard.ensureRegion(
-      odysseyPlayer.playerId,
-      region || (cachedPlayer?.region as PROMETHEUS.RAW.Regions) || undefined,
-    )
+  let ensuredRegion = await prometheusService.ranked.leaderboard.ensureRegion(
+    odysseyPlayer.playerId,
+    region || (cachedPlayer?.region === "Global" ? undefined : cachedPlayer?.region as PROMETHEUS.RAW.Regions) || undefined,
+  );
   if (ensuredRegion) {
     if (ensuredRegion?.region == undefined) {
       ensuredRegion.region = 'Global';
       ensureLogger.warn(`Could not find (${decodeURI(name)})'s region. Using ${ensuredRegion?.region} instead.`);
     } else {
       ensureLogger.info(`Found ${decodeURI(name)}'s region: ${ensuredRegion?.region}`);
+
+      if (cachedPlayer && cachedPlayer.region == 'Global' || cachedPlayer.region == null) {
+        ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
+        await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region } });
+        cachedPlayer = { // Update already-fetched cachedPlayer
+          ...cachedPlayer,
+          region: ensuredRegion.region
+        }
+      }
     }
   } else {
     ensureLogger.error(`Failed to find a valid region for (${decodeURI(name)}). Do they even play ranked?`);
   }
   
-  // Weird casing to be specific to uptime server.
+  // Weird casing to be specific for the uptime server.
   if (name !== 'SoveReigN') await sendToAnalytics('V2_PLAYERS', req.ip, req.user!.id, `${odysseyPlayer.username}`);
 
   // (Player and Character Stats)

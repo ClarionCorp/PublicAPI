@@ -97,6 +97,7 @@ export type PlayerRatingObjectType = {
   masteryLevel: number
   games: number
   rank: number
+  regionRanking: number
   wins: number
   losses: number
   createdAt?: Date

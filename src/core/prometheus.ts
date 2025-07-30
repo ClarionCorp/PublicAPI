@@ -172,46 +172,40 @@ export class PrometheusService {
       },
 
       ensureRegion: async (playerId: string, specificRegion?: string) => {
-        this.log.info('Ensuring region...')
-        for (const region of [
-          ...(specificRegion === 'Global' || !specificRegion
-            ? [
-                'Global',
+        this.log.info('Ensuring region...');
+      
+        const regionList =
+          specificRegion === 'Global'
+            ? ['Global']
+            : [
+                specificRegion, // will be undefined if not passed
                 'NorthAmerica',
                 'SouthAmerica',
                 'Europe',
                 'Asia',
                 'Oceania',
                 'JapaneseLanguageText',
-                undefined,
-              ]
-            : [specificRegion]),
-        ]) {
-          if (!region) {
-            return
-          }
+                'Global', // fallback last
+              ].filter(Boolean); // removes undefined entries
+      
+        for (const region of regionList) {
           try {
-            this.log.debug(`Checking ${region}...`)
+            this.log.debug(`Checking ${region}...`);
             const { players } = await this.ranked.leaderboard.search(
               playerId,
               0,
               0,
               region === 'Global' ? undefined : region,
-            )
-            // If you are below 100 in global, you are most likely wanting to see your regional first.
-            if (region === 'Global' && players[0].rank > 100) {
-              // this.log.warn('Not what the user expects')
-              continue
-            }
-
+            );
+      
             if (players.length > 0) {
-              return { player: players[0], region: region }
+              return { player: players[0], region };
             }
           } catch {
-            continue
+            continue;
           }
         }
-      },
+      }
     },
   }
 
