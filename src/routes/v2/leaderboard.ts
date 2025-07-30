@@ -79,9 +79,28 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       prisma.leaderboard.count({ where }),
     ]);
 
+    const userIds = data.map(entry => entry.playerId);
+
+    const matches = await prisma.esportsPlayers.findMany({
+      where: {
+        userId: { in: userIds }
+      },
+      select: {
+        userId: true,
+        linkedId: true,
+        team: true,
+      }
+    });
+
     const totalPages = Math.ceil(totalItems / perPage);
     const lastUpdated = data[0]?.createdAt ? timeAgo(new Date(data[0].createdAt)) : null;
-    const strippedData = data.map(({ createdAt, ...rest }) => rest);
+    const strippedData = data.map(({ createdAt, ...rest }) => {
+      const matched = matches.filter(m => m.userId === rest.playerId);
+      return {
+        ...rest,
+        teams: matched.map(m => m.team)
+      };
+    });
 
     await sendToAnalytics('V2_PLAYER_LEADERBOARD', req.ip, undefined, region);
 

@@ -235,6 +235,8 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
     globalRank = pFetch.players[0].rank;
   }
 
+  const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+
   try {
     const createdPlayer = await prisma.player.create({
       data: {
@@ -244,7 +246,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
         emoticonId: odysseyPlayer.emoticonId,
         logoId: odysseyPlayer.logoId,
         titleId: odysseyPlayer.titleId,
-        title: (await getTitleFromID(odysseyPlayer.titleId)).en,
+        title: getTitle ? getTitle.en : null,
         nameplateId: odysseyPlayer.nameplateId,
         socialUrl: odysseyPlayer.socialUrl,
         discordId: odysseyPlayer.platformIds?.discord?.discordId,

@@ -63,6 +63,30 @@ const teams: FastifyPluginAsync = async (fastify) => {
     }));
     return reply.status(200).send(result);
   });
+
+  fastify.post('/players', async (req, reply) => {
+    const body = req.body as {
+      userIds?: string[];
+    };
+
+    const { userIds } = body;
+
+    if (!userIds || userIds.length === 0) { return reply.status(400).send({ error: 'You must provide userIds to search for' }); }
+
+    const matches = await prisma.esportsPlayers.findMany({
+      where: {
+        userId: { in: userIds }
+      },
+      select: {
+        userId: true,
+        linkedId: true,
+        team: true,
+        player: { select: { username: true } }
+      }
+    });
+    
+    return reply.status(200).send(matches);
+  });
 };
 
 export default teams;

@@ -68,31 +68,37 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     };
   }
 
-  // Will probably just leave this here tbh.
-  let ensuredRegion = await prometheusService.ranked.leaderboard.ensureRegion(
-    odysseyPlayer.playerId,
-    region || (cachedPlayer?.region === "Global" ? undefined : cachedPlayer?.region as PROMETHEUS.RAW.Regions) || undefined,
-  );
-  if (ensuredRegion) {
-    if (ensuredRegion?.region == undefined) {
-      ensuredRegion.region = 'Global';
-      ensureLogger.warn(`Could not find (${decodeURI(name)})'s region. Using ${ensuredRegion?.region} instead.`);
-    } else {
-      ensureLogger.info(`Found ${decodeURI(name)}'s region: ${ensuredRegion?.region}`);
+  let ensuredRegion;
 
-      if (cachedPlayer && cachedPlayer.region == 'Global' || cachedPlayer.region == null) {
-        ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
-        const resolveTitle = (await getTitleFromID(cachedPlayer.titleId)).en;
-        await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region, title: resolveTitle } });
-        cachedPlayer = { // Update already-fetched cachedPlayer
-          ...cachedPlayer,
-          region: ensuredRegion.region,
-          title: resolveTitle // Updating this too just for first few waves of update
+  try {
+    // Will probably just leave this here tbh.
+    ensuredRegion = await prometheusService.ranked.leaderboard.ensureRegion(
+      odysseyPlayer.playerId,
+      region || (cachedPlayer?.region === "Global" ? undefined : cachedPlayer?.region as PROMETHEUS.RAW.Regions) || undefined,
+    );
+    if (ensuredRegion) {
+      if (ensuredRegion?.region == undefined) {
+        ensuredRegion.region = 'Global';
+        ensureLogger.warn(`Could not find (${decodeURI(name)})'s region. Using ${ensuredRegion?.region} instead.`);
+      } else {
+        ensureLogger.info(`Found ${decodeURI(name)}'s region: ${ensuredRegion?.region}`);
+
+        if (cachedPlayer && (cachedPlayer.region == 'Global' || cachedPlayer.region == null)) {
+          ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
+          const resolveTitle = (await getTitleFromID(cachedPlayer.titleId)).en;
+          await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region, title: resolveTitle } });
+          cachedPlayer = { // Update already-fetched cachedPlayer
+            ...cachedPlayer,
+            region: ensuredRegion.region,
+            title: resolveTitle // Updating this too just for first few waves of update
+          }
         }
       }
+    } else {
+      ensureLogger.error(`Failed to find a valid region for (${decodeURI(name)}). Do they even play ranked?`);
     }
-  } else {
-    ensureLogger.error(`Failed to find a valid region for (${decodeURI(name)}). Do they even play ranked?`);
+  } catch (error) {
+    ensureLogger.error(`Something went wrong while ENSURING PLAYER REGION: `, error);
   }
   
   // Weird casing to be specific for the uptime server.
@@ -248,6 +254,8 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     
   // namehistory function
 
+  const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+
   const basicUpdate = await prisma.player.update({
     where: {
       id: cachedPlayer.id,
@@ -257,7 +265,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
       emoticonId: odysseyPlayer.emoticonId,
       logoId: odysseyPlayer.logoId,
       titleId: odysseyPlayer.titleId,
-      title: (await getTitleFromID(odysseyPlayer.titleId)).en,
+      title: getTitle ? getTitle.en : null,
       nameplateId: odysseyPlayer.nameplateId,
       socialUrl: odysseyPlayer.socialUrl,
       tags: odysseyPlayer.tags,
@@ -361,6 +369,8 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
         });
       }
     
+      const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+
       await prisma.player.update({
         data: {
           tags: odysseyPlayer.tags,
@@ -371,7 +381,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
           logoId: odysseyPlayer.logoId,
           region: ensuredRegion?.region || 'Global',
           titleId: odysseyPlayer.titleId,
-          title: (await getTitleFromID(odysseyPlayer.titleId)).en,
+          title: getTitle ? getTitle.en : null,
           updatedAt: dayjs().toISOString(),
         },
         where: {
