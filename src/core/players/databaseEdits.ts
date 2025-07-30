@@ -227,7 +227,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
 
   // Fetch Global Ranking
   let globalRank = 10001;
-  if (data.ensuredRegion.region !== 'Global') {
+  if (data.ensuredRegion && data.ensuredRegion.region !== 'Global') {
     const pFetch = await prometheusService.ranked.leaderboard.search(data.odysseyPlayer.playerId, 0, 0, 'Global');
     globalRank = pFetch.players[0].rank;
   }

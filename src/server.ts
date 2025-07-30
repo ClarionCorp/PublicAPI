@@ -13,6 +13,7 @@ import fastifyJWT from '@fastify/jwt';
 import { updateTeams } from './core/cronjobs/teams';
 import { updateTwitch } from './core/cronjobs/twitch';
 import cors from '@fastify/cors'
+import v1Routes from './routes/v1';
 
 const fastify = Fastify({
   logger: {
@@ -79,6 +80,7 @@ const start = async () => {
     await fastify.register(prometheusPlugin);
     await fastify.register(teamsPlugin);
 
+    await fastify.register(v1Routes, { prefix: '/v1' });
     await fastify.register(v2Routes, { prefix: '/v2' });
 
     // Health check route
