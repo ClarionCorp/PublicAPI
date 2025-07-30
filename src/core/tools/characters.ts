@@ -1,8 +1,6 @@
 import { CharacterObject } from "@/types/tools";
 import { prisma } from "../../plugins/prisma";
 
-
-
 export async function resolveCharacterID(id: string): Promise<CharacterObject | null> {
   try {
     const fetched = await prisma.strikers.findFirst({ where: { id } });

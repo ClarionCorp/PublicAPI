@@ -244,7 +244,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
         emoticonId: odysseyPlayer.emoticonId,
         logoId: odysseyPlayer.logoId,
         titleId: odysseyPlayer.titleId,
-        title: getTitleFromID(odysseyPlayer.titleId) ?? null,
+        title: (await getTitleFromID(odysseyPlayer.titleId)).en,
         nameplateId: odysseyPlayer.nameplateId,
         socialUrl: odysseyPlayer.socialUrl,
         discordId: odysseyPlayer.platformIds?.discord?.discordId,

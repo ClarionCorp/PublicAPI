@@ -82,7 +82,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
       if (cachedPlayer && cachedPlayer.region == 'Global' || cachedPlayer.region == null) {
         ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
-        const resolveTitle = getTitleFromID(cachedPlayer.titleId);
+        const resolveTitle = (await getTitleFromID(cachedPlayer.titleId)).en;
         await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region, title: resolveTitle } });
         cachedPlayer = { // Update already-fetched cachedPlayer
           ...cachedPlayer,
@@ -257,7 +257,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
       emoticonId: odysseyPlayer.emoticonId,
       logoId: odysseyPlayer.logoId,
       titleId: odysseyPlayer.titleId,
-      title: getTitleFromID(odysseyPlayer.titleId) ?? null,
+      title: (await getTitleFromID(odysseyPlayer.titleId)).en,
       nameplateId: odysseyPlayer.nameplateId,
       socialUrl: odysseyPlayer.socialUrl,
       tags: odysseyPlayer.tags,
@@ -371,7 +371,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
           logoId: odysseyPlayer.logoId,
           region: ensuredRegion?.region || 'Global',
           titleId: odysseyPlayer.titleId,
-          title: getTitleFromID(odysseyPlayer.titleId) ?? null, // just tryna be safe idk lol im tired leave me alone
+          title: (await getTitleFromID(odysseyPlayer.titleId)).en,
           updatedAt: dayjs().toISOString(),
         },
         where: {

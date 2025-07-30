@@ -342,6 +342,13 @@ model Awakenings {
   rotatedIn                                 DateTime                                @default(now())
 }
 
+model Titles {
+  id                                        String                                  @id @unique
+  en                                        String
+  jp                                        String?                                 // Example future language translations
+  unlockMethod                              String?                                 // Future tooltips
+}
+
 model Strikers {
   id                                        String                                  @id @unique
   name                                      String
