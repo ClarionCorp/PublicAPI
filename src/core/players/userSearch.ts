@@ -10,6 +10,7 @@ import { prisma } from '../../plugins/prisma';
 import { sendToAnalytics } from '../../core/analytics';
 import dayjs from 'dayjs';
 import { PlayerMasteryObjectType } from '@/types/players';
+import { getTitleFromID } from '../tools/titles';
 
 const ensureLogger = appLogger('UserSearch')
 
@@ -81,10 +82,12 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
       if (cachedPlayer && cachedPlayer.region == 'Global' || cachedPlayer.region == null) {
         ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
-        await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region } });
+        const resolveTitle = getTitleFromID(cachedPlayer.titleId);
+        await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region, title: resolveTitle } });
         cachedPlayer = { // Update already-fetched cachedPlayer
           ...cachedPlayer,
-          region: ensuredRegion.region
+          region: ensuredRegion.region,
+          title: resolveTitle // Updating this too just for first few waves of update
         }
       }
     }
@@ -254,6 +257,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
       emoticonId: odysseyPlayer.emoticonId,
       logoId: odysseyPlayer.logoId,
       titleId: odysseyPlayer.titleId,
+      title: getTitleFromID(odysseyPlayer.titleId) ?? null,
       nameplateId: odysseyPlayer.nameplateId,
       socialUrl: odysseyPlayer.socialUrl,
       tags: odysseyPlayer.tags,
@@ -367,6 +371,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
           logoId: odysseyPlayer.logoId,
           region: ensuredRegion?.region || 'Global',
           titleId: odysseyPlayer.titleId,
+          title: getTitleFromID(odysseyPlayer.titleId) ?? null, // just tryna be safe idk lol im tired leave me alone
           updatedAt: dayjs().toISOString(),
         },
         where: {

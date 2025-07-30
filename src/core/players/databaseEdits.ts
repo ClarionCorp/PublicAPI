@@ -4,6 +4,7 @@ import { PlayerObjectType } from '../../types/players';
 import { PROMETHEUS } from '../../types/prometheus';
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
+import { getTitleFromID } from '../tools/titles';
 
 const dbLogger = appLogger('Players/Database')
 const playerLogger = appLogger('PlayerLogger')
@@ -67,8 +68,10 @@ export async function checkUpdatePlayer(data: PassiveUpdate) {
 
     // Fetch Global Ranking
     let globalRank = 10001;
-    const pFetch = await prometheusService.ranked.leaderboard.search(data.cachedPlayer.id, 0, 0, 'Global');
-    globalRank = pFetch.players[0].rank;
+    if (data.ensuredRegion && data.ensuredRegion.region !== 'Global') {
+      const pFetch = await prometheusService.ranked.leaderboard.search(data.cachedPlayer.id, 0, 0, 'Global');
+      globalRank = pFetch.players[0].rank;
+    }
 
     if (cachedPlayer.ratings && ensuredRegion?.player.rating == mostRecentRating && ensuredRegion?.player.rank != cachedPlayer.ratings[0].rank) {
       await prisma.playerRating.update({
@@ -241,6 +244,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
         emoticonId: odysseyPlayer.emoticonId,
         logoId: odysseyPlayer.logoId,
         titleId: odysseyPlayer.titleId,
+        title: getTitleFromID(odysseyPlayer.titleId) ?? null,
         nameplateId: odysseyPlayer.nameplateId,
         socialUrl: odysseyPlayer.socialUrl,
         discordId: odysseyPlayer.platformIds?.discord?.discordId,

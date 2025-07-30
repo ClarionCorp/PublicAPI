@@ -46,6 +46,7 @@ export type PlayerObjectType = {
   nameplateId?: string | null
   emoticonId?: string | null
   titleId?: string | null
+  title?: string | null
   createdAt?: Date | null
   updatedAt?: Date | null
   region: string

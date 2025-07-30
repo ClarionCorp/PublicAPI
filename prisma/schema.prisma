@@ -105,6 +105,7 @@ model Player {
   nameplateId                               String?
   emoticonId                                String?
   titleId                                   String?
+  title                                     String?
   socialUrl                                 String?
   discordId                                 String?
   createdAt                                 DateTime?                               @default(now())
