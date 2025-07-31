@@ -58,6 +58,7 @@ export type PilotDataType = {
 export type RankDataType = {
   rank: number;
   rating: number;
+  regionRanking: number;
   region: string;
   wins: number;
   losses: number;
