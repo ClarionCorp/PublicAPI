@@ -75,13 +75,13 @@ async function fetchTeamsFromSeason(tab: string) {
       // Create the team
       await prisma.esportsTeams.upsert({
         where: { teamName_series_season: { teamName: team.name, series, season } },
-        update: { teamTag: team.tag, logo: `${process.env.CDN_BASE_URL ?? 'https://cdn.clarioncorp.net'}/teams/${series}/${season}/${team.tag}.webp` }, // Always use latest icon for now
+        update: { teamTag: team.tag, logo: `${process.env.CDN_BASE_URL ?? 'https://clarioncorp.net'}/teams/${team.tag}.webp` }, // Always use latest icon for now
         create: {
           teamTag: team.tag,
           teamName: team.name,
           series,
           season,
-          logo: `${process.env.CDN_BASE_URL ?? 'https://cdn.clarioncorp.net'}/teams/${series}/${season}/${team.tag}.webp`
+          logo: `${process.env.CDN_BASE_URL ?? 'https://clarioncorp.net'}/teams/${team.tag}.webp`
         }
       });
 

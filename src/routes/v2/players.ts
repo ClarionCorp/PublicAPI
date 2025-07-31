@@ -18,14 +18,19 @@ const players: FastifyPluginAsync = async (fastify) => {
 
     if (region && (!regions.includes(region))) { region = 'Global' };
 
-    if (inType == 'id') {
-      ensureLogger.info(`User is searching with ID, passing off to ID-Search...`);
-      const response = await searchByID(input, req, region, cached);
-      return reply.status(response.status).send(response.ok ? response.data : { error: response.message });
-    } else {
-      const response = await usernameSearch(input, req, region, cached);
-
-      return reply.status(response.status).send(response.ok ? response.data : { error: response.message });
+    try {
+      if (inType == 'id') {
+        ensureLogger.info(`User is searching with ID, passing off to ID-Search...`);
+        const response = await searchByID(input, req, region, cached);
+        return reply.status(response.status).send(response.ok ? response.data : { error: response.message });
+      } else {
+        const response = await usernameSearch(input, req, region, cached);
+  
+        return reply.status(response.status).send(response.ok ? response.data : { error: response.message });
+      }
+    } catch (error) {
+      // ensureLogger.error(`Error while FETCHING PLAYER: `, error);
+      return reply.status(500).send({ error });
     }
   });
 

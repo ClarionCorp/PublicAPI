@@ -85,7 +85,8 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
         if (cachedPlayer && (cachedPlayer.region == 'Global' || cachedPlayer.region == null)) {
           ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
-          const resolveTitle = (await getTitleFromID(cachedPlayer.titleId)).en;
+          const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+          const resolveTitle = getTitle ? getTitle.en : null;
           await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region, title: resolveTitle } });
           cachedPlayer = { // Update already-fetched cachedPlayer
             ...cachedPlayer,
@@ -277,6 +278,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   // advanced stats (beginning)
   // Only runs if it needs to update.
   if (!ignoreUpdates) {
+    ensureLogger.verbose(`Obtaining Advanced Stats for '${decodedUser}'...`);
     const playerStats = await prometheusService.stats.player(odysseyPlayer.playerId)
     ensureLogger.debug(`Obtained Advanced Stats for '${decodedUser}'`);
     

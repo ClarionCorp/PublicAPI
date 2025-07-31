@@ -116,7 +116,7 @@ export type PlayerCharacterRatingObjectType = {
   playerId: string
   // player: PlayerObjectType
   character: string
-  role: Role
+  role: string
   games: number
   assists: number
   knockouts: number

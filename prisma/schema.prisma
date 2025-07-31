@@ -139,7 +139,7 @@ model PlayerCharacterRating {
   id                                        Int                                     @id @default(autoincrement())
   playerId                                  String
   character                                 String
-  role                                      Role
+  role                                      String
   games                                     Int
   assists                                   Int
   knockouts                                 Int

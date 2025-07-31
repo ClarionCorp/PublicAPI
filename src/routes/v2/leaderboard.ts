@@ -94,6 +94,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
 
     const totalPages = Math.ceil(totalItems / perPage);
     const lastUpdated = data[0]?.createdAt ? timeAgo(new Date(data[0].createdAt)) : null;
+    const nextUpdate = new Date(data[0]?.createdAt.getTime() + 6 * 60 * 60 * 1000);
     const strippedData = data.map(({ createdAt, ...rest }) => {
       const matched = matches.filter(m => m.userId === rest.playerId);
       return {
@@ -101,6 +102,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
         teams: matched.map(m => m.team)
       };
     });
+
 
     await sendToAnalytics('V2_PLAYER_LEADERBOARD', req.ip, undefined, region);
 
@@ -110,6 +112,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       totalItems,
       totalPages,
       lastUpdated,
+      nextUpdate,
       sortKey,
       sortDirection,
       region,

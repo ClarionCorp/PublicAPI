@@ -62,16 +62,23 @@ export async function checkUpdatePlayer(data: PassiveUpdate) {
   const ensuredRegion = data.ensuredRegion;
   const mostRecentRating = cachedPlayer.ratings!.length > 0 ? cachedPlayer.ratings![0].rating : null;
 
+  playerLogger.debug(`Checking if player needs a full update...`);
+
   // Check if Player's Rating changed, OR if their rank changed.
   if (ensuredRegion?.player.rating != mostRecentRating || ensuredRegion?.player.rank != cachedPlayer.ratings![0].rank) {
     // Update the most recent rating point with the new rank if rating stayed the same.
 
     // Fetch Global Ranking
     let globalRank = 10001;
-    if (data.ensuredRegion && data.ensuredRegion.region !== 'Global') {
-      const pFetch = await prometheusService.ranked.leaderboard.search(data.cachedPlayer.id, 0, 0, 'Global');
-      globalRank = pFetch.players[0].rank;
+    try {
+      if (data.ensuredRegion && data.ensuredRegion.region !== 'Global') {
+        const pFetch = await prometheusService.ranked.leaderboard.search(data.cachedPlayer.id, 0, 0, 'Global');
+        if (pFetch) { globalRank = pFetch.players[0].rank };
+      }
+    } catch (e) {
+      playerLogger.error(`Failed to search Global Leaderboard Rank! Are they in the top 10K..?`);
     }
+    
 
     if (cachedPlayer.ratings && ensuredRegion?.player.rating == mostRecentRating && ensuredRegion?.player.rank != cachedPlayer.ratings[0].rank) {
       await prisma.playerRating.update({
