@@ -41,7 +41,7 @@ const tools: FastifyPluginAsync = async (fastify) => {
       const usernameVerify = await fetchOdyPlayer(username);
 
       if (!usernameVerify) {
-        return reply.status(404);
+        return reply.status(404).send({ error: 'Player not found' });
       }
 
       return reply.status(200).send({ username: usernameVerify.username });
