@@ -22,8 +22,20 @@ interface CharProps {
   direction?: 'asc' | 'desc';
   region: OurRegions | 'All';
   gamemode?: 'Normal' | 'Ranked' | 'NormalInitial' | 'RankedInitial';
-  rank?: string | string[]
+  rank?: string;
 }
+
+const rankOrder = [
+  'Pro League',
+  'Omega',
+  'Challenger',
+  'Diamond',
+  'Platinum',
+  'Gold',
+  'Silver',
+  'Bronze',
+  'Rookie',
+];
 
 const leaderboard: FastifyPluginAsync = async (fastify) => {
   fastify.get('/players', async (req, reply) => {
@@ -125,7 +137,6 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
     let { sort, role, region, gamemode, direction, character, rank } = req.query as CharProps;
 
     region = region || 'Global';
-    gamemode = gamemode || 'Ranked';
     let rankList: string[] = [];
     const mode = gamemode;
 
@@ -140,8 +151,10 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       winrate: 'desc',
     };
 
-    if (gamemode === 'Normal') gamemode = 'NormalInitial';
-    else if (gamemode === 'Ranked') gamemode = 'RankedInitial';
+    if (gamemode) {
+      if (gamemode === 'Normal') gamemode = 'NormalInitial';
+      else if (gamemode === 'Ranked') gamemode = 'RankedInitial';
+    }
 
     const sortDirection =
       direction === 'asc' || direction === 'desc'
@@ -150,19 +163,17 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
 
     const where: any = {
       ...(region !== 'All' && { region }),
-      ...(character && { character }),
       ...(role && { role }),
       ...(gamemode && { gamemode }),
       ...(rank && { rankGroup: rank }),
+      character: character
+        ? { equals: character, not: 'None' }
+        : { not: 'None' },
     };
 
     if (rank) {
-      if (Array.isArray(rank)) {
-        rankList = rank.map(r => getRankGroup(r));
-      } else {
-        rankList = [getRankGroup(rank)];
-      }
-    
+      const rankSplit = rank.split(',').map(r => r.trim());
+      rankList = rankSplit.map(r => getRankGroup(r));
       where.rankGroup = { in: rankList };
     }
 
