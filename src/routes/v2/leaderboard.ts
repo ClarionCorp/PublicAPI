@@ -23,6 +23,7 @@ interface CharProps {
   region: OurRegions | 'All';
   gamemode?: 'Normal' | 'Ranked' | 'NormalInitial' | 'RankedInitial';
   rank?: string;
+  tumbleweeds?: string;
 }
 
 const rankOrder = [
@@ -134,11 +135,12 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.get('/characters', async (req, reply) => {
-    let { sort, role, region, gamemode, direction, character, rank } = req.query as CharProps;
+    let { sort, role, region, gamemode, direction, character, rank, tumbleweeds } = req.query as CharProps;
 
     region = region || 'Global';
     let rankList: string[] = [];
     const mode = gamemode;
+    const showTumbleweeds = tumbleweeds === undefined ? false : tumbleweeds.toLowerCase() === 'true';
 
     const validSortings = ['character', 'games', 'wins', 'losses', 'winrate'] as const;
     const sortKey = validSortings.includes(sort) ? sort : 'winrate';
@@ -169,6 +171,15 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       character: character
         ? { equals: character, not: 'None' }
         : { not: 'None' },
+      ...(showTumbleweeds === false && {
+        NOT: {
+          OR: [
+            { games: { lt: 10 } },
+            { wins: { lt: 10 } },
+            { losses: { lt: 10 } },
+          ],
+        },
+      }),
     };
 
     if (rank) {

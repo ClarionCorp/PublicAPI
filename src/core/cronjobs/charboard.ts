@@ -2,7 +2,7 @@ import { PROMETHEUS } from "@/types/prometheus";
 import { appLogger } from "../../plugins/logger";
 import { prisma } from '../../plugins/prisma';
 import { sleep } from "../utils";
-import { getRankFromLP, getRankGroup } from "../ranks";
+import { getRankGroup } from "../ranks";
 import { PlayerLeaderboardType } from "../../types/players";
 
 const leaderboardLogger = appLogger('CharacterLeaderboard');
