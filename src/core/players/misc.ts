@@ -170,16 +170,16 @@ export function calculatePlaystyle(characterRatings: PlayerCharacterRatingObject
   const playstyle: Playstyle = {
     forward: {
       // ((Category Mult * (Category Weight * Rating Mult)) * Player Stat) / 10
-      assists: { multiplier: Number((((1 * (0.65 * ratingMult)) * forward.assists) / 10).toFixed(3)), avgPerGame: Number((forward.assists / forward.games).toFixed(2)) },
-      knockouts: { multiplier: Number((((1 * (0.85 * ratingMult)) * forward.knockouts) / 10).toFixed(3)), avgPerGame: Number((forward.knockouts / forward.games).toFixed(2)) },
-      scores: { multiplier: Number((((1 * (0.75 * ratingMult)) * forward.scores) / 10).toFixed(3)), avgPerGame: Number((forward.scores / forward.games).toFixed(2)) },
+      assists: { multiplier: Number((((1 * (0.65 * (ratingMult + 0.1))) * forward.assists) / 10).toFixed(3)), avgPerGame: Number((forward.assists / forward.games).toFixed(2)) },
+      knockouts: { multiplier: Number((((1 * (0.80 * ratingMult)) * forward.knockouts) / 10).toFixed(3)), avgPerGame: Number((forward.knockouts / forward.games).toFixed(2)) },
+      scores: { multiplier: Number((((1 * (0.75 * (ratingMult + 0.1))) * forward.scores) / 10).toFixed(3)), avgPerGame: Number((forward.scores / forward.games).toFixed(2)) },
       saves: { multiplier: Number((((1 * (0.125 * ratingMult)) * forward.saves) / 10).toFixed(3)), avgPerGame: Number((forward.saves / forward.games).toFixed(2)) },
     },
     goalie: {
       assists: { multiplier: Number((((1 * (0.80 * ratingMult)) * goalie.assists) / 10).toFixed(3)), avgPerGame: Number((goalie.assists / goalie.games).toFixed(2)) },
-      knockouts: { multiplier: Number((((1 * (1.0 * ratingMult)) * goalie.knockouts) / 10).toFixed(3)), avgPerGame: Number((goalie.knockouts / goalie.games).toFixed(2)) },
-      scores: { multiplier: Number((((1 * (1.0 * ratingMult)) * goalie.scores) / 10).toFixed(3)), avgPerGame: Number((goalie.scores / goalie.games).toFixed(2)) },
-      saves: { multiplier: Number((((1 * (0.065 * ratingMult)) * goalie.saves) / 10).toFixed(3)), avgPerGame: Number((goalie.saves / goalie.games).toFixed(2)) },
+      knockouts: { multiplier: Number((((1 * (1.0 * (ratingMult - 0.1))) * goalie.knockouts) / 10).toFixed(3)), avgPerGame: Number((goalie.knockouts / goalie.games).toFixed(2)) },
+      scores: { multiplier: Number((((1 * (1.0 * (ratingMult + 0.1))) * goalie.scores) / 10).toFixed(3)), avgPerGame: Number((goalie.scores / goalie.games).toFixed(2)) },
+      saves: { multiplier: Number((((1 * (0.065 * (ratingMult - 0.1))) * goalie.saves) / 10).toFixed(3)), avgPerGame: Number((goalie.saves / goalie.games).toFixed(2)) },
     }
   }
 
