@@ -134,8 +134,28 @@ type Playstyle = {
 
 // 15 assists
 // 20.4 after calc
-export function calculatePlaystyle(forward: PlayerCharacterRatingObjectType, goalie: PlayerCharacterRatingObjectType, rating?: number): Playstyle {
+export function calculatePlaystyle(characterRatings: PlayerCharacterRatingObjectType[], rating?: number): Playstyle {
   
+  const sumStats = (entries: PlayerCharacterRatingObjectType[]) => {
+    return entries.reduce(
+      (acc, curr) => {
+        acc.assists += curr.assists;
+        acc.knockouts += curr.knockouts;
+        acc.scores += curr.scores;
+        acc.saves += curr.saves;
+        acc.games += curr.games;
+        return acc;
+      },
+      { assists: 0, knockouts: 0, scores: 0, saves: 0, games: 0 }
+    );
+  };
+
+  const forwardEntries = characterRatings.filter(r => r.role === 'Forward');
+  const goalieEntries = characterRatings.filter(r => r.role === 'Goalie');
+
+  const forward = sumStats(forwardEntries);
+  const goalie = sumStats(goalieEntries);
+
   // I got lazy and I'm bad at math.
   // Feel free to fix lol
   let ratingMult = 1;
@@ -145,19 +165,21 @@ export function calculatePlaystyle(forward: PlayerCharacterRatingObjectType, goa
   else if (rating >= 1700) ratingMult = 1.1      // Plat and Gold
   else if (rating < 1700) ratingMult = 1.2       // Silver and Below
 
+  console.log(`Rating: ${rating}: Multiplier: ${ratingMult}`)
+
   const playstyle: Playstyle = {
     forward: {
       // ((Category Mult * (Category Weight * Rating Mult)) * Player Stat) / 10
-      assists: ((1 * (0.9 * ratingMult)) * forward.assists) / 10,
-      knockouts: ((1 * (0.9 * ratingMult)) * forward.knockouts) / 10,
-      scores: ((1 * (0.9 * ratingMult)) * forward.scores) / 10,
-      saves: ((1 * (0.9 * ratingMult)) * forward.assists) / 10,
+      assists: { multiplier: Number((((1 * (0.65 * ratingMult)) * forward.assists) / 10).toFixed(3)), avgPerGame: Number((forward.assists / forward.games).toFixed(2)) },
+      knockouts: { multiplier: Number((((1 * (0.85 * ratingMult)) * forward.knockouts) / 10).toFixed(3)), avgPerGame: Number((forward.knockouts / forward.games).toFixed(2)) },
+      scores: { multiplier: Number((((1 * (0.75 * ratingMult)) * forward.scores) / 10).toFixed(3)), avgPerGame: Number((forward.scores / forward.games).toFixed(2)) },
+      saves: { multiplier: Number((((1 * (0.125 * ratingMult)) * forward.saves) / 10).toFixed(3)), avgPerGame: Number((forward.saves / forward.games).toFixed(2)) },
     },
     goalie: {
-      assists: 0,
-      knockouts: 0,
-      scores: 0,
-      saves: 0,
+      assists: { multiplier: Number((((1 * (0.80 * ratingMult)) * goalie.assists) / 10).toFixed(3)), avgPerGame: Number((goalie.assists / goalie.games).toFixed(2)) },
+      knockouts: { multiplier: Number((((1 * (1.0 * ratingMult)) * goalie.knockouts) / 10).toFixed(3)), avgPerGame: Number((goalie.knockouts / goalie.games).toFixed(2)) },
+      scores: { multiplier: Number((((1 * (1.0 * ratingMult)) * goalie.scores) / 10).toFixed(3)), avgPerGame: Number((goalie.scores / goalie.games).toFixed(2)) },
+      saves: { multiplier: Number((((1 * (0.065 * ratingMult)) * goalie.saves) / 10).toFixed(3)), avgPerGame: Number((goalie.saves / goalie.games).toFixed(2)) },
     }
   }
 

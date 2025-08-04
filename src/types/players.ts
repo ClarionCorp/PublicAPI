@@ -211,10 +211,15 @@ type CorestrikeStat = {
   saves: number,
 }
 
+type RoleCategoryPS = {
+  multiplier: number,
+  avgPerGame: number
+}
+
 // Multipliers, used for polygonal graphs
 export type RolePlaystyle = {
-  assists: number
-  knockouts: number
-  scores: number
-  saves: number
+  assists: RoleCategoryPS
+  knockouts: RoleCategoryPS
+  scores: RoleCategoryPS
+  saves: RoleCategoryPS
 }

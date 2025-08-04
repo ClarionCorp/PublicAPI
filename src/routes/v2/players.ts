@@ -4,6 +4,8 @@ import { FastifyPluginAsync } from 'fastify';
 import { searchByID } from '../../core/players/idSearch';
 import { usernameSearch } from '../../core/players/userSearch';
 import { regions } from '../../types/players';
+import { calculatePlaystyle } from '../../core/players/misc';
+import { prisma } from '../../plugins/prisma';
 
 const ensureLogger = appLogger('PlayerRoute/v2')
 
@@ -55,6 +57,31 @@ const players: FastifyPluginAsync = async (fastify) => {
     if (!playerMastery) { return reply.status(404).send({ error: "The specified player could not be found" }) };
 
     return reply.status(200).send(playerMastery);
+  });
+
+  fastify.get('/:input/playstyle', async (req, reply) => {
+    const { input } = req.params as { input: string };
+    const inType = getTypeOfInput(input);
+    let id = input;
+
+    if (inType == 'username') {
+      const user = await prisma.player.findFirst({ where: { username: input }});
+      id = user.id;
+    }
+
+    try {
+      const characterMastery = await prisma.playerCharacterRating.findMany({ where: { playerId: id } });
+      const lastRating = await prisma.playerRating.findFirst({ where: { playerId: id }, orderBy: { createdAt: 'desc' } });
+      if (!characterMastery || !lastRating) { return reply.status(404).send({ error: "The specified player could not be found" }) };
+  
+      const playstyle = calculatePlaystyle(characterMastery, lastRating.rating)
+  
+      return reply.status(200).send(playstyle);
+    } catch (e) {
+      ensureLogger.error(`Error while fetching Player Playstyle!`, e);
+      return reply.status(500).send({ error: "Something went wrong, check console for details." });
+    }
+    
   });
 };
 
