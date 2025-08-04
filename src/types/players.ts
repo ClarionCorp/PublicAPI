@@ -58,6 +58,10 @@ export type PlayerObjectType = {
   socialUrl?: string | null
   discordId?: string | null
   currentXp?: number
+  playStyle?: {
+    forward: RolePlaystyle
+    goalie: RolePlaystyle
+  }
 }
 
 export type PlayerLeaderboardType = {
@@ -205,4 +209,12 @@ type CorestrikeStat = {
   knockouts: number,
   scores: number,
   saves: number,
+}
+
+// Multipliers, used for polygonal graphs
+export type RolePlaystyle = {
+  assists: number
+  knockouts: number
+  scores: number
+  saves: number
 }

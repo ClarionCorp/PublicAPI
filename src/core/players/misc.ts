@@ -1,7 +1,7 @@
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
 import { PROMETHEUS } from '../../types/prometheus';
-import { PlayerObjectType } from '../../types/players';
+import { PlayerCharacterRatingObjectType, PlayerObjectType, RolePlaystyle } from '../../types/players';
 import { Team } from '../../types/teams';
 
 const miscLogger = appLogger('Players/Misc')
@@ -125,4 +125,41 @@ export function shouldUpdateUser(data: UpdateRequirements): boolean {
 
   miscLogger.debug(`Ignore updates? ${ignoreUpdates} (${cachedPlayer.username})`)
   return ignoreUpdates;
+}
+
+type Playstyle = {
+  forward: RolePlaystyle
+  goalie: RolePlaystyle
+}
+
+// 15 assists
+// 20.4 after calc
+export function calculatePlaystyle(forward: PlayerCharacterRatingObjectType, goalie: PlayerCharacterRatingObjectType, rating?: number): Playstyle {
+  
+  // I got lazy and I'm bad at math.
+  // Feel free to fix lol
+  let ratingMult = 1;
+  if (rating >= 3000) ratingMult = 0.8           // Pro League+
+  else if (rating >= 2600) ratingMult = 0.9      // Chally and Omega
+  else if (rating >= 2300) ratingMult = 1.0      // Diamond
+  else if (rating >= 1700) ratingMult = 1.1      // Plat and Gold
+  else if (rating < 1700) ratingMult = 1.2       // Silver and Below
+
+  const playstyle: Playstyle = {
+    forward: {
+      // ((Category Mult * (Category Weight * Rating Mult)) * Player Stat) / 10
+      assists: ((1 * (0.9 * ratingMult)) * forward.assists) / 10,
+      knockouts: ((1 * (0.9 * ratingMult)) * forward.knockouts) / 10,
+      scores: ((1 * (0.9 * ratingMult)) * forward.scores) / 10,
+      saves: ((1 * (0.9 * ratingMult)) * forward.assists) / 10,
+    },
+    goalie: {
+      assists: 0,
+      knockouts: 0,
+      scores: 0,
+      saves: 0,
+    }
+  }
+
+  return playstyle;
 }
