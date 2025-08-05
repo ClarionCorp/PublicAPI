@@ -112,7 +112,10 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
       const matched = matches.filter(m => m.userId === rest.playerId);
       return {
         ...rest,
-        teams: matched.map(m => m.team)
+        teams: matched.map(m => m.team),
+        assets: {
+          nameplate: `${process.env.CDN_BASE_URL}/nameplate/${rest.nameplateId}.webp`
+        }
       };
     });
 

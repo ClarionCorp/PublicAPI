@@ -45,6 +45,9 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
         data: {
           ...cachedPlayer,
           ratings: cachedPlayer.ratings,
+          assets: {
+            nameplate: `${process.env.CDN_BASE_URL}/nameplate/${cachedPlayer.nameplateId}.webp`
+          }
         },
         status: 200,
         ok: true
@@ -91,7 +94,10 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
           cachedPlayer = { // Update already-fetched cachedPlayer
             ...cachedPlayer,
             region: ensuredRegion.region,
-            title: resolveTitle // Updating this too just for first few waves of update
+            title: resolveTitle, // Updating this too just for first few waves of update
+            assets: {
+              nameplate: `${process.env.CDN_BASE_URL}/nameplate/${cachedPlayer.nameplateId}.webp`
+            }
           }
         }
       }
@@ -153,7 +159,10 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
       return {
         data: {
           ...newPlayer,
-          mastery
+          mastery,
+          assets: {
+            nameplate: `${process.env.CDN_BASE_URL}/nameplate/${newPlayer.nameplateId}.webp`
+          }
         },
         status: 201,
         ok: true
@@ -236,6 +245,9 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
           currentLevelXp: playerMastery.currentLevelXp,
           totalXp: playerMastery.totalXp,
           xpToNextLevel: playerMastery.xpToNextLevel
+        },
+        assets: {
+          nameplate: `${process.env.CDN_BASE_URL}/nameplate/${cachedPlayer.nameplateId}.webp`
         }
       },
       status: 200,
@@ -401,6 +413,9 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
             currentLevelXp: playerMastery.currentLevelXp,
             totalXp: playerMastery.totalXp,
             xpToNextLevel: playerMastery.xpToNextLevel
+          },
+          assets: {
+            nameplate: `${process.env.CDN_BASE_URL}/nameplate/${fullyUpdated.nameplateId}.webp`
           }
         },
         status: 200,
@@ -411,7 +426,13 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   
   // Return partial updates since player does not need full updating
   return {
-    data: { ...basicUpdate, teams: cachedPlayer.teams },
+    data: {
+      ...basicUpdate,
+      teams: cachedPlayer.teams,
+      assets: {
+        nameplate: `${process.env.CDN_BASE_URL}/nameplate/${basicUpdate.nameplateId}.webp`
+      }
+    },
     status: 200,
     ok: true
   };

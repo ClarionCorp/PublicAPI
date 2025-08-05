@@ -164,6 +164,7 @@ model Leaderboard {
   playerId                                  String
   emoticonId                                String?
   titleId                                   String?
+  nameplateId                               String?
   tags                                      String[]
   masteryLevel                              Int                                     @default(0)
   socialUrl                                 String?

@@ -14,6 +14,10 @@ const routeLogger: FastifyPluginAsync = async (fastify) => {
     const method = req.raw.method ?? 'GET';
     const url = req.raw.url ?? '';
     const status = res.statusCode;
+
+    // Skip logging for /assets/* unless it's a 404
+    if (url.startsWith('/assets/') && status !== 404) return;
+
     const time = chalk.gray(`[${new Date().toLocaleTimeString()}]`);
 
     const statusColor =

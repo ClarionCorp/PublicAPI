@@ -70,6 +70,7 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
           losses: player.losses,
           winrate: Number(((player.wins / player.games)*100).toFixed(1)),
           emoticonId: player.emoticonId,
+          nameplateId: player.nameplateId,
           masteryLevel: player.masteryLevel,
           socialUrl: player.socialUrl,
           tags: player.tags,

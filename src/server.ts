@@ -4,6 +4,7 @@ import prismaPlugin from './plugins/prisma';
 import cronPlugin from './plugins/cron';
 import prometheusPlugin from './plugins/odyssey';
 import teamsPlugin from './plugins/teams';
+import registerStatic from './plugins/static';
 import v2Routes from './routes/v2';
 import chalk from 'chalk';
 import { sleep } from './core/utils';
@@ -79,6 +80,7 @@ const start = async () => {
     await fastify.register(prismaPlugin);
     await fastify.register(prometheusPlugin);
     await fastify.register(teamsPlugin);
+    await fastify.register(registerStatic);
 
     await fastify.register(v1Routes, { prefix: '/v1' });
     await fastify.register(v2Routes, { prefix: '/v2' });

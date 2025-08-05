@@ -41,7 +41,6 @@ export type PlayerObjectType = {
   id: string
   username: string
   ratings?: PlayerRatingObjectType[]
-  characterRatings?: PlayerCharacterRatingObjectType[]
   logoId?: string | null
   nameplateId?: string | null
   emoticonId?: string | null
@@ -50,17 +49,22 @@ export type PlayerObjectType = {
   createdAt?: Date | null
   updatedAt?: Date | null
   region: string
-  mastery?: PlayerMasteryObjectType
   tags?: string[]
-  characterMastery?: PlayerCharacterMasteryObjectType
   playerStatus: string
-  teams?: Team[];
   socialUrl?: string | null
   discordId?: string | null
   currentXp?: number
+  mastery?: PlayerMasteryObjectType
+  characterRatings?: PlayerCharacterRatingObjectType[]
+  characterMastery?: PlayerCharacterMasteryObjectType
+  teams?: Team[];
   playStyle?: {
     forward: RolePlaystyle
     goalie: RolePlaystyle
+  },
+  assets?: { // Hosted versions of images from us directly
+    nameplate?: string,
+    emoticon?: string
   }
 }
 
