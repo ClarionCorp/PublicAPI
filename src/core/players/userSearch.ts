@@ -236,10 +236,12 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   // Player has not played the game since their last update.
   if (ignoreUpdates) {
     ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`);
+    const getTitle = await getTitleFromID(odysseyPlayer.titleId);
 
     return {
       data: {
         ...cachedPlayer,
+        title: getTitle ? getTitle.en : null,
         mastery: {
           currentLevel: playerMastery.currentLevel,
           currentLevelXp: playerMastery.currentLevelXp,
