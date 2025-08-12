@@ -63,6 +63,7 @@ const players: FastifyPluginAsync = async (fastify) => {
     const { input } = req.params as { input: string };
     const inType = getTypeOfInput(input);
     let id = input;
+    let { character } = req.query as { character?: string; };
 
     if (inType == 'username') {
       const user = await prisma.player.findFirst({ where: { username: input }});
@@ -70,7 +71,12 @@ const players: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const characterMastery = await prisma.playerCharacterRating.findMany({ where: { playerId: id } });
+      const characterMastery = await prisma.playerCharacterRating.findMany({
+        where: {
+          playerId: id,
+          ...(character && { character })
+        }
+      });
       const lastRating = await prisma.playerRating.findFirst({ where: { playerId: id }, orderBy: { createdAt: 'desc' } });
       if (!characterMastery || !lastRating) { return reply.status(404).send({ error: "The specified player could not be found" }) };
   
@@ -79,6 +85,7 @@ const players: FastifyPluginAsync = async (fastify) => {
       return reply.status(200).send(playstyle);
     } catch (e) {
       ensureLogger.error(`Error while fetching Player Playstyle!`, e);
+      if (character) { return reply.status(500).send({ error: "Something went wrong. Please make sure you are using character IDs, prefixed with 'CD_'!" }); }
       return reply.status(500).send({ error: "Something went wrong, check console for details." });
     }
     

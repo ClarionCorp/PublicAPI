@@ -15,6 +15,7 @@ import { updateTeams } from './core/cronjobs/teams';
 import { updateTwitch } from './core/cronjobs/twitch';
 import cors from '@fastify/cors'
 import v1Routes from './routes/v1';
+import steamRefresh from './core/cronjobs/steam';
 
 const fastify = Fastify({
   logger: {
@@ -96,7 +97,13 @@ const start = async () => {
     console.log('');
 
     // sleep(2000);
+    // await steamRefresh();
+
+    // sleep(2000);
     // await updateTeams();
+
+    // sleep(2000);
+    // await updateLeaderboard();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

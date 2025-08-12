@@ -106,9 +106,12 @@ async function sendTicketToBackend(hexEncodedTicket: string): Promise<{ jwt: str
         );
 
         const { jwt, refreshToken } = response.data;
-        steamLogger.info('Backend Response:', response.data);
-        steamLogger.info('JWT:', jwt);
-        steamLogger.info('Refresh Token:', refreshToken);
+        // steamLogger.info('Backend Response:', response.data);
+        // steamLogger.info('JWT:', jwt);
+        // steamLogger.info('Refresh Token:', refreshToken);
+        if (jwt && refreshToken) {
+          steamLogger.info(`Received JWT and RefreshToken! Saving them to the database now!`);
+        }
 
         return { jwt, refreshToken };
     } catch (error: any) {

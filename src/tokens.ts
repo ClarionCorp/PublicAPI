@@ -80,7 +80,7 @@ async function createToken() {
 
   await keyToContinue();
   await fastify.close();
-  return main();
+  return 0;
 }
 
 
@@ -90,7 +90,7 @@ async function manageTokens() {
   if (registry.length === 0) {
     console.log(chalk.redBright('No active tokens found.'));
     await keyToContinue();
-    return main();
+    return 0;
   };
 
   const { selectedId } = await inquirer.prompt([
@@ -128,14 +128,14 @@ async function manageTokens() {
     await prisma.userAccessToken.update({ where: { id: token.id }, data: { name: newName } });
     console.log(chalk.greenBright(`Token renamed to "${newName}".`));
     await keyToContinue();
-    return main();
+    return 0;
   }
 
   else if (action === 'Revoke Access') {
     await prisma.userAccessToken.update({ where: { id: token.id }, data: { active: false } });
     console.log(chalk.greenBright(`Token "${token.name}" revoked.`));
     await keyToContinue();
-    return main();
+    return 0;
   }
 
   // Higher gives more power
@@ -154,11 +154,11 @@ async function manageTokens() {
     });
     console.log(chalk.greenBright(`Tier updated to ${newTier}.`));
     await keyToContinue();
-    return main();
+    return 0;
   }
 
   else {
-    return main();
+    return 0;
   }
 }
 

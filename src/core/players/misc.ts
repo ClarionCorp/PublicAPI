@@ -132,8 +132,6 @@ type Playstyle = {
   goalie: RolePlaystyle
 }
 
-// 15 assists
-// 20.4 after calc
 export function calculatePlaystyle(characterRatings: PlayerCharacterRatingObjectType[], rating?: number): Playstyle {
   
   const sumStats = (entries: PlayerCharacterRatingObjectType[]) => {
