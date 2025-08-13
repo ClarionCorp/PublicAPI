@@ -13,6 +13,7 @@ import { PlayerMasteryObjectType } from '@/types/players';
 import { getTitleFromID } from '../tools/titles';
 
 const ensureLogger = appLogger('UserSearch')
+const statusName = 'SoveReigN'; // weird casing to distinguish status server
 
 export interface UserResponse {
   data: any;
@@ -28,7 +29,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   if (region) { regText = ` in region ${region}.` };
   
   // Make region default to Global.
-  ensureLogger.info(`Requesting data for: '${decodedUser}'${regText}`);
+  if (name !== statusName) { ensureLogger.info(`Requesting data for: '${decodedUser}'${regText}`); }
 
   // We do get the cachedPlayer, but we do not return him by himself because we need to check if he needs to be updated.
   // If he needs to be updated, we will return the updated player based on the cachedPlayerData instead of making multiple odyssey requests.
@@ -84,7 +85,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
         ensuredRegion.region = 'Global';
         ensureLogger.warn(`Could not find (${decodeURI(name)})'s region. Using ${ensuredRegion?.region} instead.`);
       } else {
-        ensureLogger.info(`Found ${decodeURI(name)}'s region: ${ensuredRegion?.region}`);
+        if (name !== statusName) { ensureLogger.info(`Found ${decodeURI(name)}'s region: ${ensuredRegion?.region}`); };
 
         if (cachedPlayer && (cachedPlayer.region == 'Global' || cachedPlayer.region == null)) {
           ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
@@ -108,8 +109,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     ensureLogger.error(`Something went wrong while ENSURING PLAYER REGION: `, error);
   }
   
-  // Weird casing to be specific for the uptime server.
-  if (name !== 'SoveReigN') await sendToAnalytics('V2_PLAYERS', req.ip, req.user!.id, `${odysseyPlayer.username}`);
+  if (name !== statusName) await sendToAnalytics('V2_PLAYERS', req.ip, req.user!.id, `${odysseyPlayer.username}`);
 
   // (Player and Character Stats)
 
@@ -235,7 +235,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
   // Player has not played the game since their last update.
   if (ignoreUpdates) {
-    ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`);
+    if (name !== statusName) { ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`); };
     const getTitle = await getTitleFromID(odysseyPlayer.titleId);
 
     return {

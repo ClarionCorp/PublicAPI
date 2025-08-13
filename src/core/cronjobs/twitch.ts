@@ -15,7 +15,7 @@ const streamLogger = appLogger('FetchTwitch')
 
 // Main function to fetch streams and update the database
 export async function updateTwitch() {
-  streamLogger.info('Updating Streams...')
+  streamLogger.debug('Updating Streams...')
 
   // Clear the TwitchStreams table
   try {
@@ -77,7 +77,7 @@ export async function updateTwitch() {
     }
   }
 
-  streamLogger.info('Updated Streams!')
+  streamLogger.debug('Updated Streams!')
 }
 
 // Method to get OAuth token and save it to a file

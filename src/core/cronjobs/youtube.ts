@@ -9,6 +9,7 @@ import {
 } from 'obscenity'
 import { sleep } from '../utils';
 import { YouTubeStreams } from '@/types/streams';
+import { prisma } from '../../plugins/prisma';
 
 const baseURL = 'https://www.googleapis.com/youtube/v3';
 const streamLogger = appLogger('FetchTwitch')
@@ -16,7 +17,7 @@ const streamLogger = appLogger('FetchTwitch')
 
 // Main function to fetch streams and update the database
 export async function updateYouTube() {
-  streamLogger.info('Updating Streams...')
+  streamLogger.debug('Updating Streams...')
 
   // Step 1: Clear the YouTubeStreams table
   try {
@@ -75,7 +76,7 @@ export async function updateYouTube() {
     }
   }
 
-  streamLogger.info('Updated Streams!')
+  streamLogger.debug('Updated Streams!')
 }
 
 
