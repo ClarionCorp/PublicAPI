@@ -29,8 +29,7 @@ export async function updateCharacterBoard() {
 
   await Promise.all(
     regions.map(async (region) => {
-      // for (let i = 0; i < 400; i++) { // ALL RANKS (prod only)
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 400; i++) {
         const startRank = i * 25 + 1;
         try {
           const data = await prometheusService.ranked.leaderboard.players(startRank, 25, region);

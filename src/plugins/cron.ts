@@ -6,6 +6,9 @@ import { updateTwitch } from '../core/cronjobs/twitch';
 import { updateYouTube } from '../core/cronjobs/youtube';
 import { appLogger } from './logger';
 import { checkTrackingUpdates } from '../core/cronjobs/tracking';
+import { updateLeaderboard } from '@/core/cronjobs/leaderboard';
+import { updateCharacterBoard } from '@/core/cronjobs/charboard';
+import { updateTeams } from '@/core/cronjobs/teams';
 
 const logger = appLogger('Cron');
 
@@ -21,6 +24,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     await checkTrackingUpdates();
   });
 
+  // [Teams] Every day at 11 pm. (offset)
+  cron.schedule('0 23 * * *', async () => {
+    await updateTeams();
+  });
+
 
   // Only enables the rest in production.
   if (process.env.MODE === 'PRODUCTION') {
@@ -33,6 +41,16 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     // [YouTubeStreams] Every 15 minutes
     cron.schedule('*/15 * * * *', async () => {
       await updateYouTube();
+    })
+
+    // [Leaderboard] Every 6 hours
+    cron.schedule('0 */6 * * *', async () => {
+      await updateLeaderboard();
+    })
+
+    // [CharacterBoard] Every Sunday at 2:00 am (offset from LB)
+    cron.schedule('0 2 * * 0', async () => {
+      await updateCharacterBoard();
     })
 
   }
