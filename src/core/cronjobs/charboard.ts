@@ -16,6 +16,8 @@ export async function updateCharacterBoard() {
   // Clear the CharacterLeaderboard table
   await clearTable();
 
+  leaderboardLogger.info('Starting Character Leaderboard Update Process....');
+
   const globalData: { [key: string]: { games: number; wins: number; losses: number; } } = {};
 
   const regions: PROMETHEUS.RAW.Regions[] = [
@@ -55,6 +57,7 @@ export async function updateCharacterBoard() {
 
   // Insert global data
   await insertGlobalData(globalData);
+  leaderboardLogger.info('Finished Character Leaderboard Update Process!');
 }
 
 async function pushHistory() {
