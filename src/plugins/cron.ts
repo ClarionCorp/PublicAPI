@@ -6,9 +6,9 @@ import { updateTwitch } from '../core/cronjobs/twitch';
 import { updateYouTube } from '../core/cronjobs/youtube';
 import { appLogger } from './logger';
 import { checkTrackingUpdates } from '../core/cronjobs/tracking';
-import { updateLeaderboard } from '@/core/cronjobs/leaderboard';
-import { updateCharacterBoard } from '@/core/cronjobs/charboard';
-import { updateTeams } from '@/core/cronjobs/teams';
+import { updateLeaderboard } from '../core/cronjobs/leaderboard';
+import { updateCharacterBoard } from '../core/cronjobs/charboard';
+import { updateTeams } from '../core/cronjobs/teams';
 
 const logger = appLogger('Cron');
 
