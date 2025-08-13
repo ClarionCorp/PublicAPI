@@ -148,8 +148,12 @@ export function calculatePlaystyle(characterRatings: PlayerCharacterRatingObject
     );
   };
 
-  const forwardEntries = characterRatings.filter(r => r.role === 'Forward');
-  const goalieEntries = characterRatings.filter(r => r.role === 'Goalie');
+  const forwardEntries = characterRatings.filter(
+    r => r.role === 'Forward' && r.games >= 3
+  );
+  const goalieEntries = characterRatings.filter(
+    r => r.role === 'Goalie' && r.games >= 3
+  );
 
   const forward = sumStats(forwardEntries);
   const goalie = sumStats(goalieEntries);
