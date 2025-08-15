@@ -240,6 +240,7 @@ model TwitchStreams {
   title                                     String
   viewers                                   Int                                     @default(0)
   thumbnail                                 String
+  startedAt                                 DateTime                                @default(now()) // Prevent errors
 }
 
 model YouTubeStreams {

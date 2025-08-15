@@ -69,6 +69,7 @@ export async function updateTwitch() {
           title: stream.title,
           viewers: stream.viewer_count,
           thumbnail: thumbnailUrl, // Store the modified thumbnail URL
+          startedAt: stream.started_at
         },
       })
       // streamLogger.info(`Inserted stream: ${stream.user_name}`)
