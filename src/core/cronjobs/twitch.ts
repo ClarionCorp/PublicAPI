@@ -126,7 +126,7 @@ async function ensureValidToken(): Promise<Token> {
   return creds;
 }
 
-async function twitchClient(subUrl: string, method: Method, params?: any): Promise<any> {
+export async function twitchClient(subUrl: string, method: Method, params?: any): Promise<any> {
   try {
     const creds = await ensureValidToken();
     const { data } = await axios({
