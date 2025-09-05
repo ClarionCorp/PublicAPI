@@ -20,8 +20,8 @@ const cached: FastifyPluginAsync = async (fastify) => {
           ...(inType === 'username' && { username: input }),
         },
         include: {
+          ratings: { orderBy: { createdAt: 'desc' }},
           characterRatings: true,
-          ratings: true,
           teams: true
         }
       });
