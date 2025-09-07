@@ -31,7 +31,7 @@ const cached: FastifyPluginAsync = async (fastify) => {
       }
   
       return reply.status(200).send({
-        data: user,
+        ...user,
         assets: {
           nameplate: `${process.env.CDN_BASE_URL}/nameplate/${user.nameplateId}.webp`
         },
