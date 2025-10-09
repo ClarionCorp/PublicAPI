@@ -42,40 +42,48 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
       throw new Error('No search parameters received!');
     }
 
-    const cachedPlayer = await prisma.player.findFirst({
-      where: username ? { username: { equals: username, mode: 'insensitive' } } : { id: userId },
-      include: {
-        teams: {
-          select: {
-            team: {
-              select: {
-                teamName: true,
-                teamTag: true,
-                logo: true,
-                series: true,
-                season: true
-              }
-            }
-          }
-        },
-        ratings: {
-          take: 1000, // Defaults to 1000 if not set.
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
-        characterRatings: {
-          take: 300,
-          orderBy: {
-            createdAt: 'desc',
-          },
+    // CASE-SENSITIVE DUPLICATE HANDLER
+    // If the username is provided, check for multiple players differing only by case
+    if (username) {
+      const matches = await prisma.player.findMany({
+        where: { username: { equals: username, mode: 'insensitive' } },
+        include: {
+          teams: { select: { team: { select: { teamName: true, teamTag: true, logo: true, series: true, season: true } } } },
+          ratings: { take: 1000, orderBy: { createdAt: 'desc' } },
+          characterRatings: { take: 300, orderBy: { createdAt: 'desc' } }
         }
-      },
-    })
+      });
 
-    if (!cachedPlayer) { return null }
+      if (matches.length === 0) return null;
 
-    const teams: Team[] = cachedPlayer?.teams.map(tp => ({
+      // Prefer exact casing if multiple matches exist
+      const exact = matches.find(m => m.username === username);
+      const cachedPlayer = exact ?? matches[0];
+
+      const teams: Team[] = cachedPlayer.teams.map(tp => ({
+        teamName: tp.team.teamName,
+        teamTag: tp.team.teamTag,
+        series: tp.team.series,
+        season: tp.team.season,
+        logo: tp.team.logo,
+      }));
+
+      return { ...cachedPlayer, teams };
+    }
+
+    // --- fallback: search by userId ---
+    const cachedPlayer = await prisma.player.findFirst({
+      where: { id: userId },
+      include: {
+        teams: { select: { team: { select: { teamName: true, teamTag: true, logo: true, series: true, season: true } } } },
+        ratings: { take: 1000, orderBy: { createdAt: 'desc' } },
+        characterRatings: { take: 300, orderBy: { createdAt: 'desc' } }
+      }
+    });
+
+    if (!cachedPlayer) return null;
+
+    const teams: Team[] = cachedPlayer.teams.map(tp => ({
       teamName: tp.team.teamName,
       teamTag: tp.team.teamTag,
       series: tp.team.series,
@@ -83,11 +91,7 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
       logo: tp.team.logo,
     }));
 
-    return {
-      ...cachedPlayer,
-      teams
-    };
-
+    return { ...cachedPlayer, teams };
   } catch (e) {
     miscLogger.error(`Error while fetching CACHED PLAYER: `, e);
     return null;
@@ -167,7 +171,7 @@ export function calculatePlaystyle(characterRatings: PlayerCharacterRatingObject
   else if (rating >= 1700) ratingMult = 1.1      // Plat and Gold
   else if (rating < 1700) ratingMult = 1.2       // Silver and Below
 
-  console.log(`Rating: ${rating}: Multiplier: ${ratingMult}`)
+  // console.log(`Rating: ${rating}: Multiplier: ${ratingMult}`)
 
   const playstyle: Playstyle = {
     forward: {

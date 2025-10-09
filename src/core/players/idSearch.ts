@@ -12,7 +12,7 @@ export async function searchByID(playerId: string, req?: FastifyRequest, region?
   let username: string;
   cachedPlayer = await fetchCachedPlayer(undefined, playerId);
 
-  console.log(JSON.stringify(cachedPlayer, null, 1))
+  // console.log(JSON.stringify(cachedPlayer, null, 1))
 
   if (!cachedPlayer && cachedPlayer !== undefined && cachedPlayer !== null) { 
     idLogger.debug(`Found Cached Data for: '${decodeURI(cachedPlayer.username)}' with ${cachedPlayer.ratings?.length} rating points.`);

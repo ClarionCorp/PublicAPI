@@ -271,11 +271,24 @@ export class PrometheusService {
           },
         )
 
-      const matchingPlayer = data.matches.find(
-        (player) => player.username.toLowerCase() === username.toLowerCase(),
-      )
+      if (!data.matches?.length) return null;
 
-      return matchingPlayer
+      // If multiple matches, prefer exact casing
+      let matchingPlayer;
+      if (data.matches.length > 1) {
+        matchingPlayer = data.matches.find(
+          (player) => player.username === username
+        );
+      }
+    
+      // Fallback to case-insensitive match if no exact casing found
+      if (!matchingPlayer) {
+        matchingPlayer = data.matches.find(
+          (player) => player.username.toLowerCase() === username.toLowerCase()
+        );
+      }
+    
+      return matchingPlayer ?? null;
     },
   }
 

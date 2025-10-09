@@ -29,6 +29,7 @@ export async function fetchOdyPlayer(username?: string, cachedPlayer?: PlayerObj
         return await tryBrokenNames(decodeURI(username!));
       }
 
+      odyLogger.verbose(`Found Odyssey Player '${userQuery.username}'...`);
       return userQuery;
       }
   } else { // Neither are provided.
@@ -93,18 +94,18 @@ export async function tryBrokenNames(username: string): Promise<PROMETHEUS.RAW.P
   try {
     lbData = await prometheusService.ranked.leaderboard.search(findCache.id);
   } catch (error) {
-    odyLogger.error(`Error while searching for SHORT USERNAME: `, error);
+    odyLogger.error(`Error while searching for BROKEN USERNAME: `, error);
     return null;
   }
 
-  if (lbData.players[0].username.toLocaleLowerCase() != username) {
-    odyLogger.error(`Could not find broken username's UID in database!`);
+  if (lbData.players[0].playerId != findCache.id) {
+    odyLogger.error(`Could not find a matching UID in database!`);
     return null
   }
 
   const basicData = lbData.players[0]
   const structPlayer: PROMETHEUS.RAW.Player = {
-    username: username,
+    username: basicData.username,
     playerId: basicData.playerId,
     logoId: basicData.logoId,
     title: basicData.title,

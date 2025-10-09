@@ -14,8 +14,8 @@ const logger = appLogger('Cron');
 
 const cronPlugin: FastifyPluginAsync = async (fastify) => {
   
-  // [SteamToken] Every 10 days at 4:00 am
-  cron.schedule('0 4 */10 * *', async () => {
+  // [SteamToken] Every 7 days at 4:00 am
+  cron.schedule('0 4 */7 * *', async () => {
     await steamRefresh();
   });
 

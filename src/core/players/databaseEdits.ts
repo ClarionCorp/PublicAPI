@@ -157,17 +157,40 @@ export async function fixMismatch(cachedPlayer: PlayerObjectType, odysseyPlayer:
     cachedPlayer.id = odysseyPlayer.playerId;
     return cachedPlayer;
   } catch { // Failed to save due to uniqueness
-    dbLogger.error(' ')
-    dbLogger.error('///////////')
-    dbLogger.error(`Failed to fix USER ID MISMATCH for Player '${odysseyPlayer.username}'.`)
-    dbLogger.error(`Please investigate manually in Prisma Studio.`)
-    dbLogger.error(' ')
-    dbLogger.error(`Cached ID: ${cachedPlayer.id}`)
-    dbLogger.error(`Odyssey ID: ${odysseyPlayer.playerId}`)
-    dbLogger.error(`Username: ${odysseyPlayer.username}`)
-    dbLogger.error('///////////')
-    dbLogger.error(' ')
-    return null;
+    // Try again, but remove unique target if they have < 5 ratings.
+    try {
+      dbLogger.warn(`Failed to automatically, safely fix mismatch. Looking into alternative options...`);
+      if (cachedPlayer.ratings.length < 6) {
+        dbLogger.warn(`Target has less than 6 ratings. Deleting their user entry as they are clearly remnants.`);
+        await prisma.player.delete({ where: { id: cachedPlayer.id }});
+        dbLogger.info(`Successfully deleted entry for: ${cachedPlayer.id} (${cachedPlayer.username})`);
+        dbLogger.debug(`Attempting to re-fix entry's player ID...`);
+
+        await prisma.player.update({
+          where: { id: odysseyPlayer.playerId },
+          data: {
+            username: odysseyPlayer.username
+          }
+        });
+        dbLogger.info(`Fixed mismatch for (${odysseyPlayer.username})'s ID! (${odysseyPlayer.playerId})`);
+        cachedPlayer.id = odysseyPlayer.playerId;
+        cachedPlayer.username = odysseyPlayer.username;
+        return cachedPlayer;
+      }
+    } catch {
+      dbLogger.error(' ')
+      dbLogger.error('///////////')
+      dbLogger.error(`Failed to fix USER ID MISMATCH for Player '${odysseyPlayer.username}'.`)
+      dbLogger.error(`Please investigate manually in Prisma Studio.`)
+      dbLogger.error(' ')
+      dbLogger.error(`Cached ID: ${cachedPlayer.id}`)
+      dbLogger.error(`Odyssey ID: ${odysseyPlayer.playerId}`)
+      dbLogger.error(`Username: ${odysseyPlayer.username}`)
+      dbLogger.error(`Cached Username: ${cachedPlayer.username}`)
+      dbLogger.error('///////////')
+      dbLogger.error(' ')
+      return null;
+    }
   }
 }
 
