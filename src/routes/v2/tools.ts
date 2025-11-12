@@ -51,6 +51,30 @@ const tools: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({ error: "Something went wrong" });
     }
   });
+
+  fastify.get('/discord/:id', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    const { id } = req.params as { id: string };
+    if (!id) { return reply.status(400).send({ error: "Missing id field" }); }
+    try {
+      const linkedUsers = await prisma.player.findMany({
+        where: { discordId: id },
+        select: {
+          id: true,
+          username: true,
+          emoticonId: true,
+          nameplateId: true,
+          titleId: true,
+          title: true
+        }
+      });
+
+      return reply.status(200).send({ linkedUsers });
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
 };
 
 export default tools;
