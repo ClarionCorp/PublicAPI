@@ -23,6 +23,7 @@ const community: FastifyPluginAsync = async (fastify) => {
             },
           }),
         },
+        orderBy: { weight: 'desc' }
       });
   
       return reply.status(200).send(communities);
