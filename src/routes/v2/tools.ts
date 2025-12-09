@@ -64,7 +64,9 @@ const tools: FastifyPluginAsync = async (fastify) => {
           emoticonId: true,
           nameplateId: true,
           titleId: true,
-          title: true
+          title: true,
+          tags: true,
+          socialUrl: true
         }
       });
 
