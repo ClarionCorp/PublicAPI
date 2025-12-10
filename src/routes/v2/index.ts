@@ -4,6 +4,7 @@ import hello from './hello';
 import players from './players';
 import leaderboard from './leaderboard';
 import adminCommunity from './admin/community';
+import adminHistory from './admin/history';
 import overlay from './overlay';
 import tracking from './tracking';
 import history from './history';
@@ -22,6 +23,7 @@ const v2Routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(overlay, { prefix: '/overlay' });
   fastify.register(tracking, { prefix: '/tracking' });
   fastify.register(adminCommunity, { prefix: '/admin' });
+  fastify.register(adminHistory, { prefix: '/admin' });
   fastify.register(history, { prefix: '/history' });
   fastify.register(community, { prefix: '/communities' });
   fastify.register(tools, { prefix: '/tools' });

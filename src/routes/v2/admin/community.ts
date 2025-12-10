@@ -1,24 +1,17 @@
-import { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyPluginAsync } from 'fastify';
 import { appLogger } from '../../../plugins/logger';
 import { prisma } from '../../../plugins/prisma';
-import { failedLogin } from '../../../core/analytics';
+import { adminCheck } from '../../../core/adminCheck';
 
 const logger = appLogger('Admin')
 const regions = new Set(['Global', 'NA East', 'NA West', 'Europe', 'Asia', 'Japan', 'Oceania']);
 const realTags = new Set(['tournaments', 'casual', 'competitive', 'custom-games', 'content-creator', 'verified', 'meta']);
 
-async function adminCheck(req: FastifyRequest, reply: FastifyReply, note: string) {
-  // Put this in a function since I'm lazy and hard coding owner names :p
-  if (req.user.owner !== 'blals' && req.user.owner !== 'lukimana') {
-    await failedLogin('V2_ADMIN', req.ip, note, req.user.id);
-    return reply.code(401).send({ error: `You are not authorized to use this endpoint. This request has been logged.` });
-  };
-}
-
 const adminCommunity: FastifyPluginAsync = async (fastify) => {
   // Add Community
   fastify.post('/community', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-    await adminCheck(req, reply, 'Add Community');
+    const auth = await adminCheck(req, 'Add Community');
+    if (!auth.allowed) { return reply.status(403).send({ error: auth.message }) };
 
     const body = req.body as {
       name: string;
@@ -73,7 +66,8 @@ const adminCommunity: FastifyPluginAsync = async (fastify) => {
 
   // Edit Community -- NOT FULLY TESTED
   fastify.patch('/community', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-    await adminCheck(req, reply, 'Edit Community');
+    const auth = await adminCheck(req, 'Edit Community');
+    if (!auth.allowed) { return reply.status(403).send({ error: auth.message }) };
     
     const body = req.body as {
       name?: string;
@@ -117,7 +111,8 @@ const adminCommunity: FastifyPluginAsync = async (fastify) => {
 
   // Delete Community
   fastify.delete('/community', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-    await adminCheck(req, reply, 'Delete Community');
+    const auth = await adminCheck(req, 'Delete Community');
+    if (!auth.allowed) { return reply.status(403).send({ error: auth.message }) };
     
     const body = req.body as {
       invite: string;
