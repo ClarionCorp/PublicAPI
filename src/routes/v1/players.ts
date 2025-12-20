@@ -6,7 +6,7 @@ import { usernameSearch, UserResponse } from '../../core/players/userSearch';
 import { CorestrikePlayer, PlayerObjectType, regions } from '../../types/players';
 import { getRankFromLP } from '../../core/ranks';
 import { fetchCharacters } from '../../core/tools/characters';
-import { Team, TeamPlayers } from '../../types/teams';
+import { Team } from '../../types/teams';
 import { prisma } from '../../plugins/prisma';
 
 const ensureLogger = appLogger('PlayerRoute/v1')

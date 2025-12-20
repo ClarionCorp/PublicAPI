@@ -5,6 +5,7 @@ import { PROMETHEUS } from '../../types/prometheus';
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
 import { getTitleFromID } from '../tools/titles';
+import { fetchRankedPlayer } from '../prometheus';
 
 const dbLogger = appLogger('Players/Database')
 const playerLogger = appLogger('PlayerLogger')
@@ -72,7 +73,7 @@ export async function checkUpdatePlayer(data: PassiveUpdate) {
     let globalRank = 10001;
     try {
       if (data.ensuredRegion && data.ensuredRegion.region !== 'Global') {
-        const pFetch = await prometheusService.ranked.leaderboard.search(data.cachedPlayer.id, 0, 0, 'Global');
+        const pFetch = await fetchRankedPlayer(data.cachedPlayer.id, 0, 0, 'Global');
         if (pFetch) { globalRank = pFetch.players[0].rank };
       }
     } catch (e) {
@@ -261,7 +262,7 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
   // Fetch Global Ranking
   let globalRank = 10001;
   if (data.ensuredRegion && data.ensuredRegion.region !== 'Global') {
-    const pFetch = await prometheusService.ranked.leaderboard.search(data.odysseyPlayer.playerId, 0, 0, 'Global');
+    const pFetch = await fetchRankedPlayer(data.odysseyPlayer.playerId, 0, 0, 'Global');
     globalRank = pFetch.players[0].rank;
   }
 

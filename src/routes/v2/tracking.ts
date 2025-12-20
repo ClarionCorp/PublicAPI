@@ -2,6 +2,7 @@ import { FastifyPluginAsync, FastifyReply } from 'fastify';
 import { TrackedPlayersStructure } from '../../types/overlay';
 import { prisma } from '../../plugins/prisma';
 import { appLogger } from '../../plugins/logger';
+import { fetchUsernameQuery, fetchRankedPlayer } from '../../core/prometheus';
 
 const logger = appLogger('Tracking');
 
@@ -38,8 +39,8 @@ const tracking: FastifyPluginAsync = async (fastify) => {
 };
 
 async function addTrackedPlayer(username: string, reply: FastifyReply): Promise<TrackedPlayersStructure> {
-  const odysseyPlayer = await prometheusService.player.usernameQuery(decodeURI(username));
-  const lbQuery = await prometheusService.ranked.leaderboard.search(odysseyPlayer.playerId, 0, 0, 'Global');
+  const odysseyPlayer = await fetchUsernameQuery(decodeURI(username));
+  const lbQuery = await fetchRankedPlayer(odysseyPlayer.playerId, 0, 0, 'Global');
   const leaderboardPlayer = lbQuery.players[0]; // Grab our player (first result)
 
   if (leaderboardPlayer == undefined) {

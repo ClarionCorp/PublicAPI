@@ -6,3 +6,4 @@ node_modules
 /prisma/client
 /dist
 googleapis.json
+pnpm-workspace.yaml

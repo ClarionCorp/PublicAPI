@@ -7,6 +7,7 @@ import { Player } from '../../../prisma/client';
 import { checkDiscord, usernameChanges } from '../players/databaseEdits';
 import { PROMETHEUS } from '@/types/prometheus';
 import { getRankFromLP } from '../ranks';
+import { fetchRankedPlayers } from '../prometheus';
 
 const leaderboardLogger = appLogger('Leaderboard')
 const maxRanks = 9999; // Never set to 10K or above, it'll stall and error out :monkaS:
@@ -37,7 +38,7 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
   leaderboardLogger.info(
     `Updating leaderboard for ${region} with > Offset:${offset} Step: ${count}`,
   )
-  const leaderboardPlayers: PROMETHEUS.API.RANKED.LEADERBOARD.Players = await prometheusService.ranked.leaderboard.players(
+  const leaderboardPlayers: PROMETHEUS.API.RANKED.LEADERBOARD.Players = await fetchRankedPlayers(
     offset,
     count,
     region === 'Global' ? undefined : region,

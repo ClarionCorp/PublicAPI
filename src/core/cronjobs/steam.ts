@@ -6,7 +6,7 @@ import { prisma } from '../../plugins/prisma';
 
 const steamLogger = appLogger('Steam');
 
-export default async function steamRefresh() {
+export default async function steamRefresh(): Promise<{ jwt: string, refreshToken: string }> {
   steamLogger.warn('Starting token refresh process...');
 
   try {
@@ -26,6 +26,8 @@ export default async function steamRefresh() {
       create: { service: 'ODYSSEY', token: jwt, refreshToken }
     });
 
+    return { jwt, refreshToken }
+
   } catch (e) {
     steamLogger.error(e);
   }
@@ -39,13 +41,13 @@ async function fetchLoginTokens(username: string, password: string, appId: numbe
     client.logOn({ accountName: username, password });
 
     client.on('loggedOn', async () => {
-      steamLogger.info('Successfully logged in to Steam!');
+      steamLogger.debug('Successfully logged in to Steam!');
       let sessionTicket: Buffer | null = null;
 
         try {
           // Check for existing active tickets
           const activeTickets = client.getActiveAuthSessionTickets();
-          steamLogger.info('Active Tickets:', activeTickets);
+          steamLogger.debug('Active Tickets:', activeTickets);
 
           if (activeTickets.length > 0) {
             // Reuse the first active ticket
@@ -58,12 +60,12 @@ async function fetchLoginTokens(username: string, password: string, appId: numbe
             // Create a new session ticket if none exist
             const ticketInfo = await client.createAuthSessionTicket(appId);
             sessionTicket = ticketInfo.sessionTicket;
-            steamLogger.info('Created new session ticket:', sessionTicket);
+            steamLogger.verbose('Created new session ticket:', sessionTicket);
           }
 
           // Encode the session ticket to HEX
           const hexEncodedTicket = sessionTicket.toString('hex').toUpperCase();
-          steamLogger.info('Session Ticket (Hex):', hexEncodedTicket);
+          steamLogger.verbose('Session Ticket (Hex):', hexEncodedTicket);
 
           // Send ticket to backend
           const tokens = await sendTicketToBackend(hexEncodedTicket);
@@ -110,7 +112,7 @@ async function sendTicketToBackend(hexEncodedTicket: string): Promise<{ jwt: str
         // steamLogger.info('JWT:', jwt);
         // steamLogger.info('Refresh Token:', refreshToken);
         if (jwt && refreshToken) {
-          steamLogger.info(`Received JWT and RefreshToken! Saving them to the database now!`);
+          steamLogger.debug(`Received JWT and RefreshToken! Saving them to the database now!`);
         }
 
         return { jwt, refreshToken };
