@@ -2,8 +2,9 @@ import axios, { AxiosInstance, AxiosError } from 'axios'
 import { PROMETHEUS } from '../types/prometheus'
 import { appLogger } from '../plugins/logger'
 import steamRefresh from './cronjobs/steam'
+import { BrowseCustomLobbies, PrometheusCustomLobbySearchBody } from '../types/customs'
 
-const log = appLogger('Prometheus')
+const logger = appLogger('Prometheus')
 
 // RAM token storage
 let tokenStore = {
@@ -13,26 +14,15 @@ let tokenStore = {
 
 let refreshPromise: Promise<void> | null = null
 
-/**
- * Initialize authentication tokens for Prometheus API
- * @param token - JWT access token
- * @param refresh - Refresh token
- */
-export function initTokens(token: string, refresh: string) {
-  tokenStore = { token, refresh }
-}
-
-/**
- * Get current authentication tokens
- * @returns Copy of current token store
- */
-export function getTokens() {
-  return { ...tokenStore }
-}
-
 // Create axios client with interceptors
 function createClient(): AxiosInstance {
   const client = axios.create({ baseURL: process.env.ODYSSEY_URL })
+
+  if (process.env.MODE == "DEVELOPMENT" && process.env.FORCE_JWT && process.env.FORCE_REFRESH) {
+    logger.warn('FORCE_JWT & FORCE_REFRESH Set! Using tokens from .env...');
+    tokenStore.token = process.env.FORCE_JWT,
+    tokenStore.refresh = process.env.FORCE_REFRESH
+  }
 
   // Request interceptor
   client.interceptors.request.use(cfg => {
@@ -61,11 +51,11 @@ async function refreshTokens(client: AxiosInstance) {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
-    log.info('Refreshing Prometheus tokens...')
+    logger.info('Refreshing Prometheus tokens...')
     const { jwt, refreshToken } = await steamRefresh();
     tokenStore.token = jwt
     tokenStore.refresh = refreshToken
-    log.info('Tokens refreshed & stored in memory')
+    logger.info('Tokens refreshed & stored in memory')
   })()
 
   await refreshPromise
@@ -221,7 +211,7 @@ export async function fetchRankedRating() {
  * @returns Player data and their region, or undefined if not found
  */
 export async function ensurePlayerRegion(playerId: string, specificRegion?: string) {
-  log.info('Ensuring region...')
+  logger.info('Ensuring region...')
 
   const regionList =
     specificRegion === 'Global'
@@ -239,7 +229,7 @@ export async function ensurePlayerRegion(playerId: string, specificRegion?: stri
 
   for (const region of regionList) {
     try {
-      log.debug(`Checking ${region}...`)
+      logger.debug(`Checking ${region}...`)
       const { players } = await fetchRankedPlayer(
         playerId,
         0,
@@ -382,55 +372,36 @@ export async function fetchPlayerStats(playerId: string) {
 }
 
 
-
-
-// Example POST request with body
-
 /**
- * Example POST request - Submit match results
- * @param matchData - Object containing match information
- * @returns Server response with match ID
- * @example
- * const result = await submitMatchResults({
- *   playerId: '12345',
- *   score: 1500,
- *   outcome: 'win'
- * })
+ * Fetch list of custom lobbies like the in game server browser
+ * @param search - Owner's Name or Lobby Name
+ * @param excludeFull - Don't query lobbies that are full
+ * @returns List of custom lobbies matching search string
  */
-export async function submitMatchResults(matchData: {
-  playerId: string
-  score: number
-  outcome: string
-}) {
-  const { data } = await client.post<{ matchId: string }>(
-    '/v1/matches/submit',
-    matchData  // This is the request body
-  )
-  return data
-}
-
-/**
- * Example POST request - Update player settings
- * @param playerId - The player's unique ID
- * @param settings - Object containing settings to update
- * @returns Updated player settings
- */
-export async function updatePlayerSettings(
-  playerId: string,
-  settings: {
-    region?: string
-    privacy?: 'public' | 'private'
-    notifications?: boolean
-  }
+export async function fetchCustomLobbies(
+  search: string,
+  excludeFull?: boolean,
 ) {
-  const { data } = await client.post(
-    `/v1/players/${playerId}/settings`,
-    settings,  // Request body
-    {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }
+  const body: PrometheusCustomLobbySearchBody = {
+    startingTimestamp: "",
+    newerThanStartingTimestamp: false,
+    desiredCount: 50,
+    searchString: search ?? "", // search has to be there, even if blank
+    onlyFriendGames: false,
+    excludeFull: excludeFull ?? false,
+    latencyThreshold: "10000", // all regions for now
+    lobbySizes: [],
+    gameOptions: {},
+  }
+
+  const { data } = await client.post<BrowseCustomLobbies>(
+    `/v1/custom-lobby/browse`,
+    body,
+    { headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'X-Odyssey-GameVersion': '4.2.8'
+    } }
   )
-  return data
+  return data.lobbies;
 }

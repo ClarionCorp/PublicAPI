@@ -33,3 +33,15 @@ export type BrowseCustomLobby = {
     modifierAssetName: string,
   }
 }
+
+export type PrometheusCustomLobbySearchBody = {
+  startingTimestamp: string,
+  newerThanStartingTimestamp: boolean,
+  desiredCount: number,
+  searchString: string,
+  onlyFriendGames: boolean,
+  excludeFull: boolean,
+  latencyThreshold: string,
+  lobbySizes: any[],
+  gameOptions: any, // idk what these are
+}
