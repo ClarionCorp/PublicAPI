@@ -4,6 +4,7 @@ import { fetchCachedPlayer } from '../../core/players/misc';
 import { PilotBadge, PilotDataType, RankDataType } from '../../types/overlay';
 import { prisma } from '../../plugins/prisma';
 import { getTitleFromID } from '../../core/tools/titles';
+import { fetchPlayerMastery, fetchPlayerStats, fetchRankedPlayer } from '../../core/prometheus';
 
 const overlay: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
@@ -15,10 +16,10 @@ const overlay: FastifyPluginAsync = async (fastify) => {
     const cachedPlayer = await fetchCachedPlayer(username);
     const odysseyPlayer = await fetchOdyPlayer(username, cachedPlayer);
 
-    const globalQuery = await prometheusService.ranked.leaderboard.search(odysseyPlayer.playerId, 0, 0, 'Global');
+    const globalQuery = await fetchRankedPlayer(odysseyPlayer.playerId, 0, 0, 'Global');
     const globalPlayer = globalQuery.players[0];
 
-    const localQuery = await prometheusService.ranked.leaderboard.search(odysseyPlayer.playerId, 0, 0, region ? region : cachedPlayer.region);
+    const localQuery = await fetchRankedPlayer(odysseyPlayer.playerId, 0, 0, region ? region : cachedPlayer.region);
     const localPlayer = localQuery.players[0];
 
     const ratingsByNewest = await prisma.playerRating.findMany({
@@ -27,11 +28,11 @@ const overlay: FastifyPluginAsync = async (fastify) => {
     });
 
     // Player Stats
-    const statsObject = await prometheusService.stats.player(odysseyPlayer.playerId);
+    const statsObject = await fetchPlayerStats(odysseyPlayer.playerId);
     const playerStats = statsObject.playerStats[1]; // 0 is None, 1 is Ranked, 2 is Norms
 
     // Other badge data
-    const mainCharacter = globalPlayer.mostPlayedCharacters[0].characterId;
+    const mainCharacter = globalPlayer.mostPlayedCharacters.characterId;
     const gamesAmt = playerStats.roleStats.Forward.games + playerStats.roleStats.Goalie.games;
     const forwardRatio = playerStats.roleStats.Forward.games / (gamesAmt) * 100
     
@@ -55,7 +56,7 @@ const overlay: FastifyPluginAsync = async (fastify) => {
     const highestRatingIndex = ratingsByNewest.map(r => r.rating).indexOf(Math.max(...ratingsByNewest.map(r => r.rating)));
     const peakRating = ratingsByNewest[highestRatingIndex];
 
-    const masteryData = await prometheusService.mastery.player(odysseyPlayer.playerId);
+    const masteryData = await fetchPlayerMastery(odysseyPlayer.playerId);
     const getTitle = await getTitleFromID(odysseyPlayer.titleId);
 
     const pilotCardData: PilotDataType = {

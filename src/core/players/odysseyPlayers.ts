@@ -2,6 +2,7 @@ import { appLogger } from "../../plugins/logger";
 import { prisma } from '../../plugins/prisma';
 import { PROMETHEUS } from '../../types/prometheus';
 import { PlayerObjectType } from "../../types/players";
+import { fetchUsernameQuery, fetchRankedPlayer } from "../prometheus";
 
 const odyLogger = appLogger('Players/Ody')
 
@@ -22,7 +23,7 @@ export async function fetchOdyPlayer(username?: string, cachedPlayer?: PlayerObj
       odyLogger.warn(`Searched Username is 1 character long! Using alternative endpoints...`);
       return await handleShortNames(cachedPlayer!);
       } else {
-      const userQuery = await prometheusService.player.usernameQuery(decodeURI(searchName));
+      const userQuery = await fetchUsernameQuery(decodeURI(searchName));
 
       if (!userQuery) {
         odyLogger.warn(`Odyssey Query came back empty! Trying fallback method..`);
@@ -45,7 +46,7 @@ export async function handleShortNames(cachedPlayer: PlayerObjectType): Promise<
   // const cUsername = decodeURI(cachedPlayer.username);
 
   try {
-    lbData = await prometheusService.ranked.leaderboard.search(cachedPlayer.id);
+    lbData = await fetchRankedPlayer(cachedPlayer.id);
   } catch (error) {
     odyLogger.error(`Error while searching for SHORT USERNAME: `, error);
     return null;
@@ -92,7 +93,7 @@ export async function tryBrokenNames(username: string): Promise<PROMETHEUS.RAW.P
   }
 
   try {
-    lbData = await prometheusService.ranked.leaderboard.search(findCache.id);
+    lbData = await fetchRankedPlayer(findCache.id);
   } catch (error) {
     odyLogger.error(`Error while searching for BROKEN USERNAME: `, error);
     return null;

@@ -1,6 +1,6 @@
 {
   "name": "cc-publicapi",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "main": "index.js",
   "repository": "https://github.com/ClarionCorp/PublicAPI",
   "author": "WWYDF <89052946+WWYDF@users.noreply.github.com>",
@@ -38,11 +38,10 @@
   },
   "scripts": {
     "dev": "tsc && node dist/server.js",
-    "test": "tsc && node dist/server.js",
     "build": "tsc",
     "start": "node dist/server.js",
-    "regen": "yarn prisma db push && yarn prisma generate",
-    "token": "tsc && node dist/tokens.js",
+    "regen": "pnpm prisma db push && pnpm prisma generate",
+    "tokens": "tsc && node dist/tokens.js",
     "setup": "tsc && node dist/setup.js"
   }
 }

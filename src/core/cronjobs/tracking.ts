@@ -1,5 +1,6 @@
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
+import { fetchRankedPlayer } from '../prometheus';
 
 const tempLogger = appLogger('Tracking');
 
@@ -51,7 +52,7 @@ async function updatePlayers() {
 
     for (const player of trackedPlayers) {
       try {
-        const lbQuery = await prometheusService.ranked.leaderboard.search(player.userId, 0, 0, 'Global');
+        const lbQuery = await fetchRankedPlayer(player.userId, 0, 0, 'Global');
         const latestRating = lbQuery.players[0].rating;
 
         const latestLogged = await prisma.tempRating.findFirst({

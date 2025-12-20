@@ -6,6 +6,7 @@ import { usernameSearch } from '../../core/players/userSearch';
 import { regions } from '../../types/players';
 import { calculatePlaystyle } from '../../core/players/misc';
 import { prisma } from '../../plugins/prisma';
+import { fetchCharacterMastery, fetchPlayerMastery } from '../../core/prometheus';
 
 const ensureLogger = appLogger('PlayerRoute/v2')
 
@@ -41,7 +42,7 @@ const players: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id/mastery/characters', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string };
 
-    const charMastery = await prometheusService.mastery.character(id);
+    const charMastery = await fetchCharacterMastery(id);
 
     if (!charMastery) { return reply.status(404).send({ error: "The specified player could not be found" }) };
 
@@ -52,7 +53,7 @@ const players: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id/mastery', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string };
 
-    const playerMastery = await prometheusService.mastery.player(id);
+    const playerMastery = await fetchPlayerMastery(id);
 
     if (!playerMastery) { return reply.status(404).send({ error: "The specified player could not be found" }) };
 

@@ -45,16 +45,6 @@ export default fp(routeLogger);
 
 export type LogLevel = 'verbose' | 'debug' | 'info' | 'warn' | 'error';
 
-// in ascending order of “loudness”
-const levels: LogLevel[] = ['verbose', 'debug', 'info', 'warn', 'error'];
-
-const levelColor: Record<LogLevel, (txt: string) => string> = {
-  verbose: chalk.magenta,
-  debug:   chalk.gray,
-  info:    chalk.cyan,
-  warn:    chalk.yellow,
-  error:   chalk.red,
-};
 
 export function appLogger(
   name: string,

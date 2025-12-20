@@ -23,7 +23,7 @@ export type RoleData = {
   saves: number,
   knockouts: number,
   mvp: number,
-  winrate: number,
+  winrate?: number,
 }
 
 export type PilotBadge = {

@@ -4,6 +4,7 @@ import { prisma } from '../../plugins/prisma';
 import { sleep } from "../utils";
 import { getRankGroup } from "../ranks";
 import { PlayerLeaderboardType } from "../../types/players";
+import { fetchPlayerStats, fetchRankedPlayers } from "../prometheus";
 
 const leaderboardLogger = appLogger('CharacterLeaderboard');
 
@@ -34,12 +35,12 @@ export async function updateCharacterBoard() {
       for (let i = 0; i < 400; i++) {
         const startRank = i * 25 + 1;
         try {
-          const data = await prometheusService.ranked.leaderboard.players(startRank, 25, region);
+          const data = await fetchRankedPlayers(startRank, 25, region);
           const players = data.players;
 
           // Parallelize only the player processing (your requirement)
           await Promise.all(
-            players.map(async (player: PlayerLeaderboardType) => {
+            players.map(async (player: any) => { // fuckin any whatever (technically PlayerLeaderboardType)
               const playerId = player.playerId;
               const rankGroup = getRankGroup(player.rating);
               await processPlayerData(playerId, region, rankGroup, globalData);
@@ -97,7 +98,7 @@ async function clearTable() {
 
 async function processPlayerData(playerId: string, region: PROMETHEUS.RAW.Regions, rankGroup: string, globalData: { [key: string]: { games: number; wins: number; losses: number; } }) {
   try {
-    const data = await prometheusService.stats.player(playerId);
+    const data = await fetchPlayerStats(playerId);
     const characterStats = data.characterStats;
     leaderboardLogger.verbose(`Received data for player ${playerId} in ${region}.`);
 

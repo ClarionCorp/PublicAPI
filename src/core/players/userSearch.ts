@@ -11,6 +11,7 @@ import { sendToAnalytics } from '../../core/analytics';
 import dayjs from 'dayjs';
 import { PlayerMasteryObjectType } from '@/types/players';
 import { getTitleFromID } from '../tools/titles';
+import { ensurePlayerRegion, fetchPlayerMastery, fetchPlayerStats } from '../prometheus';
 
 const ensureLogger = appLogger('UserSearch')
 const statusName = 'SoveReigN'; // weird casing to distinguish status server
@@ -76,7 +77,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
   try {
     // Will probably just leave this here tbh.
-    ensuredRegion = await prometheusService.ranked.leaderboard.ensureRegion(
+    ensuredRegion = await ensurePlayerRegion(
       odysseyPlayer.playerId,
       region || (cachedPlayer?.region === "Global" ? undefined : cachedPlayer?.region as PROMETHEUS.RAW.Regions) || undefined,
     );
@@ -122,12 +123,12 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     // This means we need to create a new player on our end.
 
     if (!cachedPlayer) {
-      const ensuredRegion = await prometheusService.ranked.leaderboard.ensureRegion(
+      const ensuredRegion = await ensurePlayerRegion(
         odysseyPlayer.playerId,
         region || undefined,
       )
 
-      const playerStats = await prometheusService.stats.player(odysseyPlayer.playerId)
+      const playerStats = await fetchPlayerStats(odysseyPlayer.playerId)
       ensureLogger.debug(`Obtained Advanced Stats for New Player '${decodedUser}'`);
 
       const createdPlayer = await createPlayer({odysseyPlayer, ensuredRegion, playerStats});
@@ -223,7 +224,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   const isGhostProfile = cachedPlayer && (!cachedPlayer.characterRatings || !cachedPlayer.emoticonId);
 
   // Check if player needs updating.
-  const playerMastery: PlayerMasteryObjectType = await prometheusService.mastery.player(odysseyPlayer.playerId || cachedPlayer?.id)
+  const playerMastery: PROMETHEUS.API.MASTERY.Player = await fetchPlayerMastery(odysseyPlayer.playerId || cachedPlayer?.id)
   const updateParams: UpdateRequirements = {
     cachedPlayer,
     playerMastery,
@@ -293,7 +294,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   // Only runs if it needs to update.
   if (!ignoreUpdates) {
     ensureLogger.verbose(`Obtaining Advanced Stats for '${decodedUser}'...`);
-    const playerStats = await prometheusService.stats.player(odysseyPlayer.playerId)
+    const playerStats = await fetchPlayerStats(odysseyPlayer.playerId)
     ensureLogger.debug(`Obtained Advanced Stats for '${decodedUser}'`);
     
     if (playerStats) {
@@ -443,7 +444,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
 export async function fillPlayerMastery(id: string) {
   try {
-    const playerMastery = await prometheusService.mastery.player(id);
+    const playerMastery = await fetchPlayerMastery(id);
     return {
       currentLevel: playerMastery.currentLevel,
       currentLevelXp: playerMastery.currentLevelXp,
