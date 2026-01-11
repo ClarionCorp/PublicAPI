@@ -36,6 +36,7 @@ function parseTimeAgo(timeAgoStr: string): Date {
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { username } = req.params as { username: string };
+    const { refresh } = req.query as { refresh?: string };
 
     try {
       // Fetch the player page
@@ -61,6 +62,33 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
       if (!player) {
         return reply.status(404).send({ error: 'Player not found in database' });
+      }
+
+      // Check the first (most recent) match for caching (skip if refresh=true)
+      if (refresh !== 'true') {
+        const firstMatchCard = $('.match-card', matchHistory).first();
+        if (firstMatchCard.length > 0) {
+          const firstMatchResult = firstMatchCard.hasClass('loss') ? MatchStatus.DEFEAT : MatchStatus.VICTORY;
+          const firstCharacter = firstMatchCard.find('.character-avatar').attr('alt') || 'Unknown';
+          const firstTimeAgo = firstMatchCard.find('.time-ago').text();
+          const firstPlayedAt = new Date(parseTimeAgo(firstTimeAgo).getTime());
+          const firstMatchKey = `${player.id}-${firstPlayedAt.getTime()}-${firstCharacter.toLowerCase()}-${firstMatchResult.toLowerCase()}`;
+
+          // Check if this match already exists
+          const existingMatch = await fastify.prisma.matchHistory.findUnique({
+            where: { id: firstMatchKey }
+          });
+
+          // If the most recent match exists, return cached data
+          if (existingMatch) {
+            const cachedMatches = await fastify.prisma.matchHistory.findMany({
+              where: { playerId: player.id },
+              include: { playerStats: true },
+              orderBy: { playedAt: 'desc' }
+            });
+            return reply.status(200).send(cachedMatches);
+          }
+        }
       }
 
       const matchPromises: Promise<any>[] = [];
