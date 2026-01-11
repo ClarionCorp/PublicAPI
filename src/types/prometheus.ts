@@ -289,5 +289,12 @@ export namespace PROMETHEUS {
         }
       }
     }
+
+    export namespace PRESENCE {
+      export type Friends = {
+        friends: Array<PROMETHEUS.RAW.Player>,
+        timestamp: Date
+      }
+    }
   }
 }
