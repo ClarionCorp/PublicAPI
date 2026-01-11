@@ -26,6 +26,12 @@ enum Gamemode {
   RankedInitial
 }
 
+// Used in match history
+enum MatchStatus {
+  VICTORY
+  DEFEAT
+}
+
 enum ServiceToken {
   ODYSSEY
   STEAM
@@ -399,3 +405,38 @@ model Strikers {
 //   cooldown                                  Int
 //   type                                      AbilityTypes
 // }
+
+
+model MatchHistory {
+  id                                            String                                 @id @unique @default(uuid())
+  map                                           String
+  role                                          Role
+  mode                                          String                                 @default("Ranked") // no history for norms lol
+  result                                        MatchStatus
+  duration                                      Int                                    // In seconds
+  bans                                          String[]
+  avgRank                                       String
+
+  playerId                                      String
+  playerStats                                   MatchHistoryItem[]                     // Should be 6 entries
+
+  playedAt                                      DateTime
+  createdAt                                     DateTime                               @default(now())
+}
+
+model MatchHistoryItem {
+  id                                            String                                 @id @unique @default(uuid())
+  userId                                        String
+  matchId                                       String
+  team                                          Int                                    // 1 or 2
+  match                                         MatchHistory                           @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  character                                     String
+  role                                          Role
+  awakenings                                    String[]
+  level                                         Int
+  goals                                         Int
+  assists                                       Int
+  scores                                        Int
+  knockouts                                     Int
+}
