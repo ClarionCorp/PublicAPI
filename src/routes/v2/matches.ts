@@ -49,6 +49,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
       }
 
       const html = await response.text();
+      const start = performance.now();
       const $ = cheerio.load(html);
 
       // Find the match-history div
@@ -58,28 +59,46 @@ const matches: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'No match history found' });
       }
 
-      // Get player ID from database
-      const player = await fastify.prisma.player.findUnique({
+      // Get player ID from database - try exact match first, then case insensitive
+      let player = await fastify.prisma.player.findUnique({
         where: { username }
       });
 
+      // If exact match fails, try case insensitive search
       if (!player) {
-        return reply.status(404).send({ error: 'Player not found in database' });
+        const players = await fastify.prisma.player.findMany({
+          where: {
+            username: {
+              equals: username,
+              mode: 'insensitive'
+            }
+          },
+          take: 1
+        });
+        player = players[0] || null;
       }
+
+      // if (!player) {
+      //   return reply.status(404).send({ error: 'Player not found in database' });
+      // }
 
       // Check the first (most recent) match for caching (skip if refresh=true)
       if (refresh !== 'true') {
         const firstMatchCard = $('.match-card', matchHistory).first();
         if (firstMatchCard.length > 0) {
           const firstMatchResult = firstMatchCard.hasClass('loss') ? MatchStatus.DEFEAT : MatchStatus.VICTORY;
-          const firstCharacter = firstMatchCard.find('.character-avatar').attr('alt') || 'Unknown';
-          const firstTimeAgo = firstMatchCard.find('.time-ago').text();
-          const firstPlayedAt = new Date(parseTimeAgo(firstTimeAgo).getTime());
-          const firstMatchKey = `${player.id}-${firstPlayedAt.getTime()}-${firstCharacter.toLowerCase()}-${firstMatchResult.toLowerCase()}`;
+          const firstMapName = firstMatchCard.find('.map-name').text();
+          const firstDuration = parseDuration(firstMatchCard.find('.duration').text());
 
-          // Check if this match already exists
-          const existingMatch = await fastify.prisma.matchHistory.findUnique({
-            where: { id: firstMatchKey }
+          // Check if a match with these characteristics exists
+          const existingMatch = await fastify.prisma.matchHistory.findFirst({
+            where: {
+              playerId: player.id,
+              map: firstMapName,
+              result: firstMatchResult,
+              duration: firstDuration
+            },
+            orderBy: { playedAt: 'desc' }
           });
 
           // If the most recent match exists, return cached data
@@ -89,7 +108,24 @@ const matches: FastifyPluginAsync = async (fastify) => {
               include: { playerStats: true },
               orderBy: { playedAt: 'desc' }
             });
-            return reply.status(200).send(cachedMatches);
+
+            // Transform cached matches to add ID translations
+            const transformedCachedMatches = cachedMatches.map(match => {
+              const banIds = match.bans.map(banName => getCharacterIdFromName(banName) || null);
+
+              return {
+                ...match,
+                mapId: getMapIdFromName(match.map) || null,
+                avgRankThreshold: getRankThresholdFromName(match.avgRank) || null,
+                banIds,
+                playerStats: match.playerStats.map(playerStat => ({
+                  ...playerStat,
+                  characterId: getCharacterIdFromName(playerStat.character) || null,
+                }))
+              };
+            });
+
+            return reply.status(200).send({ calcTime: (performance.now() - start), matches: transformedCachedMatches });
           }
         }
       }
@@ -127,12 +163,6 @@ const matches: FastifyPluginAsync = async (fastify) => {
         matchCard.find('.match-bans img').each((_i: number, img: Element) => {
           bans.push($(img).attr('alt') || '');
         });
-
-        // Stats
-        const goals = parseInt(matchCard.find('.stat-line').eq(0).text().replace('Goals: ', ''), 10);
-        const assists = parseInt(matchCard.find('.stat-line').eq(1).text().replace('Assists: ', ''), 10);
-        const saves = parseInt(matchCard.find('.stat-line').eq(2).text().replace('Saves: ', ''), 10);
-        const kos = parseInt(matchCard.find('.stat-line').eq(3).text().replace('KOs: ', ''), 10);
 
         // Average Tier
         const avgTier = matchCard.find('.match-tier .tier-name').text() || 'Unknown';
@@ -298,7 +328,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
       const savedMatches = await fastify.prisma.matchHistory.findMany({
         where: { playerId: player.id },
         include: { playerStats: true },
-        orderBy: { playedAt: 'desc' }
+        orderBy: { playedAt: 'desc' },
+        take: 10
       });
 
       // Transform the response to add ID translations
@@ -318,7 +349,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
         };
       });
 
-      return reply.status(200).send(transformedMatches);
+      return reply.status(200).send({ calcTime: (performance.now() - start), matches: transformedMatches });
 
     } catch (error) {
       console.error('Error fetching match history:', error);

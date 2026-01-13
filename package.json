@@ -1,6 +1,6 @@
 {
   "name": "cc-publicapi",
-  "version": "1.2.0",
+  "version": "2.2.0",
   "main": "index.js",
   "repository": "https://github.com/ClarionCorp/PublicAPI",
   "author": "WWYDF <89052946+WWYDF@users.noreply.github.com>",

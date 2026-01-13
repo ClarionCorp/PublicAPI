@@ -423,6 +423,9 @@ model MatchHistory {
 
   playedAt                                      DateTime
   createdAt                                     DateTime                               @default(now())
+
+  @@index([playerId])
+  @@index([playerId, map])
 }
 
 model MatchHistoryItem {
@@ -442,4 +445,6 @@ model MatchHistoryItem {
   saves                                         Int
   knockouts                                     Int
   mvp                                           Boolean                                @default(false)
+
+  @@index([matchId])
 }
