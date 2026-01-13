@@ -94,7 +94,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
         }
       }
 
-      const matchPromises: Promise<any>[] = [];
+      // First, collect all match data
+      const matchDataArray: any[] = [];
 
       // Extract data from each match card
       $('.match-card', matchHistory).each((index: number, element: Element) => {
@@ -154,9 +155,11 @@ const matches: FastifyPluginAsync = async (fastify) => {
           const team1Badges = cols.eq(0).find('.badge');
           const team1LevelBadge = team1Badges.filter('[title="Level"]');
           const team1RoleBadge = team1Badges.filter('[title="Role"]');
+          const team1MvpBadge = team1Badges.filter('[title="MVP"]');
           const team1Level = parseInt(team1LevelBadge.text().trim(), 10) || 1;
           const team1RoleText = team1RoleBadge.text().trim();
           const team1Role = team1RoleText === 'Forward' ? Role.Forward : Role.Goalie;
+          const team1IsMvp = team1MvpBadge.length > 0;
           const team1Awakenings: string[] = [];
           cols.eq(1).find('img').each((_idx: number, img: Element) => {
             team1Awakenings.push($(img).attr('title') || $(img).attr('alt') || '');
@@ -170,9 +173,11 @@ const matches: FastifyPluginAsync = async (fastify) => {
           const team2Badges = cols.eq(5).find('.badge');
           const team2LevelBadge = team2Badges.filter('[title="Level"]');
           const team2RoleBadge = team2Badges.filter('[title="Role"]');
+          const team2MvpBadge = team2Badges.filter('[title="MVP"]');
           const team2Level = parseInt(team2LevelBadge.text().trim(), 10) || 1;
           const team2RoleText = team2RoleBadge.text().trim();
           const team2Role = team2RoleText === 'Forward' ? Role.Forward : Role.Goalie;
+          const team2IsMvp = team2MvpBadge.length > 0;
           const team2Awakenings: string[] = [];
           cols.eq(4).find('img').each((_idx: number, img: Element) => {
             team2Awakenings.push($(img).attr('title') || $(img).attr('alt') || '');
@@ -188,10 +193,11 @@ const matches: FastifyPluginAsync = async (fastify) => {
             role: team1Role,
             awakenings: team1Awakenings,
             level: team1Level,
-            goals: parseInt(team1Stats[0], 10),
             assists: parseInt(team1Stats[1], 10),
-            scores: parseInt(team1Stats[2], 10),
+            scores: parseInt(team1Stats[0], 10),
+            saves: parseInt(team1Stats[2], 10),
             knockouts: parseInt(team1Stats[3], 10),
+            mvp: team1IsMvp,
           });
 
           playerItems.push({
@@ -201,41 +207,88 @@ const matches: FastifyPluginAsync = async (fastify) => {
             role: team2Role,
             awakenings: team2Awakenings,
             level: team2Level,
-            goals: parseInt(team2Stats[0], 10),
             assists: parseInt(team2Stats[1], 10),
-            scores: parseInt(team2Stats[2], 10),
+            scores: parseInt(team2Stats[0], 10),
+            saves: parseInt(team2Stats[2], 10),
             knockouts: parseInt(team2Stats[3], 10),
+            mvp: team2IsMvp,
           });
         });
 
-        // Create unique match ID based on data to avoid duplicates
-        const matchUniqueKey = `${player.id}-${playedAt.getTime()}-${character.toLowerCase()}-${matchResult.toLowerCase()}`;
+        // Find MVP user ID from playerItems
+        const mvpPlayer = playerItems.find(item => item.mvp === true);
+        const mvpId = mvpPlayer?.userId || null;
 
-        // Save to database (upsert to skip duplicates)
-        const matchPromise = fastify.prisma.matchHistory.upsert({
-          where: { id: matchUniqueKey },
+        // Create unique match ID based on stable data to avoid duplicates
+        const matchUniqueKey = `${player.id}-${character.toLowerCase().replace(/['\s]+/g, '-')}-${matchResult.toLowerCase()}-${mapName.toLowerCase().replace(/['\s]+/g, '-')}-${duration}-${mvpId || 'no-mvp'}`;
+
+        matchDataArray.push({
+          matchUniqueKey,
+          map: mapName,
+          role,
+          mode,
+          result: matchResult,
+          duration,
+          bans,
+          avgRank: avgTier,
+          playerId: player.id,
+          mvpId,
+          playedAt,
+          playerItems
+        });
+      });
+
+      // Collect all unique user IDs from all matches
+      const allUserIds = new Set<string>();
+      matchDataArray.forEach(matchData => {
+        matchData.playerItems.forEach((item: any) => {
+          if (item.userId) {
+            allUserIds.add(item.userId);
+          }
+        });
+      });
+
+      // Batch lookup all usernames
+      const playersInDb = await fastify.prisma.player.findMany({
+        where: { id: { in: Array.from(allUserIds) } },
+        select: { id: true, username: true }
+      });
+
+      // Create a map for quick username lookup
+      const usernameMap = new Map(playersInDb.map(p => [p.id, p.username]));
+
+      // Now create the database promises with usernames included
+      const matchPromises: Promise<any>[] = matchDataArray.map(matchData => {
+        // Add usernames to playerItems
+        const playerItemsWithUsernames = matchData.playerItems.map((item: any) => ({
+          ...item,
+          username: usernameMap.get(item.userId) || null
+        }));
+
+        // Save to database
+        return fastify.prisma.matchHistory.upsert({
+          where: { id: matchData.matchUniqueKey },
           update: {},
           create: {
-            id: matchUniqueKey,
-            map: mapName,
-            role,
-            mode,
-            result: matchResult,
-            duration,
-            bans,
-            avgRank: avgTier,
-            playerId: player.id,
-            playedAt,
+            id: matchData.matchUniqueKey,
+            map: matchData.map,
+            role: matchData.role,
+            mode: matchData.mode,
+            result: matchData.result,
+            duration: matchData.duration,
+            bans: matchData.bans,
+            avgRank: matchData.avgRank,
+            playerId: matchData.playerId,
+            mvpId: matchData.mvpId,
+            playedAt: matchData.playedAt,
             playerStats: {
-              create: playerItems
+              create: playerItemsWithUsernames
             }
           },
           include: {
             playerStats: true
           }
         });
-
-        matchPromises.push(matchPromise);
       });
 
       // Wait for all matches to be saved

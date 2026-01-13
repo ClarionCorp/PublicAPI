@@ -418,6 +418,7 @@ model MatchHistory {
   avgRank                                       String
 
   playerId                                      String
+  mvpId                                         String?
   playerStats                                   MatchHistoryItem[]                     // Should be 6 entries
 
   playedAt                                      DateTime
@@ -427,6 +428,7 @@ model MatchHistory {
 model MatchHistoryItem {
   id                                            String                                 @id @unique @default(uuid())
   userId                                        String
+  username                                      String?
   matchId                                       String
   team                                          Int                                    // 1 or 2
   match                                         MatchHistory                           @relation(fields: [matchId], references: [id], onDelete: Cascade)
@@ -435,8 +437,9 @@ model MatchHistoryItem {
   role                                          Role
   awakenings                                    String[]
   level                                         Int
-  goals                                         Int
   assists                                       Int
   scores                                        Int
+  saves                                         Int
   knockouts                                     Int
+  mvp                                           Boolean                                @default(false)
 }
