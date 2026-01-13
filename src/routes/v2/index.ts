@@ -13,6 +13,7 @@ import streams from './streams';
 import teams from './teams';
 import cached from './cached';
 import customs from './customs';
+import matches from './matches';
 
 const logger = appLogger('Routes');
 
@@ -30,6 +31,7 @@ const v2Routes: FastifyPluginAsync = async (fastify) => {
   fastify.register(teams, { prefix: '/teams' });
   fastify.register(cached, { prefix: '/cached' });
   fastify.register(customs, { prefix: '/customs' });
+  fastify.register(matches, { prefix: '/matches' });
 
   logger.info('[+] Routes v2 Initialized!');
 };

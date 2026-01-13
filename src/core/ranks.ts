@@ -64,6 +64,11 @@ export function getRankGroup(input: number | string): string {
   return compressed;
 }
 
+export function getRankThresholdFromName(rankName: string): number | undefined {
+  const rank = ranks.find(r => r.name.toLowerCase() === rankName.toLowerCase());
+  return rank?.threshold;
+}
+
 
 const ranks = [
   {

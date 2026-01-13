@@ -33,3 +33,15 @@ export function timeAgo(date: Date): string {
 export function getCharacterFromDevName(cd_characterId: string) {
   return characters.find( character => character.id === cd_characterId)
 }
+
+export function getCharacterFromName(name: string) {
+  const normalizedName = name.toLowerCase();
+  return characters.find(character =>
+    character.name.toLowerCase() === normalizedName ||
+    character.aliases?.some(alias => alias.toLowerCase() === normalizedName)
+  );
+}
+
+export function getCharacterIdFromName(name: string): string | undefined {
+  return getCharacterFromName(name)?.id;
+}
