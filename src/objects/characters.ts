@@ -3,6 +3,7 @@ export interface Character {
   assetName: string;
   name: string;
   color?: string;
+  aliases?: string[];
 }
 
 export const characters: Character[] = [
@@ -11,6 +12,7 @@ export const characters: Character[] = [
     assetName: 'CD_MagicalPlaymaker',
     name: 'Ai.Mi',
     color: '#f786a1',
+    aliases: ['AiMi', 'Aimi'],
   },
   {
     id: 'CD_ShieldUser',
@@ -29,6 +31,7 @@ export const characters: Character[] = [
     assetName: 'CD_NimbleBlaster',
     name: "Drek'ar",
     color: '#4760ff',
+    aliases: ['Drekar'],
   },
   {
     id: 'CD_StalwartProtector',

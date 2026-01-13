@@ -2,6 +2,9 @@ import { FastifyPluginAsync } from 'fastify';
 import * as cheerio from 'cheerio';
 import { Element } from 'domhandler';
 import { MatchStatus, Role } from '../../../prisma/client';
+import { getCharacterIdFromName } from '../../core/utils';
+import { getMapIdFromName } from '../../objects/maps';
+import { getRankThresholdFromName } from '../../core/ranks';
 
 // Parse duration string like "11m 55s" to seconds
 function parseDuration(durationStr: string): number {
@@ -149,9 +152,10 @@ const matches: FastifyPluginAsync = async (fastify) => {
           // Team 1 player (badges: Level, Role)
           const team1Char = cols.eq(0).find('img').attr('alt') || 'Unknown';
           const team1Badges = cols.eq(0).find('.badge');
-          const team1LevelText = team1Badges.eq(0).text().trim();
-          const team1Level = parseInt(team1LevelText, 10) || 1;
-          const team1RoleText = team1Badges.eq(1).text().trim();
+          const team1LevelBadge = team1Badges.filter('[title="Level"]');
+          const team1RoleBadge = team1Badges.filter('[title="Role"]');
+          const team1Level = parseInt(team1LevelBadge.text().trim(), 10) || 1;
+          const team1RoleText = team1RoleBadge.text().trim();
           const team1Role = team1RoleText === 'Forward' ? Role.Forward : Role.Goalie;
           const team1Awakenings: string[] = [];
           cols.eq(1).find('img').each((_idx: number, img: Element) => {
@@ -161,12 +165,13 @@ const matches: FastifyPluginAsync = async (fastify) => {
           const team1UserLink = cols.eq(0).find('a').attr('href') || '';
           const team1UserId = team1UserLink.split('/').pop() || '';
 
-          // Team 2 player (badges: Role, Level - reversed!)
+          // Team 2 player (badges can include MVP, so filter by title attribute)
           const team2Char = cols.eq(5).find('img').attr('alt') || 'Unknown';
           const team2Badges = cols.eq(5).find('.badge');
-          const team2RoleText = team2Badges.eq(0).text().trim();
-          const team2LevelText = team2Badges.eq(1).text().trim();
-          const team2Level = parseInt(team2LevelText, 10) || 1;
+          const team2LevelBadge = team2Badges.filter('[title="Level"]');
+          const team2RoleBadge = team2Badges.filter('[title="Role"]');
+          const team2Level = parseInt(team2LevelBadge.text().trim(), 10) || 1;
+          const team2RoleText = team2RoleBadge.text().trim();
           const team2Role = team2RoleText === 'Forward' ? Role.Forward : Role.Goalie;
           const team2Awakenings: string[] = [];
           cols.eq(4).find('img').each((_idx: number, img: Element) => {
@@ -243,7 +248,24 @@ const matches: FastifyPluginAsync = async (fastify) => {
         orderBy: { playedAt: 'desc' }
       });
 
-      return reply.status(200).send(savedMatches);
+      // Transform the response to add ID translations
+      const transformedMatches = savedMatches.map(match => {
+        // Translate ban names to IDs
+        const banIds = match.bans.map(banName => getCharacterIdFromName(banName) || null);
+
+        return {
+          ...match,
+          mapId: getMapIdFromName(match.map) || null,
+          avgRankThreshold: getRankThresholdFromName(match.avgRank) || null,
+          banIds,
+          playerStats: match.playerStats.map(playerStat => ({
+            ...playerStat,
+            characterId: getCharacterIdFromName(playerStat.character) || null,
+          }))
+        };
+      });
+
+      return reply.status(200).send(transformedMatches);
 
     } catch (error) {
       console.error('Error fetching match history:', error);
