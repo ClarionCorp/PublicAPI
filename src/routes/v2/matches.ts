@@ -106,7 +106,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
             const cachedMatches = await fastify.prisma.matchHistory.findMany({
               where: { playerId: player.id },
               include: { playerStats: true },
-              orderBy: { playedAt: 'desc' }
+              orderBy: { playedAt: 'desc' },
+              take: 10
             });
 
             // Transform cached matches to add ID translations
