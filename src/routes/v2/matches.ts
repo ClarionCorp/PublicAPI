@@ -84,7 +84,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
       // Check the first (most recent) match for caching (skip if refresh=true)
       if (refresh !== 'true') {
-        const firstMatchCard = $('.match-card', matchHistory).first();
+        const firstMatchCard = $('[class^="match-card"]', matchHistory).first();
         if (firstMatchCard.length > 0) {
           const firstMatchResult = firstMatchCard.hasClass('loss') ? MatchStatus.DEFEAT : MatchStatus.VICTORY;
           const firstMapName = firstMatchCard.find('.map-name').text();
@@ -134,8 +134,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
       // First, collect all match data
       const matchDataArray: any[] = [];
 
-      // Extract data from each match card
-      $('.match-card', matchHistory).each((index: number, element: Element) => {
+      // Extract data from each match card (support both old 'match-card' and new 'match-card-{hash}' formats)
+      $('[class^="match-card"]', matchHistory).each((index: number, element: Element) => {
         const matchCard = $(element);
 
         // Match result (win/loss)
