@@ -77,6 +77,19 @@ const tools: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({ error: "Something went wrong" });
     }
   });
+
+  fastify.get('/maps', async (req, reply) => {
+    try {
+      const allMaps = await prisma.maps.findMany( { omit: { updatedAt: true } } );
+      const inRotation = await prisma.maps.findMany({ where: { active: true }, omit: { updatedAt: true } });
+
+      return reply.status(200).send({ active: inRotation, all: allMaps });
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
 };
 
 export default tools;

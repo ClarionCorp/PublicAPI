@@ -16,6 +16,7 @@ import cors from '@fastify/cors'
 import v1Routes from './routes/v1';
 import steamRefresh from './core/cronjobs/steam';
 import { fetchUsernameQuery } from './core/prometheus';
+import updateMapRotation from './core/cronjobs/maps';
 
 const fastify = Fastify({
   logger: {
@@ -103,6 +104,9 @@ const start = async () => {
 
     // sleep(2000);
     // await updateTeams();
+
+    // sleep(2000);
+    // await updateMapRotation();
 
     // sleep(2000);
     // await updateLeaderboard();

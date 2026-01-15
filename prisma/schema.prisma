@@ -411,7 +411,7 @@ model MatchHistory {
   id                                            String                                 @id @unique @default(uuid())
   map                                           String
   role                                          Role
-  mode                                          String                                 @default("Ranked") // no history for norms lol
+  mode                                          String                                 @default("Ranked")
   result                                        MatchStatus
   duration                                      Int                                    // In seconds
   bans                                          String[]
@@ -447,4 +447,13 @@ model MatchHistoryItem {
   mvp                                           Boolean                                @default(false)
 
   @@index([matchId])
+}
+
+model Maps {
+  id                                            String                                 @id
+  name                                          String                                 @unique
+  imageUrl                                      String                                 @unique
+  active                                        Boolean
+  rotatedAt                                     DateTime                               @default(now())
+  updatedAt                                     DateTime                               @updatedAt
 }

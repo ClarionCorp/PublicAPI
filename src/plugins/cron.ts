@@ -9,6 +9,7 @@ import { checkTrackingUpdates } from '../core/cronjobs/tracking';
 import { updateLeaderboard } from '../core/cronjobs/leaderboard';
 import { updateCharacterBoard } from '../core/cronjobs/charboard';
 import { updateTeams } from '../core/cronjobs/teams';
+import updateMapRotation from '../core/cronjobs/maps';
 
 const logger = appLogger('Cron');
 
@@ -27,6 +28,16 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
   // [Teams] Every day at 11 pm. (offset)
   cron.schedule('0 23 * * *', async () => {
     await updateTeams();
+  });
+
+  // [Maps] Every Monday at 5 pm. (EST)
+  cron.schedule('0 20 * * 1', async () => {
+    await updateMapRotation();
+  });
+
+  // [Maps] Every Tuesday at 5 pm. (EST)
+  cron.schedule('0 20 * * 2', async () => {
+    await updateMapRotation();
   });
 
 
