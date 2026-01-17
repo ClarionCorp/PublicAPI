@@ -39,7 +39,13 @@ function parseTimeAgo(timeAgoStr: string): Date {
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { username } = req.params as { username: string };
-    const { refresh } = req.query as { refresh?: string };
+    const { refresh, mode: modeFilter } = req.query as { refresh?: string; mode?: string };
+
+    // Validate mode parameter if provided
+    const validModes = ['Normal', 'Ranked'];
+    if (modeFilter && !validModes.includes(modeFilter)) {
+      return reply.status(400).send({ error: `Invalid mode. Accepted values: ${validModes.join(', ')}` });
+    }
 
     try {
       // Fetch the player page
@@ -104,7 +110,10 @@ const matches: FastifyPluginAsync = async (fastify) => {
           // If the most recent match exists, return cached data
           if (existingMatch) {
             const cachedMatches = await fastify.prisma.matchHistory.findMany({
-              where: { playerId: player.id },
+              where: {
+                playerId: player.id,
+                ...(modeFilter && { mode: modeFilter })
+              },
               include: { playerStats: true },
               orderBy: { playedAt: 'desc' },
               take: 10
@@ -327,7 +336,10 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
       // Fetch and return the match history from database
       const savedMatches = await fastify.prisma.matchHistory.findMany({
-        where: { playerId: player.id },
+        where: {
+          playerId: player.id,
+          ...(modeFilter && { mode: modeFilter })
+        },
         include: { playerStats: true },
         orderBy: { playedAt: 'desc' },
         take: 10
