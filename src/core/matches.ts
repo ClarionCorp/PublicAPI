@@ -1,7 +1,8 @@
 import * as cheerio from 'cheerio';
 import { Element } from 'domhandler';
 import { MatchStatus, Role } from '../../prisma/client';
-import { getMapIdFromName } from '../objects/maps';
+import { getMapIdFromName, getMapNameFromId } from '../objects/maps';
+import { getCharacterIdFromName } from './utils';
 
 export interface PlayerStatData {
   userId: string;
@@ -249,4 +250,112 @@ export function extractUserIds(matchDataArray: MatchData[]): string[] {
 export function hasMatchHistory(html: string): boolean {
   const $ = cheerio.load(html);
   return $('.match-history').length > 0;
+}
+
+// Calculate map stats from matches
+export function calculateMapStats(matches: any[], playerId: string, mapId: string) {
+  let wins = 0;
+  let losses = 0;
+  let totalScores = 0;
+  let totalAssists = 0;
+  let totalSaves = 0;
+  let totalKnockouts = 0;
+  let totalDuration = 0;
+  let mvpCount = 0;
+  let forwardGames = 0;
+  let goalieGames = 0;
+  const characterCounts: Record<string, number> = {};
+
+  for (const match of matches) {
+    if (match.result === 'VICTORY') {
+      wins++;
+    } else {
+      losses++;
+    }
+
+    totalDuration += match.duration;
+
+    const playerStat = match.playerStats.find((ps: any) => ps.userId === playerId);
+    if (playerStat) {
+      totalScores += playerStat.scores;
+      totalAssists += playerStat.assists;
+      totalSaves += playerStat.saves;
+      totalKnockouts += playerStat.knockouts;
+      if (playerStat.mvp) mvpCount++;
+
+      if (playerStat.role === 'Forward') {
+        forwardGames++;
+      } else if (playerStat.role === 'Goalie') {
+        goalieGames++;
+      }
+
+      characterCounts[playerStat.character] = (characterCounts[playerStat.character] || 0) + 1;
+    }
+  }
+
+  const totalGames = matches.length;
+  const winRate = totalGames > 0 ? ((wins / totalGames) * 100) : 0;
+
+  const mostPlayedCharacter = Object.entries(characterCounts)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  const avgScores = totalGames > 0 ? totalScores / totalGames : 0;
+  const avgAssists = totalGames > 0 ? totalAssists / totalGames : 0;
+  const avgSaves = totalGames > 0 ? totalSaves / totalGames : 0;
+  const avgKnockouts = totalGames > 0 ? totalKnockouts / totalGames : 0;
+  const avgDuration = totalGames > 0 ? totalDuration / totalGames : 0;
+
+  const characterBreakdown = Object.entries(characterCounts).map(([character, games]) => {
+    const charMatches = matches.filter((m: any) =>
+      m.playerStats.some((ps: any) => ps.userId === playerId && ps.character === character)
+    );
+    const charWins = charMatches.filter((m: any) => m.result === 'VICTORY').length;
+    return {
+      character,
+      characterId: getCharacterIdFromName(character) || null,
+      games,
+      wins: charWins,
+      losses: games - charWins,
+      winRate: games > 0 ? Math.round((charWins / games) * 1000) / 10 : 0
+    };
+  }).sort((a, b) => b.games - a.games);
+
+  return {
+    map: {
+      name: getMapNameFromId(mapId) || mapId,
+      id: mapId
+    },
+    stats: {
+      games: totalGames,
+      wins,
+      losses,
+      winRate: Math.round(winRate * 10) / 10,
+      mvpCount,
+      mvpRate: totalGames > 0 ? Math.round((mvpCount / totalGames) * 1000) / 10 : 0,
+      averages: {
+        scores: Math.round(avgScores * 100) / 100,
+        assists: Math.round(avgAssists * 100) / 100,
+        saves: Math.round(avgSaves * 100) / 100,
+        knockouts: Math.round(avgKnockouts * 100) / 100,
+        duration: Math.round(avgDuration)
+      },
+      totals: {
+        scores: totalScores,
+        assists: totalAssists,
+        saves: totalSaves,
+        knockouts: totalKnockouts,
+        duration: totalDuration
+      },
+      roles: {
+        forward: forwardGames,
+        goalie: goalieGames
+      }
+    },
+    mostPlayedCharacter: mostPlayedCharacter ? {
+      character: mostPlayedCharacter[0],
+      characterId: getCharacterIdFromName(mostPlayedCharacter[0]) || null,
+      games: mostPlayedCharacter[1]
+    } : null,
+    characterBreakdown
+  };
 }

@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { getCharacterIdFromName } from '../../core/utils';
 import { getMapNameFromId } from '../../objects/maps';
 import { getRankThresholdFromName } from '../../core/ranks';
-import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory } from '../../core/matches';
+import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats } from '../../core/matches';
 
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
@@ -185,6 +185,150 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
     } catch (error) {
       console.error('Error fetching match history:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Get stats for all maps for a player
+  fastify.get('/:username/maps', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    const { username } = req.params as { username: string };
+    const { mode: modeFilter } = req.query as { mode?: string };
+
+    const validModes = ['Normal', 'Ranked'];
+    if (modeFilter && !validModes.includes(modeFilter)) {
+      return reply.status(400).send({ error: `Invalid mode. Accepted values: ${validModes.join(', ')}` });
+    }
+
+    try {
+      const start = performance.now();
+
+      let player = await fastify.prisma.player.findUnique({
+        where: { username }
+      });
+
+      if (!player) {
+        const players = await fastify.prisma.player.findMany({
+          where: {
+            username: {
+              equals: username,
+              mode: 'insensitive'
+            }
+          },
+          take: 1
+        });
+        player = players[0] || null;
+      }
+
+      if (!player) {
+        return reply.status(404).send({ error: 'Player not found' });
+      }
+
+      // Get all matches for this player
+      const allMatches = await fastify.prisma.matchHistory.findMany({
+        where: {
+          playerId: player.id,
+          ...(modeFilter && { mode: modeFilter })
+        },
+        include: { playerStats: true },
+        orderBy: { playedAt: 'desc' }
+      });
+
+      if (allMatches.length === 0) {
+        return reply.status(404).send({ error: 'No matches found for this player' });
+      }
+
+      // Group matches by map
+      const matchesByMap: Record<string, any[]> = {};
+      for (const match of allMatches) {
+        if (!matchesByMap[match.map]) {
+          matchesByMap[match.map] = [];
+        }
+        matchesByMap[match.map].push(match);
+      }
+
+      // Calculate stats for each map
+      const mapStats = Object.entries(matchesByMap).map(([mapId, matches]) =>
+        calculateMapStats(matches, player.id, mapId)
+      ).sort((a, b) => b.stats.games - a.stats.games);
+
+      return reply.status(200).send({
+        calcTime: performance.now() - start,
+        player: {
+          id: player.id,
+          username: player.username
+        },
+        mode: modeFilter || 'All',
+        maps: mapStats
+      });
+
+    } catch (error) {
+      console.error('Error fetching all map stats:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Get stats for a specific map for a player
+  fastify.get('/:username/maps/:map', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    const { username, map } = req.params as { username: string; map: string };
+    const { mode: modeFilter } = req.query as { mode?: string };
+
+    const validModes = ['Normal', 'Ranked'];
+    if (modeFilter && !validModes.includes(modeFilter)) {
+      return reply.status(400).send({ error: `Invalid mode. Accepted values: ${validModes.join(', ')}` });
+    }
+
+    try {
+      const start = performance.now();
+
+      let player = await fastify.prisma.player.findUnique({
+        where: { username }
+      });
+
+      if (!player) {
+        const players = await fastify.prisma.player.findMany({
+          where: {
+            username: {
+              equals: username,
+              mode: 'insensitive'
+            }
+          },
+          take: 1
+        });
+        player = players[0] || null;
+      }
+
+      if (!player) {
+        return reply.status(404).send({ error: 'Player not found' });
+      }
+
+      const matches = await fastify.prisma.matchHistory.findMany({
+        where: {
+          playerId: player.id,
+          map,
+          ...(modeFilter && { mode: modeFilter })
+        },
+        include: { playerStats: true },
+        orderBy: { playedAt: 'desc' }
+      });
+
+      if (matches.length === 0) {
+        return reply.status(404).send({ error: 'No matches found for this player on the specified map' });
+      }
+
+      const mapStats = calculateMapStats(matches, player.id, map);
+
+      return reply.status(200).send({
+        calcTime: performance.now() - start,
+        player: {
+          id: player.id,
+          username: player.username
+        },
+        mode: modeFilter || 'All',
+        maps: [mapStats]
+      });
+
+    } catch (error) {
+      console.error('Error fetching map stats:', error);
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });
