@@ -29,10 +29,10 @@ const overlay: FastifyPluginAsync = async (fastify) => {
 
     // Player Stats
     const statsObject = await fetchPlayerStats(odysseyPlayer.playerId);
-    const playerStats = statsObject.playerStats[1]; // 0 is None, 1 is Ranked, 2 is Norms
+    const playerStats = statsObject.playerStats.find(stats => stats.ratingName === 'RankedInitial');
 
     // Other badge data
-    const mainCharacter = globalPlayer.mostPlayedCharacters.characterId;
+    const mainCharacter = globalPlayer.mostPlayedCharacters.characterId ?? '';
     const gamesAmt = playerStats.roleStats.Forward.games + playerStats.roleStats.Goalie.games;
     const forwardRatio = playerStats.roleStats.Forward.games / (gamesAmt) * 100
     

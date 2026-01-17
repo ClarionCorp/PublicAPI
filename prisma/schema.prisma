@@ -39,6 +39,13 @@ enum ServiceToken {
   TWITCH
 }
 
+enum PlayerStatus {
+  ONLINE
+  OFFLINE
+  INGAME
+  INQUEUE
+}
+
 enum AnalyticServices {
   V2_ADMIN                                  //                                      /v2/admin
   V1_PLAYERS                                //                                      /v1/players
@@ -411,7 +418,7 @@ model MatchHistory {
   id                                            String                                 @id @unique @default(uuid())
   map                                           String
   role                                          Role
-  mode                                          String                                 @default("Ranked") // no history for norms lol
+  mode                                          String                                 @default("Ranked")
   result                                        MatchStatus
   duration                                      Int                                    // In seconds
   bans                                          String[]
@@ -447,4 +454,20 @@ model MatchHistoryItem {
   mvp                                           Boolean                                @default(false)
 
   @@index([matchId])
+}
+
+model Maps {
+  id                                            String                                 @id
+  name                                          String                                 @unique
+  imageUrl                                      String                                 @unique
+  active                                        Boolean
+  rotatedAt                                     DateTime                               @default(now())
+  updatedAt                                     DateTime                               @updatedAt
+}
+
+model OnlinePlayers {
+  userId                                        String                                 @id @unique
+  username                                      String
+  status                                        PlayerStatus
+  updatedAt                                     DateTime                               @updatedAt
 }

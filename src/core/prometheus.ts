@@ -405,3 +405,14 @@ export async function fetchCustomLobbies(
   )
   return data.lobbies;
 }
+
+/**
+ * Fetch online friends list for Discord
+*/
+export async function fetchDiscordFriends() {
+  return (
+    await client.get<PROMETHEUS.API.PRESENCE.Friends>(
+      `/v1/presence/friends`
+    )
+  ).data
+}

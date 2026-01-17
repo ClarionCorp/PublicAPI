@@ -9,6 +9,8 @@ import { checkTrackingUpdates } from '../core/cronjobs/tracking';
 import { updateLeaderboard } from '../core/cronjobs/leaderboard';
 import { updateCharacterBoard } from '../core/cronjobs/charboard';
 import { updateTeams } from '../core/cronjobs/teams';
+import updateMapRotation from '../core/cronjobs/maps';
+import { refreshPlayerCount } from '../core/cronjobs/online';
 
 const logger = appLogger('Cron');
 
@@ -29,6 +31,16 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     await updateTeams();
   });
 
+  // [Maps] Every Monday at 5 pm. (EST)
+  cron.schedule('0 20 * * 1', async () => {
+    await updateMapRotation();
+  });
+
+  // [Maps] Every Tuesday at 5 pm. (EST)
+  cron.schedule('0 20 * * 2', async () => {
+    await updateMapRotation();
+  });
+
 
   // Only enables the rest in production.
   if (process.env.MODE === 'PRODUCTION') {
@@ -41,6 +53,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     // [YouTubeStreams] Every 15 minutes
     cron.schedule('*/15 * * * *', async () => {
       await updateYouTube();
+    })
+
+    // [PlayerCount] Every 10 minutes
+    cron.schedule('*/10 * * * *', async () => {
+      await refreshPlayerCount();
     })
 
     // [Leaderboard] Every 6 hours

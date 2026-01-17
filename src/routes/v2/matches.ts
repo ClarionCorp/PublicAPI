@@ -39,7 +39,13 @@ function parseTimeAgo(timeAgoStr: string): Date {
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { username } = req.params as { username: string };
-    const { refresh } = req.query as { refresh?: string };
+    const { refresh, mode: modeFilter } = req.query as { refresh?: string; mode?: string };
+
+    // Validate mode parameter if provided
+    const validModes = ['Normal', 'Ranked'];
+    if (modeFilter && !validModes.includes(modeFilter)) {
+      return reply.status(400).send({ error: `Invalid mode. Accepted values: ${validModes.join(', ')}` });
+    }
 
     try {
       // Fetch the player page
@@ -84,7 +90,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
       // Check the first (most recent) match for caching (skip if refresh=true)
       if (refresh !== 'true') {
-        const firstMatchCard = $('.match-card', matchHistory).first();
+        const firstMatchCard = $('[class^="match-card"]', matchHistory).first();
         if (firstMatchCard.length > 0) {
           const firstMatchResult = firstMatchCard.hasClass('loss') ? MatchStatus.DEFEAT : MatchStatus.VICTORY;
           const firstMapName = firstMatchCard.find('.map-name').text();
@@ -104,7 +110,10 @@ const matches: FastifyPluginAsync = async (fastify) => {
           // If the most recent match exists, return cached data
           if (existingMatch) {
             const cachedMatches = await fastify.prisma.matchHistory.findMany({
-              where: { playerId: player.id },
+              where: {
+                playerId: player.id,
+                ...(modeFilter && { mode: modeFilter })
+              },
               include: { playerStats: true },
               orderBy: { playedAt: 'desc' },
               take: 10
@@ -134,8 +143,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
       // First, collect all match data
       const matchDataArray: any[] = [];
 
-      // Extract data from each match card
-      $('.match-card', matchHistory).each((index: number, element: Element) => {
+      // Extract data from each match card (support both old 'match-card' and new 'match-card-{hash}' formats)
+      $('[class^="match-card"]', matchHistory).each((index: number, element: Element) => {
         const matchCard = $(element);
 
         // Match result (win/loss)
@@ -327,7 +336,10 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
       // Fetch and return the match history from database
       const savedMatches = await fastify.prisma.matchHistory.findMany({
-        where: { playerId: player.id },
+        where: {
+          playerId: player.id,
+          ...(modeFilter && { mode: modeFilter })
+        },
         include: { playerStats: true },
         orderBy: { playedAt: 'desc' },
         take: 10

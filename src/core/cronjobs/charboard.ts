@@ -3,7 +3,6 @@ import { appLogger } from "../../plugins/logger";
 import { prisma } from '../../plugins/prisma';
 import { sleep } from "../utils";
 import { getRankGroup } from "../ranks";
-import { PlayerLeaderboardType } from "../../types/players";
 import { fetchPlayerStats, fetchRankedPlayers } from "../prometheus";
 
 const leaderboardLogger = appLogger('CharacterLeaderboard');
