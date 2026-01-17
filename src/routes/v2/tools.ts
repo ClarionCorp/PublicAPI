@@ -3,6 +3,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
 import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
+import { PlayerStatus } from '../../../prisma/client';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
@@ -84,6 +85,29 @@ const tools: FastifyPluginAsync = async (fastify) => {
       const inRotation = await prisma.maps.findMany({ where: { active: true }, omit: { updatedAt: true } });
 
       return reply.status(200).send({ active: inRotation, all: allMaps });
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  fastify.get('/online', async (req, reply) => {
+    try {
+      const counts = await prisma.onlinePlayers.groupBy({
+        by: ['status'],
+        _count: true,
+      });
+
+      const byStatus = Object.fromEntries(
+        counts.map((g) => [g.status, g._count])
+      ) as Partial<Record<PlayerStatus, number>>;
+
+      return reply.status(200).send({
+        online: byStatus.ONLINE ?? 0,
+        queued: byStatus.INQUEUE ?? 0,
+        playing: byStatus.INGAME ?? 0
+      });
 
     } catch (e) {
       console.error(e);

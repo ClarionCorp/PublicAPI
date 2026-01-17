@@ -10,6 +10,7 @@ import { updateLeaderboard } from '../core/cronjobs/leaderboard';
 import { updateCharacterBoard } from '../core/cronjobs/charboard';
 import { updateTeams } from '../core/cronjobs/teams';
 import updateMapRotation from '../core/cronjobs/maps';
+import { refreshPlayerCount } from '../core/cronjobs/online';
 
 const logger = appLogger('Cron');
 
@@ -52,6 +53,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     // [YouTubeStreams] Every 15 minutes
     cron.schedule('*/15 * * * *', async () => {
       await updateYouTube();
+    })
+
+    // [PlayerCount] Every 10 minutes
+    cron.schedule('*/10 * * * *', async () => {
+      await refreshPlayerCount();
     })
 
     // [Leaderboard] Every 6 hours

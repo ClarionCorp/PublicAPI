@@ -39,6 +39,13 @@ enum ServiceToken {
   TWITCH
 }
 
+enum PlayerStatus {
+  ONLINE
+  OFFLINE
+  INGAME
+  INQUEUE
+}
+
 enum AnalyticServices {
   V2_ADMIN                                  //                                      /v2/admin
   V1_PLAYERS                                //                                      /v1/players
@@ -455,5 +462,12 @@ model Maps {
   imageUrl                                      String                                 @unique
   active                                        Boolean
   rotatedAt                                     DateTime                               @default(now())
+  updatedAt                                     DateTime                               @updatedAt
+}
+
+model OnlinePlayers {
+  userId                                        String                                 @id @unique
+  username                                      String
+  status                                        PlayerStatus
   updatedAt                                     DateTime                               @updatedAt
 }
