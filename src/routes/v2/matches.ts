@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { getCharacterIdFromName } from '../../core/utils';
-import { getMapIdFromName } from '../../objects/maps';
+import { getMapNameFromId } from '../../objects/maps';
 import { getRankThresholdFromName } from '../../core/ranks';
 import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory } from '../../core/matches';
 
@@ -86,7 +86,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
               return {
                 ...match,
-                mapId: getMapIdFromName(match.map) || null,
+                map: getMapNameFromId(match.map) || match.map,
+                mapId: match.map,
                 avgRankThreshold: getRankThresholdFromName(match.avgRank) || null,
                 banIds,
                 playerStats: match.playerStats.map(playerStat => ({
@@ -169,7 +170,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
         return {
           ...match,
-          mapId: getMapIdFromName(match.map) || null,
+          map: getMapNameFromId(match.map) || match.map,
+          mapId: match.map,
           avgRankThreshold: getRankThresholdFromName(match.avgRank) || null,
           banIds,
           playerStats: match.playerStats.map(playerStat => ({

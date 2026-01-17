@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio';
 import { Element } from 'domhandler';
 import { MatchStatus, Role } from '../../prisma/client';
+import { getMapIdFromName } from '../objects/maps';
 
 export interface PlayerStatData {
   userId: string;
@@ -75,9 +76,10 @@ export function parseFirstMatchForCache(html: string): { result: MatchStatus; ma
     return null;
   }
 
+  const mapName = firstMatchCard.find('.map-name').text();
   return {
     result: firstMatchCard.hasClass('loss') ? MatchStatus.DEFEAT : MatchStatus.VICTORY,
-    map: firstMatchCard.find('.map-name').text(),
+    map: getMapIdFromName(mapName) || mapName,
     duration: parseDuration(firstMatchCard.find('.duration').text())
   };
 }
@@ -213,7 +215,7 @@ export function parseMatchHistory(html: string, playerId: string): MatchData[] {
 
     matchDataArray.push({
       matchUniqueKey,
-      map: mapName,
+      map: getMapIdFromName(mapName) || mapName,
       role,
       mode,
       result: matchResult,
