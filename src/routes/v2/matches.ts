@@ -257,7 +257,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
       // Calculate stats for each map
       const mapStats = Object.entries(matchesByMap).map(([mapId, matches]) =>
         calculateMapStats(matches, player.id, mapId)
-      ).sort((a, b) => b.stats.games - a.stats.games);
+      ).sort((a, b) => b.stats.winRate - a.stats.winRate);
 
       return reply.status(200).send({
         calcTime: performance.now() - start,
