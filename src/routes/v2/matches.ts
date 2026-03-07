@@ -2,7 +2,8 @@ import { FastifyPluginAsync } from 'fastify';
 import { getCharacterIdFromName } from '../../core/utils';
 import { getMapNameFromId } from '../../objects/maps';
 import { getRankThresholdFromName } from '../../core/ranks';
-import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats } from '../../core/matches';
+import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats, getSeasonDateRange } from '../../core/matches';
+import { seasonCutoffs } from '../../objects/seasons';
 
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
@@ -192,12 +193,18 @@ const matches: FastifyPluginAsync = async (fastify) => {
   // Get stats for all maps for a player
   fastify.get('/:username/maps', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { username } = req.params as { username: string };
-    const { mode: modeFilter } = req.query as { mode?: string };
+    const { mode: modeFilter, season } = req.query as { mode?: string; season?: string };
 
     const validModes = ['Normal', 'Ranked'];
     if (modeFilter && !validModes.includes(modeFilter)) {
       return reply.status(400).send({ error: `Invalid mode. Accepted values: ${validModes.join(', ')}` });
     }
+
+    const validSeasons = [...Object.keys(seasonCutoffs).map(s => s.toLowerCase()), 'current'];
+    if (season && !validSeasons.includes(season.toLowerCase())) {
+      return reply.status(400).send({ error: `Invalid season. Accepted values: ${Object.keys(seasonCutoffs).join(', ')}, current` });
+    }
+    const seasonRange = getSeasonDateRange(season); // null only if invalid, already handled above
 
     try {
       const start = performance.now();
@@ -227,7 +234,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
       const allMatches = await fastify.prisma.matchHistory.findMany({
         where: {
           playerId: player.id,
-          ...(modeFilter && { mode: modeFilter })
+          ...(modeFilter && { mode: modeFilter }),
+          ...(seasonRange && { playedAt: seasonRange }),
         },
         include: { playerStats: true },
         orderBy: { playedAt: 'desc' }
@@ -258,6 +266,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
           username: player.username
         },
         mode: modeFilter || 'All',
+        season: season || 'current',
         maps: mapStats
       });
 
@@ -270,12 +279,18 @@ const matches: FastifyPluginAsync = async (fastify) => {
   // Get stats for a specific map for a player
   fastify.get('/:username/maps/:map', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { username, map } = req.params as { username: string; map: string };
-    const { mode: modeFilter } = req.query as { mode?: string };
+    const { mode: modeFilter, season } = req.query as { mode?: string; season?: string };
 
     const validModes = ['Normal', 'Ranked'];
     if (modeFilter && !validModes.includes(modeFilter)) {
       return reply.status(400).send({ error: `Invalid mode. Accepted values: ${validModes.join(', ')}` });
     }
+
+    const validSeasons = [...Object.keys(seasonCutoffs).map(s => s.toLowerCase()), 'current'];
+    if (season && !validSeasons.includes(season.toLowerCase())) {
+      return reply.status(400).send({ error: `Invalid season. Accepted values: ${Object.keys(seasonCutoffs).join(', ')}, current` });
+    }
+    const seasonRange = getSeasonDateRange(season); // null only if invalid, already handled above
 
     try {
       const start = performance.now();
@@ -305,7 +320,8 @@ const matches: FastifyPluginAsync = async (fastify) => {
         where: {
           playerId: player.id,
           map,
-          ...(modeFilter && { mode: modeFilter })
+          ...(modeFilter && { mode: modeFilter }),
+          ...(seasonRange && { playedAt: seasonRange }),
         },
         include: { playerStats: true },
         orderBy: { playedAt: 'desc' }
@@ -324,6 +340,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
           username: player.username
         },
         mode: modeFilter || 'All',
+        season: season || 'current',
         maps: [mapStats]
       });
 
