@@ -257,7 +257,14 @@ const matches: FastifyPluginAsync = async (fastify) => {
       // Calculate stats for each map
       const mapStats = Object.entries(matchesByMap).map(([mapId, matches]) =>
         calculateMapStats(matches, player.id, mapId)
-      ).sort((a, b) => b.stats.winRate - a.stats.winRate);
+      ).sort((a, b) => {
+          const minGames = 3;
+          const aEligible = a.stats.games >= minGames;
+          const bEligible = b.stats.games >= minGames;
+          if (aEligible !== bEligible) return aEligible ? -1 : 1;
+          return b.stats.winRate - a.stats.winRate;
+        }
+      );
 
       return reply.status(200).send({
         calcTime: performance.now() - start,
