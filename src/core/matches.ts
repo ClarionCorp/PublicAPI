@@ -3,6 +3,7 @@ import { Element } from 'domhandler';
 import { MatchStatus, Role } from '../../prisma/client';
 import { getMapIdFromName, getMapNameFromId } from '../objects/maps';
 import { getCharacterIdFromName } from './utils';
+import { seasonCutoffs } from '../objects/seasons';
 
 export interface PlayerStatData {
   userId: string;
@@ -40,6 +41,24 @@ export function parseDuration(durationStr: string): number {
   const minutes = parseInt(matches[1] || '0', 10);
   const seconds = parseInt(matches[2] || '0', 10);
   return minutes * 60 + seconds;
+}
+
+export function getSeasonDateRange(season?: string): { gte: Date; lt?: Date } | null {
+  const entries = Object.entries(seasonCutoffs).sort(
+    (a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime()
+  ); // sorted newest → oldest
+
+  if (!season || season === 'current') {
+    // Season 8: after Season 7's end cutoff, no upper bound
+    return { gte: new Date(entries[0][1]) };
+  }
+
+  const idx = entries.findIndex(([name]) => name.toLowerCase() === season.toLowerCase());
+  if (idx === -1) return null;
+
+  const lt = new Date(entries[idx][1]); // season's end
+  const gte = idx + 1 < entries.length ? new Date(entries[idx + 1][1]) : undefined; // prev season's end = this season's start
+  return { gte: gte ?? new Date(0), lt };
 }
 
 // Parse time ago to approximate date
