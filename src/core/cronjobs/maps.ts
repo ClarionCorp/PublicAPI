@@ -32,18 +32,30 @@ export default async function updateMapRotation(): Promise<void> {
 
     mapsLogger.info(`Processing ${scrapedMaps.length} maps from rotation...`);
 
+    // Fetch current active status for all maps in one query
+    const existingMaps = await prisma.maps.findMany({
+      where: { name: { in: Array.from(scrapedMapNames) } },
+      select: { name: true, active: true }
+    });
+    const existingMapStatus = new Map(existingMaps.map(m => [m.name, m.active]));
+
     // Upsert each scraped map with active=true
     for (const map of scrapedMaps) {
       // Extract the ID from the image path (e.g., GTD_SummerSplash from /static/img/maps/GTD_SummerSplash.png)
       const mapId = map.imagePath.replace(/^\/static\/img\/maps\//, '').replace(/\.png$/, '');
       const imageUrl = `${process.env.CDN_BASE_URL}/maps/${mapId}.webp`;
 
+      // Only update rotatedAt if the map is newly rotating in (was inactive or didn't exist)
+      const wasActive = existingMapStatus.get(map.name);
+      const isNewlyRotatedIn = wasActive === false || wasActive === undefined;
+
       await prisma.maps.upsert({
         where: { name: map.name },
         update: {
           active: true,
           imageUrl: imageUrl,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          ...(isNewlyRotatedIn && { rotatedAt: new Date() })
         },
         create: {
           id: mapId,
@@ -54,7 +66,7 @@ export default async function updateMapRotation(): Promise<void> {
         }
       });
 
-      mapsLogger.debug(`Upserted map: ${map.name} (active=true)`);
+      mapsLogger.debug(`Upserted map: ${map.name} (active=true${isNewlyRotatedIn ? ', rotatedAt updated' : ''})`);
     }
 
     // Set active=false for maps not in the current rotation
