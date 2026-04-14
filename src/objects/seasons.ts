@@ -1,4 +1,5 @@
 export const seasonCutoffs = {
+  "Season 8": "2026-04-14T20:30:00Z",
   "Season 7": "2026-01-13T19:00:00Z", // ex: January 13th @ 2PM EST -> UTC
   "Season 6": "2025-09-16T15:30:00Z",
   "Season 5": "2025-05-13T23:00:00Z",
