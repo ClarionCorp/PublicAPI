@@ -110,7 +110,7 @@ const players: FastifyPluginAsync = async (fastify) => {
     try {
       const [top3, playerEntry] = await Promise.all([
         prisma.roleBoard.findMany({
-          where: { characterId, role },
+          where: { characterId, role, gamemode },
           orderBy: { playerScore: 'desc' },
           take: 3,
           include: { player: true },
@@ -127,6 +127,7 @@ const players: FastifyPluginAsync = async (fastify) => {
             where: {
               characterId,
               role,
+              gamemode,
               playerScore: { gt: playerEntry.playerScore },
             },
           })) + 1
@@ -139,6 +140,7 @@ const players: FastifyPluginAsync = async (fastify) => {
               where: {
                 characterId,
                 role,
+                gamemode,
                 playerScore: { gt: playerEntry.playerScore },
               },
               orderBy: { playerScore: 'asc' },
@@ -148,6 +150,7 @@ const players: FastifyPluginAsync = async (fastify) => {
               where: {
                 characterId,
                 role,
+                gamemode,
                 playerScore: { lt: playerEntry.playerScore },
               },
               orderBy: { playerScore: 'desc' },
