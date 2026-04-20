@@ -17,6 +17,7 @@ import v1Routes from './routes/v1';
 import steamRefresh from './core/cronjobs/steam';
 import { fetchUsernameQuery } from './core/prometheus';
 import updateMapRotation from './core/cronjobs/maps';
+import { updateRoleBoard } from './core/cronjobs/roleboard';
 
 const fastify = Fastify({
   logger: {
@@ -99,17 +100,15 @@ const start = async () => {
     sleep(2000);
     await fetchUsernameQuery('blals'); // run fetch to refresh tokens
 
-    // sleep(2000);
-    // await steamRefresh();
+    // sleep(2000); await steamRefresh();
 
-    // sleep(2000);
-    // await updateTeams();
+    // sleep(2000); await updateTeams();
 
-    // sleep(2000);
-    // await updateMapRotation();
+    // sleep(2000); await updateMapRotation();
 
-    // sleep(2000);
-    // await updateLeaderboard();
+    // sleep(2000); await updateLeaderboard();
+
+    // sleep(2000); await updateRoleBoard();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

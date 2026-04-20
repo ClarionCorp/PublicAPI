@@ -11,6 +11,7 @@ import { updateCharacterBoard } from '../core/cronjobs/charboard';
 import { updateTeams } from '../core/cronjobs/teams';
 import updateMapRotation from '../core/cronjobs/maps';
 import { refreshPlayerCount } from '../core/cronjobs/online';
+import { updateRoleBoard } from '../core/cronjobs/roleboard';
 
 const logger = appLogger('Cron');
 
@@ -68,6 +69,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     // [CharacterBoard] Every Sunday at 2:00 am (offset from LB)
     cron.schedule('0 2 * * 0', async () => {
       await updateCharacterBoard();
+    })
+
+    // [RoleBoard] Every 4 hours (offset from LB)
+    cron.schedule('0 */4 * * *', async () => {
+      await updateRoleBoard();
     })
 
   }

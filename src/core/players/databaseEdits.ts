@@ -205,6 +205,7 @@ export async function usernameChanges(cachedPlayer: PlayerObjectType, odysseyPla
         where: { id: odysseyPlayer.playerId },
         data: { username: odysseyPlayer.username.toLocaleLowerCase() },
       });
+      await changeUsernameMatchHistory(cachedPlayer, odysseyPlayer); // Overwrite MHI for Player after changes
     } catch (error) {
       dbLogger.error(`Failed Update Player's USERNAME CHANGE:`, error);
       return cachedPlayer;
@@ -242,9 +243,27 @@ export async function updateNameHistory(cachedPlayer: PlayerObjectType, odysseyP
       },
       });
     }
-    } catch (error) {
+  } catch (error) {
     dbLogger.error(`Failed to add NAMEHISTORY entry:`, error);
-    }
+  }
+}
+
+// Updates existing MatchHistoryItem's with Players new username.
+// DOES NOT CHECK FOR NAME CHANGES ITSELF.
+export async function changeUsernameMatchHistory(cachedPlayer: PlayerObjectType, odysseyPlayer: PROMETHEUS.RAW.Player) {
+  const b4 = performance.now();
+  dbLogger.info(`Updating '${cachedPlayer.username}' to (${odysseyPlayer.username.toLocaleLowerCase()}) in Match History!`)
+  try {
+    
+    await prisma.matchHistoryItem.updateMany({
+      where: { userId: odysseyPlayer.playerId },
+      data: { username: odysseyPlayer.username, nameChanged: true }
+    });
+
+    dbLogger.info(`Updated Match History Items for ${odysseyPlayer.username}! (${(performance.now() - b4).toFixed(1)}ms)`)
+  } catch (error) {
+    dbLogger.error(`Failed to edit MATCH HISTORY ITEM entry:`, error);
+  }
 }
 
 // Updates a user's rating, separate from updatePlayer()

@@ -128,6 +128,7 @@ model Player {
   characterRatings                          PlayerCharacterRating[]
   ratings                                   PlayerRating[]
   teams                                     EsportsPlayers[]
+  roleBoardEntries                          RoleBoard[]
   playerStatus                              String                                  @default("Offline")
 }
 
@@ -442,6 +443,7 @@ model MatchHistoryItem {
   matchId                                       String
   team                                          Int                                    // 1 or 2
   match                                         MatchHistory                           @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  nameChanged                                   Boolean                                @default(false) // flip if username changed to show warning
 
   character                                     String
   role                                          Role
@@ -470,4 +472,35 @@ model OnlinePlayers {
   username                                      String
   status                                        PlayerStatus
   updatedAt                                     DateTime                               @updatedAt
+}
+
+// What shows up in CharacterModals for Striker Placement
+// Couldn't call it "Character Leaderboard" cause that's already a different thing (lol)
+model RoleBoard {
+  // Character Info
+  characterId                                   String
+  role                                          Role
+  gamemode                                      Gamemode
+  knockouts                                     Int
+  scores                                        Int
+  assists                                       Int
+  saves                                         Int
+  mvps                                          Int
+  games                                         Int
+  wins                                          Int
+  losses                                        Int
+
+  significance                                  Float?
+  playerScore                                   Float  // wanted it to be more different than "score" vs "scores".
+
+  // Player Info
+  globalRank                                    Int
+  rating                                        Int
+  playerId                                      String
+  player                                        Player                                 @relation(fields: [playerId], references: [id])
+  updatedAt                                     DateTime                               @updatedAt
+
+  @@id([playerId, characterId, role, gamemode])
+  @@index([characterId, role, gamemode])
+  @@index([characterId, role, gamemode, playerScore(sort: Desc)])
 }

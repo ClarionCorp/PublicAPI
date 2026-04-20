@@ -4,6 +4,7 @@ import { OurRegions } from '../../types/players';
 import { timeAgo } from '../../core/utils';
 import { sendToAnalytics } from '../../core/analytics';
 import { getRankFromLP, getRankGroup, Rank } from '../../core/ranks';
+import { Gamemode, Role } from '../../../prisma/client';
 
 interface PlayerProps {
   page: number;
@@ -12,6 +13,8 @@ interface PlayerProps {
   character?: string;
   role?: 'Forward' | 'Goalie'
   direction?: 'asc' | 'desc';
+  playerId?: string;
+  gamemode?: Gamemode;
   region: OurRegions;
 }
 
@@ -229,10 +232,46 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
   });
 
   // For World Comparison on CC Profiles
-  fastify.get('/presence', async (req, reply) => {
-    let { page, sort, rank, character, role, region, direction } = req.query as PlayerProps;
+  fastify.get('/roles', async (req, reply) => {
+    let { page, sort, direction, character, role, gamemode, playerId } = req.query as PlayerProps;
     
-  });
+    const SORTABLE = ['playerScore', 'games', 'wins', 'knockouts', 'saves', 'scores', 'assists', 'mvps', 'rating', 'globalRank']
+    const safeSortKey = SORTABLE.includes(sort) ? sort : 'playerScore'
+    const PAGE_SIZE = 50
+    const currentPage = Math.max(1, page || 1)
+
+    const where = {
+      ...(character  && { characterId: character }),
+      ...(gamemode   && { gamemode: gamemode as Gamemode }),
+      ...(role       && { role: role as Role }),
+      ...(playerId   && { playerId }),
+    }
+
+    const orderBy = {
+      [safeSortKey]: (direction ?? 'desc') as 'asc' | 'desc'
+    }
+
+    const [entries, total] = await Promise.all([
+      prisma.roleBoard.findMany({
+        where,
+        orderBy,
+        take: PAGE_SIZE,
+        skip: (currentPage - 1) * PAGE_SIZE,
+        include: { player: true },
+      }),
+      prisma.roleBoard.count({ where }),
+    ])
+
+    return reply.send({
+      data: entries,
+      meta: {
+        page:       currentPage,
+        pageSize:   PAGE_SIZE,
+        total,
+        totalPages: Math.ceil(total / PAGE_SIZE),
+      },
+    })
+  })
 };
 
 export default leaderboard;

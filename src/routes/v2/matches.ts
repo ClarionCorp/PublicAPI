@@ -4,6 +4,10 @@ import { getMapNameFromId } from '../../objects/maps';
 import { getRankThresholdFromName } from '../../core/ranks';
 import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats, getSeasonDateRange } from '../../core/matches';
 import { seasonCutoffs } from '../../objects/seasons';
+import { appLogger } from '../../plugins/logger';
+
+const dev_mode = process.env.MODE !== 'PRODUCTION';
+const logger = appLogger('Matches');
 
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
@@ -17,6 +21,11 @@ const matches: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
+      if (dev_mode) {
+        logger.warn(`Skipping because DEV_MODE is true! (Avoid spamming OS.GG)`);
+        return reply.status(503).send({ error: 'This feature is disabled in DEV MODE' });
+      };
+
       // Fetch the player page
       const response = await fetch(`https://stats.omegastrikers.gg/player/${username}`);
       if (!response.ok) {

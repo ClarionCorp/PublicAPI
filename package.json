@@ -23,6 +23,7 @@
     "inquirer": "^12.7.0",
     "node-cron": "^4.2.0",
     "obscenity": "^0.4.4",
+    "p-limit": "^7.3.0",
     "pino-pretty": "^13.0.0",
     "prisma": "^6.13.0",
     "sanitize-html": "^2.17.0",
