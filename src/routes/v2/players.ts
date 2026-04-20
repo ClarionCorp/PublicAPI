@@ -173,8 +173,8 @@ const players: FastifyPluginAsync = async (fastify) => {
 
       if (role === 'Forward') {
         statScore =
-          clamp(scorePG  / 11)  * 0.30 +
-          clamp(koPG     / 10)  * 0.35 +
+          clamp(scorePG  / 7)   * 0.35 + // 11 is technically max, but averaging 7 per game is insane
+          clamp(koPG     / 10)  * 0.30 +
           clamp(assistPG / 11)  * 0.15 +
           clamp(mvpRate)        * 0.10 +
           clamp(savePG   / 200) * 0.10

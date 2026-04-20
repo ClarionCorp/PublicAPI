@@ -117,7 +117,7 @@ function calcScore(data: {
 
   if (role === 'Forward') {
     base =
-      scorePG  * 10  +
+      scorePG  * 12  +
       koPG     * 4   +
       assistPG * 3   +
       savePG   * 0.4 +  // rewards midfielder saves without inflating scoring forwards
@@ -133,18 +133,18 @@ function calcScore(data: {
       winRate  * 5
   }
 
-  // Soft penalty below rating 1400, no bonus above it
-  const smurfDampening = rating < 1400
-    ? 0.6 + ((rating - 800) / 600) * 0.4
-    : 1.0
+  // Soft penalty below rating 1400, no bonus above it (unless inactive)
+  const smurfDampening = rating === 0 || rating >= 1400
+    ? 1.0
+    : 0.6 + ((rating - 800) / 600) * 0.4
 
-  // Minimum games guard - exclude from leaderboard entirely below this
-  if (games < 5) return 0
+  // Minimum games guard - push lucky or one-off players to bottom
+  const lowGamePenalty = games < 5 ? 0.2 + (games / 5) * 0.3 : 1.0
 
   // Breakeven at 50 games, capped at 1.5×
-  const consistencyMultiplier = Math.min(1.5, Math.log1p(games) / Math.log1p(50))
+  const consistencyMultiplier = Math.min(1.5, Math.log1p(games) / Math.log1p(25))
 
-  return base * smurfDampening * consistencyMultiplier
+  return base * smurfDampening * consistencyMultiplier * lowGamePenalty
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
