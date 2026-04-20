@@ -128,6 +128,7 @@ model Player {
   characterRatings                          PlayerCharacterRating[]
   ratings                                   PlayerRating[]
   teams                                     EsportsPlayers[]
+  roleBoardEntries                          RoleBoard[]
   playerStatus                              String                                  @default("Offline")
 }
 
@@ -470,4 +471,34 @@ model OnlinePlayers {
   username                                      String
   status                                        PlayerStatus
   updatedAt                                     DateTime                               @updatedAt
+}
+
+// What shows up in CharacterModals for Striker Placement
+// Couldn't call it "Character Leaderboard" cause that's already a different thing (lol)
+model RoleBoard {
+  // Character Info
+  characterId                                   String
+  role                                          Role
+  knockouts                                     Int
+  scores                                        Int
+  assists                                       Int
+  saves                                         Int
+  mvps                                          Int
+  games                                         Int
+  wins                                          Int
+  losses                                        Int
+
+  significance                                  Float?
+  playerScore                                   Float  // wanted it to be more different than "score" vs "scores".
+
+  // Player Info
+  globalRank                                    Int
+  rating                                        Int
+  playerId                                      String
+  player                                        Player                                 @relation(fields: [playerId], references: [id])
+  updatedAt                                     DateTime                               @updatedAt
+
+  @@id([playerId, characterId, role])
+  @@index([characterId, role])
+  @@index([characterId, role, playerScore(sort: Desc)])
 }
