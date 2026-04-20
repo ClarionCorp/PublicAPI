@@ -443,6 +443,7 @@ model MatchHistoryItem {
   matchId                                       String
   team                                          Int                                    // 1 or 2
   match                                         MatchHistory                           @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  nameChanged                                   Boolean                                @default(false) // flip if username changed to show warning
 
   character                                     String
   role                                          Role
