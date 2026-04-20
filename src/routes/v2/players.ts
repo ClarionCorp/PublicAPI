@@ -7,6 +7,7 @@ import { regions } from '../../types/players';
 import { calculatePlaystyle } from '../../core/players/misc';
 import { prisma } from '../../plugins/prisma';
 import { fetchCharacterMastery, fetchPlayerMastery } from '../../core/prometheus';
+import { Gamemode, Role } from '../../../prisma/client';
 
 const ensureLogger = appLogger('PlayerRoute/v2')
 
@@ -97,9 +98,9 @@ const players: FastifyPluginAsync = async (fastify) => {
     const inType = getTypeOfInput(input);
     let id = input;
 
-    const body = req.body as { characterId: string, role: 'Forward' | 'Goalie' };
-    const { characterId, role } = body;
-    if (!characterId || !role) { return reply.status(400).send({ error: 'Missing fields' }) };
+    const body = req.body as { characterId: string, role: Role, gamemode: Gamemode };
+    const { characterId, role, gamemode } = body;
+    if (!characterId || !role || !gamemode) { return reply.status(400).send({ error: 'Missing fields' }) };
 
     if (inType == 'username') {
       const user = await prisma.player.findFirst({ where: { username: input }});
@@ -115,7 +116,7 @@ const players: FastifyPluginAsync = async (fastify) => {
           include: { player: true },
         }),
         prisma.roleBoard.findUnique({
-          where: { playerId_characterId_role: { playerId: id, characterId, role } },
+          where: { playerId_characterId_role_gamemode: { playerId: id, characterId, role, gamemode } },
           include: { player: true },
         }),
       ])

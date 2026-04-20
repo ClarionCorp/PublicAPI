@@ -4,7 +4,7 @@ import { OurRegions } from '../../types/players';
 import { timeAgo } from '../../core/utils';
 import { sendToAnalytics } from '../../core/analytics';
 import { getRankFromLP, getRankGroup, Rank } from '../../core/ranks';
-import { Role } from '../../../prisma/client';
+import { Gamemode, Role } from '../../../prisma/client';
 
 interface PlayerProps {
   page: number;
@@ -14,6 +14,7 @@ interface PlayerProps {
   role?: 'Forward' | 'Goalie'
   direction?: 'asc' | 'desc';
   playerId?: string;
+  gamemode?: Gamemode;
   region: OurRegions;
 }
 
@@ -232,7 +233,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
 
   // For World Comparison on CC Profiles
   fastify.get('/roles', async (req, reply) => {
-    let { page, sort, direction, character, role, playerId } = req.query as PlayerProps;
+    let { page, sort, direction, character, role, gamemode, playerId } = req.query as PlayerProps;
     
     const SORTABLE = ['playerScore', 'games', 'wins', 'knockouts', 'saves', 'scores', 'assists', 'mvps', 'rating', 'globalRank']
     const safeSortKey = SORTABLE.includes(sort) ? sort : 'playerScore'
@@ -241,6 +242,7 @@ const leaderboard: FastifyPluginAsync = async (fastify) => {
 
     const where = {
       ...(character  && { characterId: character }),
+      ...(gamemode   && { gamemode: gamemode as Gamemode }),
       ...(role       && { role: role as Role }),
       ...(playerId   && { playerId }),
     }

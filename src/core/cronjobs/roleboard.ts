@@ -13,7 +13,7 @@ export async function updateRoleBoard() {
 
   // Aggregate stats across all gamemodes in the DB
   const grouped = await prisma.playerCharacterRating.groupBy({
-    by: ['playerId', 'character', 'role'],
+    by: ['playerId', 'character', 'role', 'gamemode'],
     _sum: {
       games: true,
       assists: true,
@@ -59,6 +59,7 @@ export async function updateRoleBoard() {
         playerId: row.playerId,
         characterId: row.character,
         role: row.role as Role,
+        gamemode: row.gamemode,
         playerScore: score,
         games,
         knockouts: s.knockouts ?? 0,

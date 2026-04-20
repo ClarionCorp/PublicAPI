@@ -479,6 +479,7 @@ model RoleBoard {
   // Character Info
   characterId                                   String
   role                                          Role
+  gamemode                                      Gamemode
   knockouts                                     Int
   scores                                        Int
   assists                                       Int
@@ -498,7 +499,7 @@ model RoleBoard {
   player                                        Player                                 @relation(fields: [playerId], references: [id])
   updatedAt                                     DateTime                               @updatedAt
 
-  @@id([playerId, characterId, role])
-  @@index([characterId, role])
-  @@index([characterId, role, playerScore(sort: Desc)])
+  @@id([playerId, characterId, role, gamemode])
+  @@index([characterId, role, gamemode])
+  @@index([characterId, role, gamemode, playerScore(sort: Desc)])
 }
