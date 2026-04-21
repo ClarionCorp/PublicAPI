@@ -159,6 +159,9 @@ const players: FastifyPluginAsync = async (fastify) => {
           ])
         : [null, null]
 
+      if (!playerEntry || !playerEntry.knockouts) {
+        return reply.status(404).send({ error: "Player has no logged stats for this selection yet." });
+      }
       
       // Calc Presence Significance
       const koPG = playerEntry.knockouts / playerEntry.games

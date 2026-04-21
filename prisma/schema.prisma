@@ -61,6 +61,7 @@ enum AnalyticServices {
   V2_LIVERATING                             //                                      /v2/liverating
   V2_HISTORY_CHARACTERS                     //                                      /v2/history/characters
   V2_HISTORY_PLAYERS                        //                                      /v2/history/players
+  V2_CUSTOMS_BROWSE                         //                                      /v2/customs/browse
 }
 
 // Internal Service Tokens
