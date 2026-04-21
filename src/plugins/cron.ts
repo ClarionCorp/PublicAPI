@@ -71,8 +71,8 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
       await updateCharacterBoard();
     })
 
-    // [RoleBoard] Every 4 hours (offset from LB)
-    cron.schedule('0 */4 * * *', async () => {
+    // [RoleBoard] Every 2 hours (offset from LB)
+    cron.schedule('0 */2 * * *', async () => {
       await updateRoleBoard();
     })
 

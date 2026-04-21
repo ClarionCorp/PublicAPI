@@ -1,6 +1,6 @@
 // Assorted stuff that people can use :)
 
-import { sendToAnalytics } from '@/core/analytics';
+import { sendToAnalytics } from '../../core/analytics';
 import { fetchCustomLobbies } from '../../core/prometheus';
 import { FastifyPluginAsync } from 'fastify';
 
