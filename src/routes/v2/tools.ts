@@ -13,6 +13,10 @@ const tools: FastifyPluginAsync = async (fastify) => {
       const awakenings = await prisma.awakenings.findMany({
         where: {
           ...(active === 'true' ? { active: true } : {})
+        },
+        omit: {
+          description: true,
+          rotatedIn: true
         }
       });
 

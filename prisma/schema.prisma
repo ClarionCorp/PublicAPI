@@ -353,7 +353,7 @@ model tempRating {
 model Awakenings {
   id                                        String                                  @id @unique
   name                                      String
-  description                               String
+  description                               String?
   image                                     String
   active                                    Boolean
   rotatedIn                                 DateTime                                @default(now())
