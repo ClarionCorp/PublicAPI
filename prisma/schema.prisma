@@ -355,7 +355,8 @@ model Awakenings {
   name                                      String
   description                               String?
   image                                     String
-  active                                    Boolean
+  active                                    Boolean                                 @default(false)
+  gear                                      Boolean                                 @default(false)
   rotatedIn                                 DateTime                                @default(now())
 }
 
