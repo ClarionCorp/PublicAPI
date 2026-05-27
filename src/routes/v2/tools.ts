@@ -17,7 +17,8 @@ const tools: FastifyPluginAsync = async (fastify) => {
         omit: {
           description: true,
           rotatedIn: true
-        }
+        },
+        orderBy: { name: 'asc' }
       });
 
       return reply.status(200).send(awakenings);
