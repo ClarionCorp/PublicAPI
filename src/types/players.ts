@@ -215,13 +215,24 @@ type CorestrikeStat = {
   saves: number,
 }
 
-type RoleCategoryPS = {
+export type RoleCategoryPS = {
   multiplier: number,
   avgPerGame: number
 }
 
+export type PlaystyleType = 
+  'Brawler' |
+  'Midfielder' |
+  'Hard Forward' |
+  'Offensive Goalie' |
+  'Defensive Goalie' |
+  'Generic Goalie' |
+  'Generic Forward'
+;
+
 // Multipliers, used for polygonal graphs
 export type RolePlaystyle = {
+  type?: PlaystyleType
   assists: RoleCategoryPS
   knockouts: RoleCategoryPS
   scores: RoleCategoryPS

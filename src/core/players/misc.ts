@@ -1,7 +1,7 @@
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
 import { PROMETHEUS } from '../../types/prometheus';
-import { PlayerCharacterRatingObjectType, PlayerObjectType, RolePlaystyle } from '../../types/players';
+import { PlayerCharacterRatingObjectType, PlayerObjectType, PlaystyleType, RoleCategoryPS, RolePlaystyle } from '../../types/players';
 import { Team } from '../../types/teams';
 
 const miscLogger = appLogger('Players/Misc')
@@ -189,5 +189,57 @@ export function calculatePlaystyle(characterRatings: PlayerCharacterRatingObject
     }
   }
 
+  playstyle.forward.type = getPlaystyleType('Forward', playstyle.forward.assists, playstyle.forward.knockouts, playstyle.forward.scores, playstyle.forward.saves);
+  playstyle.goalie.type = getPlaystyleType('Goalie', playstyle.goalie.assists, playstyle.goalie.knockouts, playstyle.goalie.scores, playstyle.goalie.saves);
+
   return playstyle;
+}
+
+// function getPlaystyleType(
+//   role: 'Forward' | 'Goalie',
+//   assists: RoleCategoryPS,
+//   kos: RoleCategoryPS,
+//   scores: RoleCategoryPS,
+//   saves: RoleCategoryPS
+// ): PlaystyleType {
+//   if (role === 'Goalie') {
+//     if (kos.multiplier > 1.5 || scores.multiplier > 1.5 || assists.multiplier > 2.5) return 'Offensive Goalie';
+//     else if (saves.multiplier > 50 && scores.multiplier < 1.0) return 'Defensive Goalie';
+//     else return 'Generic Goalie';
+//   }
+
+//   if (role === 'Forward') {
+//     if (kos.multiplier > 4.0) return 'Brawler';
+//     else if (scores.multiplier > 3.0) return 'Hard Forward';
+//     else if ((saves.multiplier > 30 && assists.multiplier > 3.0) || (assists.multiplier > scores.multiplier)) return 'Midfielder';
+//     else return 'Generic Forward';
+//   }
+// }
+
+function getPlaystyleType(
+  role: 'Forward' | 'Goalie',
+  assists: RoleCategoryPS,
+  kos: RoleCategoryPS,
+  scores: RoleCategoryPS,
+  saves: RoleCategoryPS
+): PlaystyleType {
+  if (role === 'Goalie') {
+    if (kos.avgPerGame > 3.75 || scores.avgPerGame > 2.0 || assists.avgPerGame > 3.75) return 'Offensive Goalie';
+    else if ((saves.avgPerGame > 50) || (saves.avgPerGame > 40 && scores.avgPerGame < 1.5)) return 'Defensive Goalie';
+    else return 'Generic Goalie';
+  }
+
+  if (role === 'Forward') {
+    if (kos.avgPerGame > 3.5) return 'Brawler';
+
+    else if ( // MF is a complex role to detect, sorry lol
+      (saves.avgPerGame > 20 && assists.avgPerGame > 3.0) ||
+      (assists.avgPerGame > scores.avgPerGame) ||
+      (saves.multiplier > scores.multiplier) ||
+      ((saves.multiplier + assists.multiplier)*0.75 > scores.multiplier))
+    return 'Midfielder';
+
+    else if (scores.avgPerGame > 3.5) return 'Hard Forward';
+    else return 'Generic Forward';
+  }
 }
