@@ -414,6 +414,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
       await fastify.inject({
         method: 'GET',
         url: `/v2/matches/${body.owner.username}`,
+        headers: { 'authorization': req.headers.authorization }
       });
       
       const allMatches = await fastify.prisma.matchHistory.findMany({
