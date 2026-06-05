@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { Element } from 'domhandler';
-import { MatchStatus, Role } from '../../prisma/client';
+import { Gamemode, MatchStatus, Role } from '../../prisma/client';
 import { getMapIdFromName, getMapNameFromId } from '../objects/maps';
 import { getCharacterIdFromName } from './utils';
 import { seasonCutoffs } from '../objects/seasons';
@@ -32,6 +32,25 @@ export interface MatchData {
   mvpId: string | null;
   playedAt: Date;
   playerItems: PlayerStatData[];
+}
+
+export type MatchSlice = {
+  playedAt: number, // unix timestamp
+  mapId: string,
+  players: {
+    username: string
+  }[],
+  owner: {
+    username: string,
+    playerId: string,
+    assists: number,
+    scores: number,
+    saves: number,
+    knockouts: number,
+    characterId: string,
+  },
+  result: MatchStatus,
+  queue: Gamemode,
 }
 
 // Parse duration string like "11m 55s" to seconds

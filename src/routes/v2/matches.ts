@@ -1,8 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
-import { getCharacterIdFromName } from '../../core/utils';
-import { getMapNameFromId } from '../../objects/maps';
+import { getCharacterFromDevName, getCharacterIdFromName } from '../../core/utils';
+import { getMapFromAppId, getMapNameFromId } from '../../objects/maps';
 import { getRankThresholdFromName } from '../../core/ranks';
-import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats, getSeasonDateRange } from '../../core/matches';
+import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats, getSeasonDateRange, MatchSlice } from '../../core/matches';
 import { seasonCutoffs } from '../../objects/seasons';
 import { appLogger } from '../../plugins/logger';
 
@@ -402,6 +402,54 @@ const matches: FastifyPluginAsync = async (fastify) => {
     } catch (error) {
       console.error('Error fetching map stats:', error);
       return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Validate Match History from Ai.Mi App API
+  fastify.post('/validate', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+    try {
+      const body = req.body as MatchSlice;
+      
+      // First, update player's match history (or not if cached)
+      await fastify.inject({
+        method: 'GET',
+        url: `/v2/matches/${body.owner.username}`,
+      });
+      
+      const allMatches = await fastify.prisma.matchHistory.findMany({
+        where: { playerId: body.owner.playerId },
+        include: { playerStats: true }
+      });
+
+      // maybe add awakenings to this? could be annoying though..
+      const matchedMatch = allMatches
+        .filter(match => match.map === getMapFromAppId(body.mapId).id)
+        .filter(match => match.result === body.result)
+        .filter(match => match.mode === body.queue)
+        .filter(match => {
+          const ownerStat = match.playerStats.find(ps => ps.userId === body.owner.playerId);
+          if (!ownerStat) return false;
+          return (
+            ownerStat.scores === body.owner.scores &&
+            ownerStat.assists === body.owner.assists &&
+            ownerStat.saves === body.owner.saves &&
+            ownerStat.knockouts === body.owner.knockouts &&
+            ownerStat.character === getCharacterFromDevName(body.owner.characterId).name
+          );
+        })
+        .find(match => {
+          const matchUsernames = new Set(match.playerStats.map(ps => ps.username).filter(Boolean));
+          return body.players.every(p => matchUsernames.has(p.username));
+        });
+
+      if (!matchedMatch) {
+        return reply.status(404).send({ id: null, error: 'No matches found for this slice' });
+      }
+
+      return reply.status(200).send({ id: matchedMatch.id });
+
+    } catch (e) {
+      logger.error(`Something went wrong while validating a match!`, e);
     }
   });
 };
