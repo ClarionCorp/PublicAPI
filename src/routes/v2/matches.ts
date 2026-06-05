@@ -8,6 +8,7 @@ import { appLogger } from '../../plugins/logger';
 
 const dev_mode = process.env.MODE !== 'PRODUCTION';
 const logger = appLogger('Matches');
+const playerFetchCache = new Map<string, number>(); // in memory cache, non persistive (doesnt matter)
 
 const matches: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
@@ -25,6 +26,43 @@ const matches: FastifyPluginAsync = async (fastify) => {
         logger.warn(`Skipping because DEV_MODE is true! (Avoid spamming OS.GG)`);
         return reply.status(503).send({ error: 'This feature is disabled in DEV MODE' });
       };
+
+      const cacheKey = username.toLowerCase();
+      const lastFetched = playerFetchCache.get(cacheKey);
+      if (refresh !== 'true' && lastFetched && Date.now() - lastFetched < 300_000) {
+        const start = performance.now();
+        let player = await fastify.prisma.player.findUnique({ where: { username } });
+        if (!player) {
+          const players = await fastify.prisma.player.findMany({
+            where: { username: { equals: username, mode: 'insensitive' } },
+            take: 1
+          });
+          player = players[0] || null;
+        }
+        if (player) {
+          const cachedMatches = await fastify.prisma.matchHistory.findMany({
+            where: { playerId: player.id, ...(modeFilter && { mode: modeFilter }) },
+            include: { playerStats: true },
+            orderBy: { playedAt: 'desc' },
+            take: 10
+          });
+          const transformed = cachedMatches.map(match => {
+            const banIds = match.bans.map(banName => getCharacterIdFromName(banName) || null);
+            return {
+              ...match,
+              map: getMapNameFromId(match.map) || match.map,
+              mapId: match.map,
+              avgRankThreshold: getRankThresholdFromName(match.avgRank) || null,
+              banIds,
+              playerStats: match.playerStats.map(playerStat => ({
+                ...playerStat,
+                characterId: getCharacterIdFromName(playerStat.character) || null,
+              }))
+            };
+          });
+          return reply.status(200).send({ calcTime: performance.now() - start, matches: transformed });
+        }
+      }
 
       // Fetch the player page
       const response = await fetch(`https://stats.omegastrikers.gg/player/${username}`);
@@ -161,6 +199,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
 
       // Wait for all matches to be saved
       await Promise.all(matchPromises);
+      playerFetchCache.set(cacheKey, Date.now());
 
       // Fetch and return the match history from database
       const savedMatches = await fastify.prisma.matchHistory.findMany({
