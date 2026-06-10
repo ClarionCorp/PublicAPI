@@ -389,8 +389,9 @@ export async function createPlayer(data: NewPlayer): Promise<PlayerObjectType | 
   }   
 }
 
-export async function checkDiscord(player: PROMETHEUS.RAW.Player, discordId: string) {
+export async function checkDiscord(player: PROMETHEUS.RAW.Player) {
   try {
+    const discordId = player.platformIds.discord?.discordId;
     const dbUser = await prisma.player.findUnique({
       where: {
         id: player.playerId,
@@ -400,18 +401,18 @@ export async function checkDiscord(player: PROMETHEUS.RAW.Player, discordId: str
       }
     });
 
-    const currentSnowflake = dbUser!.discordId
+    const currentDID = dbUser!.discordId;
 
-    if (currentSnowflake && currentSnowflake == discordId) // This and the function above makes sure the player doesn't already have the discordId bound.
+    if (currentDID && currentDID == discordId) // This and the function above makes sure the player doesn't already have the same discordId bound.
     return; // No log, otherwise it would spam the shit out of console lol
 
     await prisma.player.update({
-    where: {
-      id: player.playerId,
-    },
-    data: {
-      discordId: discordId
-    }
+      where: {
+        id: player.playerId,
+      },
+      data: {
+        discordId: discordId
+      }
     });
   
     discordLogger.debug(`Set ${player.username}'s Discord ID to ${discordId}!`);

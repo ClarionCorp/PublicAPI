@@ -90,7 +90,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
         if (cachedPlayer && (cachedPlayer.region == 'Global' || cachedPlayer.region == null)) {
           ensureLogger.warn(`Resetting ${cachedPlayer.username}'s region to ${ensuredRegion.region} locally!`);
-          const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+          const getTitle = getTitleFromID(odysseyPlayer.titleId);
           const resolveTitle = getTitle ? getTitle.en : null;
           await prisma.player.update({ where: { id: cachedPlayer.id }, data: { region: ensuredRegion.region, title: resolveTitle } });
           cachedPlayer = { // Update already-fetched cachedPlayer
@@ -234,10 +234,14 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
 
   const ignoreUpdates = shouldUpdateUser(updateParams);
 
+  if (odysseyPlayer.platformIds?.discord) {
+    await checkDiscord(odysseyPlayer);
+  }
+
   // Player has not played the game since their last update.
   if (ignoreUpdates) {
     if (name !== statusName) { ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`); };
-    const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+    const getTitle = getTitleFromID(odysseyPlayer.titleId);
 
     return {
       data: {
@@ -261,16 +265,12 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
   // AKA, (ignoreUpdates) is FALSE, and we need to update them now.
   // Can use odysseyPlayer as much as you want now. (Depending on context)
   // Also cachedPlayer definitely exists (by this point) and matches odysseyPlayer.
-
-  if (odysseyPlayer.platformIds.discord) {
-    await checkDiscord(odysseyPlayer, odysseyPlayer.platformIds.discord.discordId);
-  }
   
   ensureLogger.info(`Updating profile of '${decodedUser}'...`);
     
   // namehistory function
 
-  const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+  const getTitle = getTitleFromID(odysseyPlayer.titleId);
 
   const basicUpdate = await prisma.player.update({
     where: {
@@ -386,7 +386,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
         });
       }
     
-      const getTitle = await getTitleFromID(odysseyPlayer.titleId);
+      const getTitle = getTitleFromID(odysseyPlayer.titleId);
 
       await prisma.player.update({
         data: {

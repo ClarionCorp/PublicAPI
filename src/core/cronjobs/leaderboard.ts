@@ -191,8 +191,9 @@ async function populateByBoardOffset(offset = 0, count = 25, region?: OurRegions
         }
       }
       await insertRating(player.rating, player);
+
       if (player.platformIds?.discord) {
-        await checkDiscord(player, player.platformIds.discord.discordId)
+        await checkDiscord(player);
       }
 
       async function logPlayerRating(playerId: string, newRating: number) {
