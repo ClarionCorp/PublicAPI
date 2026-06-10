@@ -1,4 +1,4 @@
-import { prisma } from '../../plugins/prisma';
+import { Title, titles } from '../../objects/titles';
 
 export type TitleObject = {
   id: string,
@@ -7,12 +7,7 @@ export type TitleObject = {
   unlockMethod?: string | null,
 }
 
-export async function getTitleFromID(id: string): Promise<TitleObject | null> {
-  try {
-    const fetched = await prisma.titles.findFirst({ where: { id } });
-    return fetched;
-  } catch (e) {
-    console.error(e);
-    return null;
-  }
+// Resolves their title from the ID
+export function getTitleFromID(id: string): Title | undefined {
+  return titles.find(t => t.id === id)
 }
