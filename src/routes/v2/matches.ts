@@ -423,28 +423,29 @@ const matches: FastifyPluginAsync = async (fastify) => {
       });
 
       // maybe add awakenings to this? could be annoying though..
-      const matchedMatch = allMatches
-        .filter(match => match.map === getMapFromAppId(body.mapId).id)
-        .filter(match => match.result === body.result)
-        .filter(match => match.mode === body.queue)
-        .filter(match => {
-          const ownerStat = match.playerStats.find(ps => ps.userId === body.owner.playerId);
-          if (!ownerStat) return false;
-          return (
-            ownerStat.scores === body.owner.scores &&
-            ownerStat.assists === body.owner.assists &&
-            ownerStat.saves === body.owner.saves &&
-            ownerStat.knockouts === body.owner.knockouts &&
-            ownerStat.character === getCharacterFromDevName(body.owner.characterId).name
-          );
-        })
-        .find(match => {
-          const matchUsernames = new Set(match.playerStats.map(ps => ps.username).filter(Boolean));
-          return body.players.every(p => matchUsernames.has(p.username));
-        });
+      // logger.debug(`Matching slice — total: ${allMatches.length} | GASK: ${body.owner.scores}/${body.owner.assists}/${body.owner.saves}/${body.owner.knockouts}`);
+      const afterMap = allMatches.filter(match => match.map === getMapFromAppId(body.mapId).id);
+      const afterResult = afterMap.filter(match => match.result === body.result);
+      const afterMode = afterResult.filter(match => match.mode === body.queue);
+      const afterStats = afterMode.filter(match => {
+        const ownerStat = match.playerStats.find(ps => ps.userId === body.owner.playerId);
+        if (!ownerStat) return false;
+        return (
+          ownerStat.scores === body.owner.scores &&
+          ownerStat.assists === body.owner.assists &&
+          ownerStat.saves === body.owner.saves &&
+          ownerStat.knockouts === body.owner.knockouts &&
+          ownerStat.character === getCharacterFromDevName(body.owner.characterId).name
+        );
+      });
+      // logger.debug(`After map: ${afterMap.length} | result: ${afterResult.length} | mode: ${afterMode.length} | stats: ${afterStats.length}`);
+      const matchedMatch = afterStats.find(match => {
+        const bodyPlayerIds = new Set(body.players.map(p => p.playerId));
+        return match.playerStats.every(ps => bodyPlayerIds.has(ps.userId));
+      });
 
       if (!matchedMatch) {
-        return reply.status(404).send({ id: null, error: 'No matches found for this slice' });
+        return reply.status(400).send({ id: null, error: 'No matches found for this slice' });
       }
 
       return reply.status(200).send({ id: matchedMatch.id });

@@ -38,7 +38,8 @@ export type MatchSlice = {
   playedAt: number, // unix timestamp
   mapId: string,
   players: {
-    username: string
+    username: string,
+    playerId: string,
   }[],
   owner: {
     username: string,
