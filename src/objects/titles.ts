@@ -616,4 +616,20 @@ export const titles: Title[] = [
     id: "TitleData_CoreBoys",
     en: "CoreBoys",
   },
+  {
+    id: "TitleData_VerifiedFortress",
+    en: "Verified Fortress",
+  },
+  {
+    id: "TitleData_VerifiedKOChamp",
+    en: "Verified KO Champ",
+  },
+  {
+    id: "TitleData_VerifiedEgoist",
+    en: "Verified Egoist",
+  },
+  {
+    id: "TitleData_VerifiedMVP",
+    en: "Verified MVP",
+  },
 ]
