@@ -612,4 +612,8 @@ export const titles: Title[] = [
     id: "TitleData_WhipFighterMastery",
     en: "Off the Hook",
   },
+  {
+    id: "TitleData_CoreBoys",
+    en: "CoreBoys",
+  },
 ]
