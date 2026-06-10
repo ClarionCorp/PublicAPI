@@ -11,6 +11,15 @@ import { Gamemode, Role } from '../../../prisma/client';
 
 const ensureLogger = appLogger('PlayerRoute/v2')
 
+const playerCache = new Map<string, { data: unknown; expiresAt: number }>();
+const TTL = 10_000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of playerCache) {
+    if (now >= entry.expiresAt) playerCache.delete(key);
+  }
+}, 60_000);
+
 // Users must have a valid JWT to use this endpoint.
 // I hate doing this but we cannot gamble someone abusing it.
 // (If we get rate limited it could shutdown CC)
@@ -22,18 +31,25 @@ const players: FastifyPluginAsync = async (fastify) => {
 
     if (region && (!regions.includes(region))) { region = 'Global' };
 
+    const cacheKey = `${input}:${region ?? 'Global'}`;
+    const cachedEntry = playerCache.get(cacheKey);
+    if (cachedEntry && Date.now() < cachedEntry.expiresAt) {
+      return reply.status(200).send(cachedEntry.data);
+    }
+
     try {
       if (inType == 'id') {
         ensureLogger.info(`User is searching with ID, passing off to ID-Search...`);
         const response = await searchByID(input, req, region, cached);
+        if (response.ok) playerCache.set(cacheKey, { data: response.data, expiresAt: Date.now() + TTL });
         return reply.status(response.status).send(response.ok ? response.data : { error: response.message });
       } else {
         const response = await usernameSearch(input, req, region, cached);
-  
+        if (response.ok) playerCache.set(cacheKey, { data: response.data, expiresAt: Date.now() + TTL });
         return reply.status(response.status).send(response.ok ? response.data : { error: response.message });
       }
     } catch (error) {
-      // ensureLogger.error(`Error while FETCHING PLAYER: `, error);
+      ensureLogger.error(`Error while FETCHING PLAYER: `, error);
       return reply.status(500).send({ error });
     }
   });
