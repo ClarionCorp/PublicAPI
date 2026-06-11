@@ -150,7 +150,7 @@ function calcScore(data: {
   //
   // Goalie:
   //   Saves: x5 (primary), KOs: x3, Assists: x2.
-  //   Scores excluded: goalie goals are too rare and situational to use as a meaningful ranking signal. (may change)
+  //   Scores included: we need to reward aggressive goalies slightly too.
   //
   // Volume uses the same stat priority but at lower weights (x1.2 / x0.7 / x0.5)
   // so accumulated totals are a secondary signal, not the headline number.
@@ -158,11 +158,11 @@ function calcScore(data: {
   let volume: number;
 
   if (role === 'Forward') {
-    pgQuality = normScorePG * 5 + normKoPG * 3 + normAssistPG * 2 + normSavePG * 1.5;
+    pgQuality = normScorePG * 5 + normKoPG * 3 + normAssistPG * 2 + normSavePG * 1;
     volume = normScoreVol * 1.2 + normKoVol * 0.7 + normAssistVol * 0.5 + normSaveVol * 0.3;
   } else {
-    pgQuality = normSavePG * 5 + normKoPG * 3 + normAssistPG * 2;
-    volume = normSaveVol * 1.2 + normKoVol * 0.7 + normAssistVol * 0.5;
+    pgQuality = normSavePG * 4 + normKoPG * 3.5 + normAssistPG * 2.5 + normScorePG * 0.5;
+    volume = normSaveVol * 1.2 + normKoVol * 0.7 + normAssistVol * 0.5 + normScoreVol * 0.1;
   }
 
   //  Base Score
@@ -185,10 +185,10 @@ function calcScore(data: {
   //      Same weight for both roles; MVP is earned by whoever carried hardest
   //      regardless of position.
   const base =
-    pgQuality * (1 + winRate) +   // 1. Win-amplified per-game quality
-    volume +                      // 2. Log-compressed accumulated totals
-    winRate * 1.5 +               // 3. Win rate as a standalone term
-    mvpRate * 1.5                 // 4. MVP rate (role-agnostic)
+    pgQuality * (1 + winRate) +                     // 1. Win-amplified per-game quality
+    volume +                                        // 2. Log-compressed accumulated totals
+    winRate * (role === 'Goalie' ? 3.0 : 1.5) +     // 3. Win rate as a standalone term (higher for goalies)
+    mvpRate * (role === 'Goalie' ? 3.5 : 2.5)       // 4. MVP rate
 
   //  Rating Multiplier
   // Rating is a subtle modifier. The intent is to stop a Silver from outranking
@@ -222,9 +222,9 @@ function calcScore(data: {
   // 100% WR shouldn't sit at #1 -- there isn't enough data to call it
   // consistent. The penalty fades to nothing at 20 games (a fair amount).
   //
-  //   1 game: x0.23, 5 games: x0.57, 10 games: x0.76
-  //   15 games: x0.90, 20 games: x1.00
-  const lowGamePenalty = Math.min(1.0, Math.log1p(games) / Math.log1p(20))
+  //   3 games: x0.09, 5 games: x0.25, 7 games: x0.49
+  //   8 games: x0.64, 10 games: x1.00
+  const lowGamePenalty = Math.min(1.0, (games / 10) ** 2)
 
   // Multiply it all together and an additional flat 10
   // to expand the range of points into something like 0-130
