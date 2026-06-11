@@ -4,8 +4,7 @@ import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
 
 const logger = appLogger('Roleboard')
-const BATCH_SIZE = 500
-const CONCURRENCY = 4
+const threads = 4
 
 export async function updateRoleBoard() {
   const b4 = performance.now();
@@ -41,7 +40,6 @@ export async function updateRoleBoard() {
     .map(row => {
       const s = row._sum
       const { rating, globalRank } = ratingMap.get(row.playerId) ?? { rating: 800, globalRank: 10001 }
-      const games = s.games ?? 0
 
       const score = calcScore({
         knockouts: s.knockouts ?? 0,
@@ -50,7 +48,7 @@ export async function updateRoleBoard() {
         saves: s.saves ?? 0,
         mvps: s.mvp ?? 0,
         wins: s.wins ?? 0,
-        games,
+        games: s.games ?? 0,
         rating,
         role: row.role as Role,
       })
@@ -61,7 +59,7 @@ export async function updateRoleBoard() {
         role: row.role as Role,
         gamemode: row.gamemode,
         playerScore: score,
-        games,
+        games: s.games ?? 0,
         knockouts: s.knockouts ?? 0,
         scores: s.scores ?? 0,
         assists: s.assists ?? 0,
@@ -79,10 +77,10 @@ export async function updateRoleBoard() {
   logger.info(`Deleting existing entries...`)
   await prisma.roleBoard.deleteMany()
 
-  const limit = pLimit(CONCURRENCY)
+  const limit = pLimit(threads)
   logger.info(`Creating entries...`)
   await Promise.all(
-    chunk(entries, BATCH_SIZE).map(batch =>
+    chunk(entries, 500).map(batch =>
       limit(() => prisma.roleBoard.createMany({ data: batch }))
     )
   )
@@ -91,6 +89,10 @@ export async function updateRoleBoard() {
 }
 
 
+// I wanted to add detailed comments to this section in particular so normal people
+// can look at it and provide feedback on what they think should change.
+// If you got referred to this page from Discord,
+// this is the function you should be looking at.
 function calcScore(data: {
   knockouts: number
   scores: number
@@ -104,47 +106,130 @@ function calcScore(data: {
 }): number {
   const { knockouts, scores, assists, saves, mvps, games, wins, rating, role } = data
 
-  if (games === 0) return 0
+  // Players with less than 3 games on the character are irrelevant
+  // There's just not enough consistent data to rank their performance
+  if (games < 3) return 0;
 
-  const koPG     = knockouts / games
-  const scorePG  = scores / games
-  const assistPG = assists / games
-  const savePG   = saves / games
-  const mvpRate  = mvps / games
-  const winRate  = wins / games
+  //  Per-game rates 
+  const scorePG  = scores / games;
+  const koPG = knockouts / games;
+  const assistPG = assists / games;
+  const savePG = saves / games;
+  const mvpRate = mvps / games;
+  const winRate = wins / games;
 
-  let base = 0
+  //   Per-game quality (linear)
+  // Each stat is divided by its single-game "maximum" - the threshold
+  // before rare occurrences (Scores: 11, KOs: 10, Assists: 8, Saves: 100).
+  // Because players rarely sustain those as long-run averages, realistic per-game
+  // rates fall below that, giving the formula a wide spread:
+  // a "mid" stat lands around 25–35% of max, and elite averages sit around 50–60%.
+  // Linear is intentional here, as sqrt would inflate mid-tier stats.
+  const normScorePG = scorePG / 11;
+  const normKoPG = koPG / 10;
+  const normAssistPG = assistPG / 8;
+  const normSavePG = savePG / 100;
+
+  //  Volume (logarithmic)
+  // Raw totals give credit for real investment in a character. log1p compresses
+  // the scale so that 10x more games yields nowhere near 10x more credit, so
+  // high game counts can't bury high-quality players. The denominator (upper-limit
+  // rate x 50 games) anchors 1.0 at a natural reference point, keeping the
+  // component on the same scale as per-game quality.
+  const normScoreVol = Math.log1p(scores) / Math.log1p(11 * 50);
+  const normKoVol = Math.log1p(knockouts) / Math.log1p(10 * 50);
+  const normAssistVol = Math.log1p(assists) / Math.log1p(8 * 50);
+  const normSaveVol = Math.log1p(saves) / Math.log1p(100 * 50);
+
+  //  Role-specific quality + volume
+  // Weights reflect what defines a strong player in each role:
+  //
+  // Forward:
+  //   Scores: x5 (primary), KOs: x3, Assists: x2, Saves: x1.5.
+  //   Saves included: we need to reward midfielders too.
+  //
+  // Goalie:
+  //   Saves: x5 (primary), KOs: x3, Assists: x2.
+  //   Scores excluded: goalie goals are too rare and situational to use as a meaningful ranking signal. (may change)
+  //
+  // Volume uses the same stat priority but at lower weights (x1.2 / x0.7 / x0.5)
+  // so accumulated totals are a secondary signal, not the headline number.
+  let pgQuality: number;
+  let volume: number;
 
   if (role === 'Forward') {
-    base =
-      scorePG  * 12  +
-      koPG     * 4   +
-      assistPG * 3   +
-      savePG   * 0.4 +  // rewards midfielder saves without inflating scoring forwards
-      mvpRate  * 8   +
-      winRate  * 5
+    pgQuality = normScorePG * 5 + normKoPG * 3 + normAssistPG * 2 + normSavePG * 1.5;
+    volume = normScoreVol * 1.2 + normKoVol * 0.7 + normAssistVol * 0.5 + normSaveVol * 0.3;
   } else {
-    base =
-      savePG   * 0.1  +  // 200 saves/game = 20pts, low coeff, but fair for goalies
-      scorePG  * 15   +  // goals as a goalie are extraordinary, but not the focus
-      koPG     * 8    +
-      assistPG * 3    +
-      mvpRate  * 15   +
-      winRate  * 5
+    pgQuality = normSavePG * 5 + normKoPG * 3 + normAssistPG * 2;
+    volume = normSaveVol * 1.2 + normKoVol * 0.7 + normAssistVol * 0.5;
   }
 
-  // Soft penalty below rating 1400, no bonus above it (unless inactive)
-  const smurfDampening = rating === 0 || rating >= 1400
-    ? 1.0
-    : 0.6 + ((rating - 800) / 600) * 0.4
+  //  Base Score
+  // Four additive components in order of influence (insert stupid mithrix quote here):
+  //
+  //   1. pgQuality x (1 + winRate)
+  //      Overally win rate amplifies per-game quality as a proxy for "how do you
+  //      perform in games you win." WR gives a x1.0–x2.0 multiplier, so a
+  //      60% WR player scores ~14% more quality than a 40% WR player with
+  //      identical per-game stats.
+  //
+  //   2. volume
+  //      Log-compressed totals (see above). Game count matters but can't dominate.
+  //
+  //   3. winRate x 1.5
+  //      Win rate as its own flat term, separate from the quality amplification,
+  //      because winning consistently is independently valuable.
+  //
+  //   4. mvpRate x 1.5
+  //      Same weight for both roles; MVP is earned by whoever carried hardest
+  //      regardless of position.
+  const base =
+    pgQuality * (1 + winRate) +   // 1. Win-amplified per-game quality
+    volume +                      // 2. Log-compressed accumulated totals
+    winRate * 1.5 +               // 3. Win rate as a standalone term
+    mvpRate * 1.5                 // 4. MVP rate (role-agnostic)
 
-  // Minimum games guard - push lucky or one-off players to bottom
-  const lowGamePenalty = games < 5 ? 0.2 + (games / 5) * 0.3 : 1.0
+  //  Rating Multiplier
+  // Rating is a subtle modifier. The intent is to stop a Silver from outranking
+  // a Diamond with equal character stats, without over-rewarding LP grinding.
+  // Breakeven is Mid Gold. (Rookie through High Silver are smurf-heavy and
+  // not considered reliable representatives of their rank)
+  //
+  //   Inactive/Unranked (0):  x0.50  - inactive, significant dampening
+  //   Rookie         (800):   x0.70
+  //   High Rookie   (1000):   x0.76
+  //   Bronze        (1100):   x0.79
+  //   High Bronze   (1300):   x0.85
+  //   Silver        (1400):   x0.88
+  //   High Silver   (1600):   x0.94
+  //   Gold          (1700):   x0.97
+  //   Mid Gold      (1800):   x1.00  - breakeven; no bonus or penalty
+  //   Platinum      (2000):   x1.014
+  //   Diamond       (2300):   x1.034
+  //   Challenger    (2600):   x1.055
+  //   Pro League    (3000):   x1.082
+  //   ~4000 LP (theoretical 'max'): x1.15 (hard cap)
+  const lpMultiplier =
+    rating === 0    ? 0.50
+    : rating < 800  ? 0.50 + (rating / 800) * 0.10
+    : rating < 1800 ? 0.70 + ((rating - 800) / 1000) * 0.30
+    : 1.00 + Math.min(0.15, (rating - 1800) / 2200 * 0.15
+  );
 
-  // Breakeven at 50 games, capped at 1.5×
-  const consistencyMultiplier = Math.min(1.5, Math.log1p(games) / Math.log1p(25))
+  //  Very-low-game Penalty
+  // A smooth logarithmic ramp that penalises small sample sizes. 8 games at
+  // 100% WR shouldn't sit at #1 -- there isn't enough data to call it
+  // consistent. The penalty fades to nothing at 20 games (a fair amount).
+  //
+  //   1 game: x0.23, 5 games: x0.57, 10 games: x0.76
+  //   15 games: x0.90, 20 games: x1.00
+  const lowGamePenalty = Math.min(1.0, Math.log1p(games) / Math.log1p(20))
 
-  return base * smurfDampening * consistencyMultiplier * lowGamePenalty
+  // Multiply it all together and an additional flat 10
+  // to expand the range of points into something like 0-130
+  // instead of 0-13. It's really just a styling preference thing
+  return base * lpMultiplier * lowGamePenalty * 10
 }
 
 function chunk<T>(arr: T[], size: number): T[][] {
