@@ -12,6 +12,7 @@ import { updateTeams } from '../core/cronjobs/teams';
 import updateMapRotation from '../core/cronjobs/maps';
 import { refreshPlayerCount } from '../core/cronjobs/online';
 import { updateRoleBoard } from '../core/cronjobs/roleboard';
+import { fetchLinkedDiscord } from '../core/cronjobs/discord';
 
 const logger = appLogger('Cron');
 
@@ -40,6 +41,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
   // [Maps] Every Tuesday at 5 pm. (EST)
   cron.schedule('0 20 * * 2', async () => {
     await updateMapRotation();
+  });
+
+  // [Discord] Every day at midnight. (EST)
+  cron.schedule('0 0 * * *', async () => {
+    await fetchLinkedDiscord();
   });
 
 

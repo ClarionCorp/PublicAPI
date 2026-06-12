@@ -122,6 +122,7 @@ model Player {
   title                                     String?
   socialUrl                                 String?
   discordId                                 String?
+  forcedDID                                 Boolean                                 @default(false)
   createdAt                                 DateTime?                               @default(now())
   tags                                      String[]                                @default([])
   updatedAt                                 DateTime?                               @default(now()) @updatedAt
