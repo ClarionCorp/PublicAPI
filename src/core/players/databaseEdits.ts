@@ -398,9 +398,11 @@ export async function checkDiscord(player: PROMETHEUS.RAW.Player) {
       },
       select: {
         discordId: true,
+        forcedDID: true
       }
     });
 
+    if (dbUser.forcedDID == true) { return; }; // don't update forced Discord IDs from CCUI
     const currentDID = dbUser!.discordId;
 
     if (currentDID && currentDID == discordId) // This and the function above makes sure the player doesn't already have the same discordId bound.
