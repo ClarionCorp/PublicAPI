@@ -632,4 +632,64 @@ export const titles: Title[] = [
     id: "TitleData_VerifiedMVP",
     en: "Verified MVP",
   },
+  {
+    id: "TitleData_S3Top100",
+    en: "S3 Top 100",
+  },
+  {
+    id: "TitleData_S3Top1000",
+    en: "S3 Top 1000",
+  },
+  {
+    id: "TitleData_S3Top10000",
+    en: "S3 Top 10000",
+  },
+  {
+    id: "TitleData_S4Top100",
+    en: "S4 Top 100",
+  },
+  {
+    id: "TitleData_S4Top1000",
+    en: "S4 Top 1000",
+  },
+  {
+    id: "TitleData_S4Top10000",
+    en: "S4 Top 10000",
+  },
+  {
+    id: "TitleData_S5Top100",
+    en: "S5 Top 100",
+  },
+  {
+    id: "TitleData_S5Top1000",
+    en: "S5 Top 1000",
+  },
+  {
+    id: "TitleData_S5Top10000",
+    en: "S5 Top 10000",
+  },
+  {
+    id: "TitleData_S6Top100",
+    en: "S6 Top 100",
+  },
+  {
+    id: "TitleData_S6Top1000",
+    en: "S6 Top 1000",
+  },
+  {
+    id: "TitleData_S6Top10000",
+    en: "S6 Top 10000",
+  },
+  {
+    id: "TitleData_S7Top100",
+    en: "S7 Top 100",
+  },
+  {
+    id: "TitleData_S7Top1000",
+    en: "S7 Top 1000",
+  },
+  {
+    id: "TitleData_S7Top10000",
+    en: "S7 Top 10000",
+  },
 ]
