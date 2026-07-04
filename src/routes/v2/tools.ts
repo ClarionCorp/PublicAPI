@@ -4,6 +4,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { prisma } from '../../plugins/prisma';
 import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
 import { PlayerStatus } from '../../../prisma/client';
+import { PlayerObjectType } from '../../types/players';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
@@ -112,6 +113,57 @@ const tools: FastifyPluginAsync = async (fastify) => {
         online: byStatus.ONLINE ?? 0,
         queued: byStatus.INQUEUE ?? 0,
         playing: byStatus.INGAME ?? 0
+      });
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Guesses whether or not a player is smurfing. Ranked-Only currently.
+  fastify.get('/smurf/:username', { preHandler: [fastify.authenticate] },  async (req, reply) => {
+    const { username } = req.params as { username: string };
+    if (!username) { return reply.status(400).send({ error: "Missing username field" }); }
+    try {
+      const internal_res = await fastify.inject({
+        method: 'GET',
+        url: `/v2/players/${username}`,
+        headers: { "authorization": req.headers.authorization }
+      });
+      const player: PlayerObjectType = await internal_res.json();
+      if (internal_res.statusCode !== 200 && internal_res.statusCode !== 201) { throw new Error(`Internal fetch returned no such player with username ${username}!`) };
+
+      let youngAccount = false;
+      let lowLevel = false;
+      let abnormalWinrate = false;
+
+      // Account Age Check
+      const oldestRating = player.ratings[player.ratings.length - 1];
+      const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      if (new Date(oldestRating.createdAt) > oneMonthAgo) { youngAccount = true };
+
+      // Account Level Check
+      if (player.mastery.currentLevel < 30) { lowLevel = true };
+
+      // Abnormal Winrate Check (when paired with either above)
+      const latestRating = player.ratings[0];
+      if (latestRating.games > 0 && (latestRating.wins / latestRating.games) > 0.85) { abnormalWinrate = true };
+
+      let confidence: 'none' | 'low' | 'medium' | 'high' = 'none';
+
+      if (abnormalWinrate && youngAccount && lowLevel) {
+        confidence = 'high';
+      } else if (abnormalWinrate && (youngAccount || lowLevel)) {
+        confidence = 'medium';
+      } else if (youngAccount || lowLevel) {
+        confidence = 'low';
+      }
+
+      return reply.status(200).send({
+        username: player.username,
+        confidence,
+        signals: { youngAccount, lowLevel, abnormalWinrate }
       });
 
     } catch (e) {
