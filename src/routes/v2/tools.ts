@@ -5,6 +5,7 @@ import { prisma } from '../../plugins/prisma';
 import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
 import { PlayerStatus } from '../../../prisma/client';
 import { PlayerObjectType } from '../../types/players';
+import { usernameSearch } from '../../core/players/userSearch';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
@@ -122,17 +123,12 @@ const tools: FastifyPluginAsync = async (fastify) => {
   });
 
   // Guesses whether or not a player is smurfing. Ranked-Only currently.
-  fastify.get('/smurf/:username', { preHandler: [fastify.authenticate] },  async (req, reply) => {
+  fastify.get('/smurf/:username', async (req, reply) => {
     const { username } = req.params as { username: string };
     if (!username) { return reply.status(400).send({ error: "Missing username field" }); }
     try {
-      const internal_res = await fastify.inject({
-        method: 'GET',
-        url: `/v2/players/${username}`,
-        headers: { "authorization": req.headers.authorization }
-      });
-      const player: PlayerObjectType = await internal_res.json();
-      if (internal_res.statusCode !== 200 && internal_res.statusCode !== 201) { throw new Error(`Internal fetch returned no such player with username ${username}!`) };
+      const pJson = await usernameSearch(username, req);
+      const player = pJson.data as PlayerObjectType;
 
       let youngAccount = false;
       let lowLevel = false;

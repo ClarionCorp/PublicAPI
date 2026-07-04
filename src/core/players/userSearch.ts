@@ -42,7 +42,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     // If cached argument is true, return HERE.
     if (cached && cachedPlayer) {
       ensureLogger.info('Cached Player Requested. Returning cached data...');
-      await sendToAnalytics('V2_PLAYERS_CACHED', req.ip, req.user!.id, `${cachedPlayer.username}`);
+      await sendToAnalytics('V2_PLAYERS_CACHED', req.ip, req.user?.id, `${cachedPlayer.username}`);
       return {
         data: {
           ...cachedPlayer,
@@ -110,7 +110,7 @@ export async function usernameSearch(name: string, req: FastifyRequest, region?:
     ensureLogger.error(`Something went wrong while ENSURING PLAYER REGION: `, error);
   }
   
-  if (name !== statusName) await sendToAnalytics('V2_PLAYERS', req.ip, req.user!.id, `${odysseyPlayer.username}`);
+  if (name !== statusName) await sendToAnalytics('V2_PLAYERS', req.ip, req.user?.id, `${odysseyPlayer.username}`);
 
   // (Player and Character Stats)
 
