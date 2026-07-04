@@ -43,8 +43,8 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
     await updateMapRotation();
   });
 
-  // [Discord] Every day at midnight. (EST)
-  cron.schedule('0 0 * * *', async () => {
+  // [Discord] Every 15 minutes.
+  cron.schedule('*/15 * * * *', async () => {
     await fetchLinkedDiscord();
   });
 
