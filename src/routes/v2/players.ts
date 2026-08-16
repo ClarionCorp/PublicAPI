@@ -8,6 +8,7 @@ import { calculatePlaystyle } from '../../core/players/misc';
 import { prisma } from '../../plugins/prisma';
 import { fetchCharacterMastery, fetchPlayerMastery } from '../../core/prometheus';
 import { Gamemode, Role } from '../../../prisma/client';
+import { rateLimitByTier } from '../../core/rateLimitByTier';
 
 const ensureLogger = appLogger('PlayerRoute/v2')
 
@@ -24,7 +25,14 @@ setInterval(() => {
 // I hate doing this but we cannot gamble someone abusing it.
 // (If we get rate limited it could shutdown CC)
 const players: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/:input', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+  fastify.get('/:input', {
+    config: { rateLimit: rateLimitByTier({
+      0: { requests: 10 },
+      1: { requests: 100 },
+      2: { requests: 1_000 },
+      3: { requests: 100_000 }, // admins only
+    })}
+  }, async (req, reply) => {
     const { input } = req.params as { input: string };
     let { region, cached } = req.query as { region?: string; cached?: boolean };
     const inType = getTypeOfInput(input);

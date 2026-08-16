@@ -16,6 +16,7 @@ declare module 'fastify' {
       id: number;
       name: string;
       owner: string;
+      tier: number;
     };
   }
 }

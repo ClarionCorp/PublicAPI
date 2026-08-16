@@ -4,6 +4,7 @@ import prismaPlugin from './plugins/prisma';
 import cronPlugin from './plugins/cron';
 import teamsPlugin from './plugins/teams';
 import registerStatic from './plugins/static';
+import rateLimitPlugin from './plugins/rateLimit';
 import v2Routes from './routes/v2';
 import chalk from 'chalk';
 import { sleep } from './core/utils';
@@ -72,13 +73,16 @@ const start = async () => {
 
           if (!entry || !entry.active) throw new Error('No entry');
           if (!request.user) throw new Error('No token');
+
+          // Stash the tier on the request so per-route rate limits don't need another query.
+          request.user.tier = entry.tier;
         } catch (e) {
           reply.code(401).send({ error: `This endpoint requires authorization. Please visit ${process.env.DOCS_BASE_URL}/FAQ/authentication.` });
         }
       }
     )
 
-
+    await fastify.register(rateLimitPlugin);
     await fastify.register(routeLogger);
     await fastify.register(cronPlugin);
     await fastify.register(prismaPlugin);
