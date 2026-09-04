@@ -13,6 +13,7 @@ import updateMapRotation from '../core/cronjobs/maps';
 import { refreshPlayerCount } from '../core/cronjobs/online';
 import { updateRoleBoard } from '../core/cronjobs/roleboard';
 import { fetchLinkedDiscord } from '../core/cronjobs/discord';
+import { verifySeasonEnd } from '../core/cronjobs/seasons';
 
 const logger = appLogger('Cron');
 
@@ -46,6 +47,11 @@ const cronPlugin: FastifyPluginAsync = async (fastify) => {
   // [Discord] Every 15 minutes.
   cron.schedule('*/15 * * * *', async () => {
     await fetchLinkedDiscord();
+  });
+
+  // [Season] Every day at midnight.
+  cron.schedule('0 0 * * *', async () => {
+    await verifySeasonEnd();
   });
 
 

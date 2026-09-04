@@ -416,3 +416,13 @@ export async function fetchDiscordFriends() {
     )
   ).data
 }
+
+/**
+ * Fetch latest season info
+ */
+export async function fetchSeasonInfo() {
+  const { data } = await client.get<PROMETHEUS.API.RANKED.SEASON.Current>(
+    `/v1/ranked/season/current`
+  )
+  return data
+}

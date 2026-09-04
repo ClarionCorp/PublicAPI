@@ -44,7 +44,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "regen": "pnpm prisma db push && pnpm prisma generate",
-    "tokens": "tsc && node dist/tokens.js",
+    "tokens": "node dist/tokens.js",
     "setup": "tsc && node dist/setup.js"
   }
 }

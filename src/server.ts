@@ -19,6 +19,7 @@ import { fetchUsernameQuery } from './core/prometheus';
 import updateMapRotation from './core/cronjobs/maps';
 import { updateRoleBoard } from './core/cronjobs/roleboard';
 import { fetchLinkedDiscord } from './core/cronjobs/discord';
+import { verifySeasonEnd } from './core/cronjobs/seasons';
 
 const fastify = Fastify({
   logger: {
@@ -112,6 +113,7 @@ const start = async () => {
     // sleep(2000); await updateRoleBoard();
 
     sleep(2000); await fetchLinkedDiscord();
+    sleep(2000); await verifySeasonEnd();
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

@@ -6,6 +6,7 @@ import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
 import { PlayerStatus } from '../../../prisma/client';
 import { PlayerObjectType } from '../../types/players';
 import { usernameSearch } from '../../core/players/userSearch';
+import { getLatestSeason } from '../../core/cronjobs/seasons';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
@@ -161,6 +162,19 @@ const tools: FastifyPluginAsync = async (fastify) => {
         confidence,
         signals: { youngAccount, lowLevel, abnormalWinrate }
       });
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
+
+  // Get basic info about the current season.
+  fastify.get('/season/current', async (req, reply) => {
+    try {
+      const current = await getLatestSeason();
+
+      return reply.status(200).send(current);
 
     } catch (e) {
       console.error(e);

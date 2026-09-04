@@ -168,6 +168,17 @@ export namespace PROMETHEUS {
           rating: number
         }
       }
+      export namespace SEASON {
+        export type Current = {
+          season: {
+            description: string,
+            endTime: Date,
+            id: string,
+            name: string, // season9
+            // ratingTiers
+          }
+        }
+      }
     }
     export namespace MASTERY {
       export type Player = {
