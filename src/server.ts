@@ -20,6 +20,7 @@ import updateMapRotation from './core/cronjobs/maps';
 import { updateRoleBoard } from './core/cronjobs/roleboard';
 import { fetchLinkedDiscord } from './core/cronjobs/discord';
 import { verifySeasonEnd } from './core/cronjobs/seasons';
+import v3Routes from './routes/v3';
 
 const fastify = Fastify({
   logger: {
@@ -88,6 +89,7 @@ const start = async () => {
 
     await fastify.register(v1Routes, { prefix: '/v1' });
     await fastify.register(v2Routes, { prefix: '/v2' });
+    await fastify.register(v3Routes, { prefix: '/v3' });
 
     // Health check route
     fastify.get('/health', async () => ({ ok: true }));
