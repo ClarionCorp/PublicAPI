@@ -1,9 +1,9 @@
 import { fetchCachedPlayer } from "./misc";
-import { appLogger } from '../../plugins/logger';
-import { sendToAnalytics } from "../analytics";
+import { appLogger } from '@/plugins/logger';
+import { sendToAnalytics } from "@/core/analytics";
 import { FastifyRequest } from "fastify";
 import { usernameSearch, UserResponse } from "./userSearch";
-import { fetchRankedPlayer } from "../prometheus";
+import { fetchRankedPlayer } from "@/core/prometheus";
 
 const idLogger = appLogger('ID-Search')
 

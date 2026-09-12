@@ -1,12 +1,12 @@
-import { getTypeOfInput } from '../../core/utils';
-import { appLogger } from '../../plugins/logger';
+import { getTypeOfInput } from '@/core/utils';
+import { appLogger } from '@/plugins/logger';
 import { FastifyPluginAsync } from 'fastify';
-import { searchByID } from '../../core/players/idSearch';
-import { usernameSearch } from '../../core/players/userSearch';
-import { regions } from '../../types/players';
-import { calculatePlaystyle } from '../../core/players/misc';
-import { prisma } from '../../plugins/prisma';
-import { fetchCharacterMastery, fetchPlayerMastery } from '../../core/prometheus';
+import { searchByID } from '@/core/players/v2/idSearch';
+import { usernameSearch } from '@/core/players/v2/userSearch';
+import { regions } from '@/types/players';
+import { calculatePlaystyle } from '@/core/players/v2/misc';
+import { prisma } from '@/plugins/prisma';
+import { fetchCharacterMastery, fetchPlayerMastery } from '@/core/prometheus';
 import { Gamemode, Role } from '../../../prisma/client';
 
 const ensureLogger = appLogger('PlayerRoute/v2')

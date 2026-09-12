@@ -1,5 +1,3 @@
-import { PlayerWithTeams, Team } from '../types/teams';
-import { prisma } from './prisma';
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin'
 import { appLogger } from './logger';

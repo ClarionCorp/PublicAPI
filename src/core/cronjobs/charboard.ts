@@ -1,9 +1,9 @@
 import { PROMETHEUS } from "@/types/prometheus";
-import { appLogger } from "../../plugins/logger";
-import { prisma } from '../../plugins/prisma';
-import { sleep } from "../utils";
-import { getRankGroup } from "../ranks";
-import { fetchPlayerStats, fetchRankedPlayers } from "../prometheus";
+import { appLogger } from "@/plugins/logger";
+import { prisma } from '@/plugins/prisma';
+import { sleep } from "@/core/utils";
+import { getRankGroup } from "@/core/ranks";
+import { fetchPlayerStats, fetchRankedPlayers } from "@/core/prometheus";
 
 const leaderboardLogger = appLogger('CharacterLeaderboard');
 

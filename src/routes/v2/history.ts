@@ -1,9 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
-import { OurRegions } from '../../types/players';
-import { getTypeOfInput, timeAgo } from '../../core/utils';
-import { sendToAnalytics } from '../../core/analytics';
-import { getRankGroup, Rank } from '../../core/ranks';
+import { prisma } from '@/plugins/prisma';
+import { OurRegions } from '@/types/players';
+import { getTypeOfInput, timeAgo } from '@/core/utils';
+import { sendToAnalytics } from '@/core/analytics';
+import { getRankGroup, Rank } from '@/core/ranks';
 
 interface CharProps {
   sort: 'character' | 'games' | 'wins' | 'losses' | 'winrate';

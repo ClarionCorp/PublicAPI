@@ -1,7 +1,7 @@
-import { PROMETHEUS } from '../../types/prometheus';
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
-import { PlayerObjectType } from '../../types/players';
+import { PROMETHEUS } from '@/types/prometheus';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { PlayerObjectType } from '@/types/players';
 
 const ghostLogger = appLogger('Players/Ghosts')
 

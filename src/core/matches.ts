@@ -1,9 +1,9 @@
 import * as cheerio from 'cheerio';
 import { Element } from 'domhandler';
 import { Gamemode, MatchStatus, Role } from '../../prisma/client';
-import { getMapIdFromName, getMapNameFromId } from '../objects/maps';
+import { getMapIdFromName, getMapNameFromId } from '@/objects/maps';
 import { getCharacterIdFromName } from './utils';
-import { seasonCutoffs } from '../objects/seasons';
+import { seasonCutoffs } from '@/objects/seasons';
 
 export interface PlayerStatData {
   userId: string;

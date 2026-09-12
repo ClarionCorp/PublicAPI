@@ -1,8 +1,8 @@
 import axios, { Method } from 'axios';
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
 import { Token } from '../../../prisma/client';
-import { TwitchStreams } from '../../types/streams';
+import { TwitchStreams } from '@/types/streams';
 import {
   TextCensor,
   RegExpMatcher,

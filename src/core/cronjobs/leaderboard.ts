@@ -1,10 +1,10 @@
 import { OurRegions, PlayerObjectType } from '@/types/players';
 import { appLogger } from '../../plugins/logger';
 import { prisma } from '../../plugins/prisma';
-import { handleCorestrike } from '../players/ghostPlayers';
+import { handleCorestrike } from '@/core/players/v2/ghostPlayers';
 import { areDifferentDays, sleep } from '../utils';
 import { Player } from '../../../prisma/client';
-import { checkDiscord, usernameChanges } from '../players/databaseEdits';
+import { checkDiscord, usernameChanges } from '@/core/players/v2/databaseEdits';
 import { PROMETHEUS } from '@/types/prometheus';
 import { getRankFromLP } from '../ranks';
 import { fetchRankedPlayers } from '../prometheus';

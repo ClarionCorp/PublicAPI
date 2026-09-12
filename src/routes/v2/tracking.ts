@@ -1,8 +1,8 @@
 import { FastifyPluginAsync, FastifyReply } from 'fastify';
-import { TrackedPlayersStructure } from '../../types/overlay';
-import { prisma } from '../../plugins/prisma';
-import { appLogger } from '../../plugins/logger';
-import { fetchUsernameQuery, fetchRankedPlayer } from '../../core/prometheus';
+import { TrackedPlayersStructure } from '@/types/overlay';
+import { prisma } from '@/plugins/prisma';
+import { appLogger } from '@/plugins/logger';
+import { fetchUsernameQuery, fetchRankedPlayer } from '@/core/prometheus';
 
 const logger = appLogger('Tracking');
 

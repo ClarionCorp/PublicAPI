@@ -1,12 +1,12 @@
 // Assorted stuff that people can use :)
 
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
-import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
+import { prisma } from '@/plugins/prisma';
+import { fetchOdyPlayer } from '@/core/players/v2/odysseyPlayers';
 import { PlayerStatus } from '../../../prisma/client';
-import { PlayerObjectType } from '../../types/players';
-import { usernameSearch } from '../../core/players/userSearch';
-import { getLatestSeason } from '../../core/cronjobs/seasons';
+import { PlayerObjectType } from '@/types/players';
+import { usernameSearch } from '@/core/players/v2/userSearch';
+import { getLatestSeason } from '@/core/cronjobs/seasons';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {

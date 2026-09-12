@@ -101,21 +101,23 @@ const start = async () => {
     console.log(chalk.greenBright(`[>] Server Startup Completed.`));
     console.log('');
 
-    sleep(2000);
-    await fetchUsernameQuery('blals'); // run fetch to refresh tokens
+    if (process.env?.MODE == 'PRODUCTION') {
+      sleep(2000);
+      await fetchUsernameQuery('blals'); // run fetch to refresh tokens
 
-    // sleep(2000); await steamRefresh();
+      // sleep(2000); await steamRefresh();
 
-    // sleep(2000); await updateTeams();
+      // sleep(2000); await updateTeams();
 
-    // sleep(2000); await updateMapRotation();
+      // sleep(2000); await updateMapRotation();
 
-    // sleep(2000); await updateLeaderboard();
+      // sleep(2000); await updateLeaderboard();
 
-    // sleep(2000); await updateRoleBoard();
+      // sleep(2000); await updateRoleBoard();
 
-    sleep(2000); await fetchLinkedDiscord();
-    sleep(2000); await verifySeasonEnd();
+      sleep(2000); await fetchLinkedDiscord();
+      sleep(2000); await verifySeasonEnd();
+    }
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

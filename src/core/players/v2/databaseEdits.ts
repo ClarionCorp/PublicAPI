@@ -1,11 +1,11 @@
-import { fetchCachedPlayer } from './misc';
-import { Gamemode } from '../../../prisma/client';
-import { PlayerObjectType } from '../../types/players';
-import { PROMETHEUS } from '../../types/prometheus';
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
-import { getTitleFromID } from '../tools/titles';
-import { fetchRankedPlayer } from '../prometheus';
+import { fetchCachedPlayer } from '@/core/players/v2/misc';
+import { Gamemode } from '../../../../prisma/client';
+import { PlayerObjectType } from '@/types/players';
+import { PROMETHEUS } from '@/types/prometheus';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { getTitleFromID } from '@/core/tools/titles';
+import { fetchRankedPlayer } from '@/core/prometheus';
 
 const dbLogger = appLogger('Players/Database')
 const playerLogger = appLogger('PlayerLogger')

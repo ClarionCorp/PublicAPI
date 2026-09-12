@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
+import { prisma } from '@/plugins/prisma';
 
 const community: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (req, reply) => {

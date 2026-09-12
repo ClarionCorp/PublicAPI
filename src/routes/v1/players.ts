@@ -1,13 +1,13 @@
-import { getTypeOfInput } from '../../core/utils';
-import { appLogger } from '../../plugins/logger';
+import { getTypeOfInput } from '@/core/utils';
+import { appLogger } from '@/plugins/logger';
 import { FastifyPluginAsync } from 'fastify';
-import { searchByID } from '../../core/players/idSearch';
-import { usernameSearch, UserResponse } from '../../core/players/userSearch';
-import { CorestrikePlayer, PlayerObjectType, regions } from '../../types/players';
-import { getRankFromLP } from '../../core/ranks';
-import { fetchCharacters } from '../../core/tools/characters';
-import { Team } from '../../types/teams';
-import { prisma } from '../../plugins/prisma';
+import { searchByID } from '@/core/players/v2/idSearch';
+import { usernameSearch, UserResponse } from '@/core/players/v2/userSearch';
+import { CorestrikePlayer, PlayerObjectType, regions } from '@/types/players';
+import { getRankFromLP } from '@/core/ranks';
+import { fetchCharacters } from '@/core/tools/characters';
+import { Team } from '@/types/teams';
+import { prisma } from '@/plugins/prisma';
 
 const ensureLogger = appLogger('PlayerRoute/v1')
 

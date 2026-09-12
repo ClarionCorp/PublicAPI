@@ -1,8 +1,8 @@
-import { appLogger } from "../../plugins/logger";
-import { prisma } from '../../plugins/prisma';
-import { PROMETHEUS } from '../../types/prometheus';
-import { PlayerObjectType } from "../../types/players";
-import { fetchUsernameQuery, fetchRankedPlayer } from "../prometheus";
+import { appLogger } from "@/plugins/logger";
+import { prisma } from '@/plugins/prisma';
+import { PROMETHEUS } from '@/types/prometheus';
+import { PlayerObjectType } from "@/types/players";
+import { fetchUsernameQuery, fetchRankedPlayer } from "@/core/prometheus";
 
 const odyLogger = appLogger('Players/Ody')
 

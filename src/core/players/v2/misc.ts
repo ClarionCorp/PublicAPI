@@ -1,8 +1,8 @@
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
-import { PROMETHEUS } from '../../types/prometheus';
-import { PlayerCharacterRatingObjectType, PlayerObjectType, PlaystyleType, RoleCategoryPS, RolePlaystyle } from '../../types/players';
-import { Team } from '../../types/teams';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { PROMETHEUS } from '@/types/prometheus';
+import { PlayerCharacterRatingObjectType, PlayerObjectType, PlaystyleType, RoleCategoryPS, RolePlaystyle } from '@/types/players';
+import { Team } from '@/types/teams';
 
 const miscLogger = appLogger('Players/Misc')
 

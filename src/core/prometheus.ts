@@ -1,8 +1,8 @@
 import axios, { AxiosInstance, AxiosError } from 'axios'
-import { PROMETHEUS } from '../types/prometheus'
-import { appLogger } from '../plugins/logger'
+import { PROMETHEUS } from '@/types/prometheus'
+import { appLogger } from '@/plugins/logger'
 import steamRefresh from './cronjobs/steam'
-import { BrowseCustomLobbies, PrometheusCustomLobbySearchBody } from '../types/customs'
+import { BrowseCustomLobbies, PrometheusCustomLobbySearchBody } from '@/types/customs'
 
 const logger = appLogger('Prometheus')
 

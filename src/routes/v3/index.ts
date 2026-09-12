@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { appLogger } from '../../plugins/logger';
+import { appLogger } from '@/plugins/logger';
 import players from './players';
 
 const logger = appLogger('Routes');

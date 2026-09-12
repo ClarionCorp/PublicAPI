@@ -1,4 +1,4 @@
-import characters from "../objects/characters";
+import characters from "@/objects/characters";
 import { formatDistanceToNow } from "date-fns";
 import dayjs from "dayjs";
 
