@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { LogController } from 'fastify';
 import routeLogger from './plugins/logger';
 import prismaPlugin from './plugins/prisma';
 import cronPlugin from './plugins/cron';
@@ -40,7 +40,7 @@ const fastify = Fastify({
       }
     },
   },
-  disableRequestLogging: true,
+  logController: new LogController({ disableRequestLogging: true }),
 });
 
 const start = async () => {
