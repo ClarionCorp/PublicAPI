@@ -123,15 +123,19 @@ model Player {
   socialUrl                                 String?
   discordId                                 String?
   forcedDID                                 Boolean                                 @default(false)
-  createdAt                                 DateTime?                               @default(now())
   tags                                      String[]                                @default([])
-  updatedAt                                 DateTime?                               @default(now()) @updatedAt
   currentXp                                 Int                                     @default(0)
+  currentLevel                              Int                                     @default(0)
+  xpToNextLevel                             Int                                     @default(0)
+  totalXp                                   Int                                     @default(0)
   characterRatings                          PlayerCharacterRating[]
   ratings                                   PlayerRating[]
   teams                                     EsportsPlayers[]
   roleBoardEntries                          RoleBoard[]
   playerStatus                              String                                  @default("Offline")
+  
+  createdAt                                 DateTime?                               @default(now())
+  updatedAt                                 DateTime?                               @default(now()) @updatedAt
 }
 
 model PlayerRating {

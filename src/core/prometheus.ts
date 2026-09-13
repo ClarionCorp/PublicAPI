@@ -219,11 +219,11 @@ export async function ensurePlayerRegion(playerId: string, specificRegion?: stri
       : [
           specificRegion,
           'NorthAmerica',
-          'SouthAmerica',
           'Europe',
+          'SouthAmerica',
+          'JapaneseLanguageText',
           'Asia',
           'Oceania',
-          'JapaneseLanguageText',
           'Global',
         ].filter(Boolean)
 

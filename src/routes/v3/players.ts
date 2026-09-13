@@ -1,24 +1,24 @@
 import { appLogger } from '@/plugins/logger';
 import { FastifyPluginAsync } from 'fastify';
 import { regions } from '@/types/players';
-import { fetchCharacterMastery, fetchPlayerMastery } from '@/core/prometheus';
+import { searchByUsername } from '@/core/players/v3/search';
 
 const ensureLogger = appLogger('PlayerRoute/v3')
 
 const playersV3Cache = new Map<string, { data: unknown; expiresAt: number }>();
-const TTL = 10_000; // 10 seconds
+const TTL = 60_000; // 60 seconds
 setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of playersV3Cache) {
     if (now >= entry.expiresAt) playersV3Cache.delete(key);
   }
-}, 60_000);
+}, TTL);
 
 // Users must have a valid JWT to use this endpoint.
 const players: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
     const { username } = req.params as { username: string };
-    let { region, cached } = req.query as { region?: string; cached?: boolean };
+    let { region, cached, mode } = req.query as { region?: string; cached?: boolean; mode?: 'Ranked' | 'Normal' };
     if (region && (!regions.includes(region))) { region = 'Global' };
 
     const cacheKey = `${username}:${region ?? 'Global'}`;
@@ -26,34 +26,14 @@ const players: FastifyPluginAsync = async (fastify) => {
     if (cachedEntry && Date.now() < cachedEntry.expiresAt) { return reply.status(200).send(cachedEntry.data); };
 
     try {
-      
+      const response = await searchByUsername(username, req, region, cached, mode);
+      if (!response.ok) { throw new Error(response.message) };
+
+      return reply.status(response.status).send(response.data);
     } catch (error) {
       ensureLogger.error(`Error while FETCHING PLAYER: `, error);
       return reply.status(500).send({ error });
     }
-  });
-
-  // merge with main function
-  fastify.get('/:id/mastery/characters', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-    const { id } = req.params as { id: string };
-
-    const charMastery = await fetchCharacterMastery(id);
-
-    if (!charMastery) { return reply.status(404).send({ error: "The specified player could not be found" }) };
-
-    return reply.status(200).send(charMastery);
-  });
-
-
-  // merge with main function
-  fastify.get('/:id/mastery', { preHandler: [fastify.authenticate] }, async (req, reply) => {
-    const { id } = req.params as { id: string };
-
-    const playerMastery = await fetchPlayerMastery(id);
-
-    if (!playerMastery) { return reply.status(404).send({ error: "The specified player could not be found" }) };
-
-    return reply.status(200).send(playerMastery);
   });
 };
 
