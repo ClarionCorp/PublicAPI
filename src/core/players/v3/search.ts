@@ -1,11 +1,11 @@
 import { checkDiscord, checkUpdatePlayer, createPlayer, fixMismatch, usernameChanges } from '@/core/players/v2/databaseEdits';
 import { handleCorestrike } from '@/core/players/v2/ghostPlayers';
-import { fetchCachedPlayer, shouldUpdateUser, UpdateRequirements } from '@/core/players/v2/misc';
+import { calculatePlaystyle, fetchCachedPlayer, shouldUpdateUser, UpdateRequirements } from '@/core/players/v2/misc';
 import { fetchOdyPlayer } from '@/core/players/v2/odysseyPlayers';
 import { PROMETHEUS } from '@/types/prometheus';
 import { appLogger } from '@/plugins/logger';
 import { FastifyRequest } from 'fastify';
-import { Gamemode, Role } from '../../../../prisma/client';
+import { EsportsPlayers, Gamemode, Player, PlayerCharacterMastery, PlayerCharacterRating, PlayerRating, Role } from '../../../../prisma/client';
 import { prisma } from '@/plugins/prisma';
 import { sendToAnalytics } from '@/core/analytics';
 import dayjs from 'dayjs';
@@ -13,6 +13,7 @@ import { getTitleFromID } from '@/core/tools/titles';
 import { ensurePlayerRegion, fetchPlayerMastery, fetchPlayerStats } from '@/core/prometheus';
 import { OurRegions, PlayerObjectType, PlayerObjectV3, PlayerRatingObjectType, PlayerV3Season } from '@/types/players';
 import { getLatestSeason } from '@/core/cronjobs/seasons';
+import { buildTeamsForPlayer, ExpandedTeam } from '@/core/tools/teams';
 
 const ensureLogger = appLogger('UserSearch')
 const statusName = 'SoveReigN'; // weird casing to distinguish status server
@@ -24,31 +25,92 @@ export interface UserResponse {
   message?: string;
 }
 
-export async function fitV2UserToV3(cached: PlayerObjectType): Promise<PlayerObjectV3> {
+function buildPlayerTableFromCache(cached: PlayerObjectType) {
+  const built: Player = {
+    id: cached.id,
+    username: cached.username,
+    region: cached.username,
+    logoId: cached.logoId,
+    nameplateId: cached.nameplateId,
+    emoticonId: cached.nameplateId,
+    titleId: cached.titleId,
+    title: cached.title,
+    socialUrl: cached.socialUrl,
+  }
+}
+
+//   id                                        String                                  @unique
+//   username                                  String                                  @unique
+//   region                                    String?
+//   logoId                                    String?
+//   nameplateId                               String?
+//   emoticonId                                String?
+//   titleId                                   String?
+//   title                                     String?
+//   socialUrl                                 String?
+//   discordId                                 String?
+//   forcedDID                                 Boolean                                 @default(false)
+//   tags                                      String[]                                @default([])
+//   currentXp                                 Int                                     @default(0)
+//   currentLevel                              Int                                     @default(0)
+//   xpToNextLevel                             Int                                     @default(0)
+//   totalXp                                   Int                                     @default(0)
+//   ratings                                   PlayerRating[]
+//   characterRatings                          PlayerCharacterRating[]
+//   characterMasteries                        PlayerCharacterMastery[]
+//   teams                                     EsportsPlayers[]
+//   roleBoardEntries                          RoleBoard[]
+//   playerStatus                              String                                  @default("Offline")
+
+//   createdAt                                 DateTime?                               @default(now())
+//   updatedAt                                 DateTime?                               @default(now()) @updatedAt
+// }
+
+
+/**
+ * Fits Cached Player data to our new V3 response type
+ *
+ * @param playerTable - Expects shape of Prisma table "Player". Use buildPlayerTableFromCache().
+ * @param charTable - Expects shape of Prisma table "PlayerCharacterRating[]".
+ * @param ratingTable - Expects shape of Prisma table "PlayerRating[]".
+ * @param charMastery - Expects shape of Prisma table "PlayerCharacterMastery[]".
+ * @param teams - Expects shape of "ExpandedTeam[]".
+ * @returns PlayerObjectV3 formatted for API responses.
+ */
+export async function fitV2UserToV3(
+  playerTable: Player,
+  charTable: PlayerCharacterRating[],
+  ratingTable: PlayerRating[],
+  charMastery: PlayerCharacterMastery[],
+  teams: ExpandedTeam[],
+): Promise<PlayerObjectV3> {
   const currentSeason = await getLatestSeason();
+  const currentRating = ratingTable[0]?.rating ?? 0;
+  const playstyle = calculatePlaystyle(charTable, currentRating);
+
   return {
     info: {
-      playerId: cached.id,
-      username: cached.username,
-      nameplateId: cached.nameplateId,
-      emoticonId: cached.emoticonId,
-      titleId: cached.titleId,
-      title: cached.title,
-      region: cached.region,
-      tags: cached.tags,
-      socialUrl: cached.socialUrl,
+      playerId: playerTable.id,
+      username: playerTable.username,
+      nameplateId: playerTable.nameplateId,
+      emoticonId: playerTable.emoticonId,
+      titleId: playerTable.titleId,
+      title: playerTable.title,
+      region: playerTable.region,
+      tags: playerTable.tags,
+      socialUrl: playerTable.socialUrl,
       discord: {
-        id: cached.discordId,
-        overwritten: cached.forcedDID
+        id: playerTable.discordId,
+        overwritten: playerTable.forcedDID
       },
     },
     leveling: {
-      currentLevel: cached.mastery.currentLevel,
-      currentLevelXp: cached.currentXp,
-      xpToNextLevel: cached.mastery.xpToNextLevel,
-      totalXp: cached.mastery.totalXp,
+      currentLevel: playerTable.currentLevel,
+      currentLevelXp: playerTable.currentXp,
+      xpToNextLevel: playerTable.xpToNextLevel,
+      totalXp: playerTable.totalXp,
     },
-    latestRatings: cached.ratings
+    latestRatings: ratingTable
       .slice(0, 50)
       .map((r) => ({
         rating: r.rating,
@@ -56,7 +118,7 @@ export async function fitV2UserToV3(cached: PlayerObjectType): Promise<PlayerObj
           global: r.rank,
           region: r.regionRanking
         },
-        region: cached.region as OurRegions,
+        region: playerTable.region as OurRegions,
         games: r.games,
         wins: r.wins,
         losses: r.losses,
@@ -64,8 +126,8 @@ export async function fitV2UserToV3(cached: PlayerObjectType): Promise<PlayerObj
         createdAt: r.createdAt
       }))
     ,
-    seasons: await sliceRatingsBySeason(cached.ratings),
-    characterStats: cached.characterRatings
+    seasons: await sliceRatingsBySeason(ratingTable),
+    characterStats: charTable
       .map((c) => ({
         characterId: c.character,
         role: c.role as Role,
@@ -81,23 +143,23 @@ export async function fitV2UserToV3(cached: PlayerObjectType): Promise<PlayerObj
         createdAt: c.createdAt,
       }))
     ,
-    characterMasteries: cached.characterMastery.characterMasteries
+    characterMasteries: charMastery
       .map((c) => ({
-        characterId: c.characterAssetName,
+        characterId: c.characterId,
         currentTier: c.currentTier,
         currentTierXp: c.currentTierXp,
         xpToNextTier: c.xpToNextTier,
         totalXp: c.totalXp,
       }))
     ,
-    teams: cached.teams,
-    playStyle: cached.playStyle,
+    teams: buildTeamsForPlayer(teams),
+    playStyle: playstyle,
     assets: {
-      nameplate: `${process.env.CDN_BASE_URL}/nameplate/${cached.nameplateId}.webp`
+      nameplate: `${process.env.CDN_BASE_URL}/nameplate/${playerTable.nameplateId}.webp`
     },
     currentSeason: currentSeason.season,
-    createdAt: cached.createdAt,
-    updatedAt: cached.updatedAt,
+    createdAt: playerTable.createdAt,
+    updatedAt: playerTable.updatedAt,
   }
 }
 
@@ -158,7 +220,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
       ensureLogger.info('Cached Player Requested. Returning cached data...');
       await sendToAnalytics('V2_PLAYERS_CACHED', req.ip, req.user?.id, `${cachedPlayer.username}`);
       return {
-        data: await fitV2UserToV3(cachedPlayer),
+        data: await fitV2UserToV3(cachedPlayer as Player, cachedPlayer.characterRatings, cachedPlayer.ratings, cachedPlayer.characterMastery, cachedPlayer.teams),
         status: 200,
         ok: true
       };

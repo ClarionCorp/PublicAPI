@@ -128,12 +128,13 @@ model Player {
   currentLevel                              Int                                     @default(0)
   xpToNextLevel                             Int                                     @default(0)
   totalXp                                   Int                                     @default(0)
-  characterRatings                          PlayerCharacterRating[]
   ratings                                   PlayerRating[]
+  characterRatings                          PlayerCharacterRating[]
+  characterMasteries                        PlayerCharacterMastery[]
   teams                                     EsportsPlayers[]
   roleBoardEntries                          RoleBoard[]
   playerStatus                              String                                  @default("Offline")
-  
+
   createdAt                                 DateTime?                               @default(now())
   updatedAt                                 DateTime?                               @default(now()) @updatedAt
 }
@@ -173,6 +174,23 @@ model PlayerCharacterRating {
   player                                    Player                                  @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([playerId, character, gamemode, role], name: "player_character_role_game_unique")
+}
+
+model PlayerCharacterMastery {
+  playerId                                  String
+  characterId                               String
+  totalXp                                   Int                                     @default(0)
+  maxTier                                   Int                                     @default(10)
+  highestTierCollected                      Int                                     @default(0)
+  currentTier                               Int                                     @default(0)
+  currentTierXp                             Int                                     @default(0)
+  xpToNextTier                              Int                                     @default(0)
+
+  createdAt                                 DateTime                                @default(now())
+  updatedAt                                 DateTime                                @default(now()) @updatedAt
+  player                                    Player                                  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@id([playerId, characterId], name: "player_character_unique")
 }
 
 model Leaderboard {

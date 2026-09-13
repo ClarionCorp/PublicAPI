@@ -1,4 +1,4 @@
-import { Role } from "../../prisma/client"
+import { Gamemode, Role } from "../../prisma/client"
 import { Team, TeamPlayers } from "./teams"
 
 export type OurRegions =
@@ -111,6 +111,7 @@ export type PlayerRatingObjectType = {
   wins: number
   losses: number
   createdAt?: Date
+  season: number
 }
 
 export type PilotAutocompleteObjectType = {
@@ -134,7 +135,7 @@ export type PlayerCharacterRatingObjectType = {
   saves: number
   scores: number
   wins: number
-  gamemode: string
+  gamemode: Gamemode
   createdAt: Date
 }
 
