@@ -55,6 +55,9 @@ export type PlayerObjectType = {
   discordId?: string | null
   forcedDID?: boolean
   currentXp?: number
+  currentLevel?: number,
+  xpToNextLevel?: number,
+  totalXp?: number
   mastery?: PlayerMasteryObjectType
   characterRatings?: PlayerCharacterRatingObjectType[]
   characterMastery?: PlayerCharacterMasteryObjectType
