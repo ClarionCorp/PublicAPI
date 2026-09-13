@@ -29,6 +29,8 @@ const players: FastifyPluginAsync = async (fastify) => {
       const response = await searchByUsername(username, req, region, cached, mode);
       if (!response.ok) { throw new Error(response.message) };
 
+      playersV3Cache.set(cacheKey, { data: response.data, expiresAt: Date.now() + TTL });
+
       return reply.status(response.status).send(response.data);
     } catch (error) {
       ensureLogger.error(`Error while FETCHING PLAYER: `, error);

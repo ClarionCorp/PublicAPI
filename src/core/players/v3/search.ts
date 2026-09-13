@@ -46,6 +46,10 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
     where: { playerId: cachedPlayer.id },
   });
 
+  // `PlayerRating.season` just holds the schema default; the real season a rating happened in
+  // has to be derived from its createdAt against seasonDates.
+  const ratingSeasons = await resolveRatingSeasons(ratingTable);
+
   return {
     info: {
       playerId: cachedPlayer.id,
@@ -80,7 +84,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
         games: r.games,
         wins: r.wins,
         losses: r.losses,
-        season: currentSeason.season,
+        season: ratingSeasons.get(r.id) ?? currentSeason.season,
         createdAt: r.createdAt
       }))
     ,
@@ -155,6 +159,34 @@ export async function sliceRatingsBySeason(ratings: PlayerRatingObjectType[]): P
   return Array.from(buckets.entries())
     .map(([season, { peak, final }]) => ({ season, peakRating: peak, finalRating: final }))
     .sort((a, b) => a.season - b.season);
+}
+
+
+// The "Season" column in the ratings table isn't reliable currently (it will be later).
+// So the season a rating actually happened in, has to be derived from its 'createdAt' against `seasonDates`.
+async function resolveRatingSeasons(ratings: PlayerRatingObjectType[]): Promise<Map<number, number>> {
+  const seasons = await prisma.seasonDates.findMany({ orderBy: { season: 'desc' } });
+
+  const result = new Map<number, number>();
+  let seasonIdx = 0;
+
+  for (const r of ratings) {
+    if (!r.createdAt) continue;
+    const createdAt = r.createdAt.getTime();
+
+    // Advance to the season this rating actually falls in.
+    // Season ranges are contiguous, so we only need to check the lower bound.
+    while (seasonIdx < seasons.length - 1 && createdAt < seasons[seasonIdx].startDate.getTime()) {
+      seasonIdx++;
+    }
+
+    const season = seasons[seasonIdx];
+    if (!season || createdAt < season.startDate.getTime()) continue; // older than any known season
+
+    result.set(r.id, season.season);
+  }
+
+  return result;
 }
 
 export async function searchByUsername(name: string, req: FastifyRequest, region?: string, cached?: boolean, mode?: 'Ranked' | 'Normal'): Promise<UserResponse> {
