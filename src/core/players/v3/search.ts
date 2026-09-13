@@ -10,7 +10,7 @@ import { prisma } from '@/plugins/prisma';
 import { sendToAnalytics } from '@/core/analytics';
 import dayjs from 'dayjs';
 import { getTitleFromID } from '@/core/tools/titles';
-import { ensurePlayerRegion, fetchPlayerMastery, fetchPlayerStats } from '@/core/prometheus';
+import { ensurePlayerRegion, fetchCharacterMastery, fetchPlayerMastery, fetchPlayerStats } from '@/core/prometheus';
 import { OurRegions, PlayerObjectType, PlayerObjectV3, PlayerRatingObjectType, PlayerV3Season } from '@/types/players';
 import { getLatestSeason } from '@/core/cronjobs/seasons';
 
@@ -550,6 +550,42 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
       });
     }
 
+    ensureLogger.debug(`Updating character masteries for (${name})...`);
+
+    // Character Masteries
+    const odyCharMast = await fetchCharacterMastery(odysseyPlayer.playerId);
+    await prisma.$transaction(
+      odyCharMast.characterMasteries.map((cm) =>
+        prisma.playerCharacterMastery.upsert({
+          where: {
+            player_character_unique: {
+              playerId: odysseyPlayer.playerId,
+              characterId: cm.characterAssetName,
+            },
+          },
+          update: {
+            totalXp: cm.totalXp,
+            maxTier: cm.maxTier,
+            highestTierCollected: cm.idxHighestTierCollected,
+            currentTier: cm.currentTier,
+            currentTierXp: cm.currentTierXp,
+            xpToNextTier: cm.xpToNextTier,
+          },
+          create: {
+            playerId: odysseyPlayer.playerId,
+            characterId: cm.characterAssetName,
+            totalXp: cm.totalXp,
+            maxTier: cm.maxTier,
+            highestTierCollected: cm.idxHighestTierCollected,
+            currentTier: cm.currentTier,
+            currentTierXp: cm.currentTierXp,
+            xpToNextTier: cm.xpToNextTier,
+          },
+        })
+      )
+    );
+
+    ensureLogger.info(`Finished updating player '${name}'.`);
     const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username);
     const v3 = await fitV2UserToV3(fullyUpdated);
 
