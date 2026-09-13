@@ -272,6 +272,10 @@ export type PlayerObjectV3 = {
   seasons: PlayerV3Season[], // Season Ranks block on CCUI
   characterStats: PlayerV3CharacterStats[],
   characterMasteries: PlayerV3CharacterMastery[],
+  accolades: {
+    favCharacter: CharacterAccolade,
+    bestCharacter: CharacterAccolade
+  }
   teams?: Team[],
   playStyle?: {
     forward: RolePlaystyle,
@@ -328,4 +332,11 @@ export type PlayerV3CharacterMastery = {
   currentTierXp: number,
   xpToNextTier: number,
   totalXp: number,
+}
+
+export type CharacterAccolade = {
+  character: string,
+  games: number,
+  wins: number,
+  losses: number,
 }

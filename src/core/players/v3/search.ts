@@ -34,7 +34,13 @@ export interface UserResponse {
  * @returns PlayerObjectV3 formatted for API responses.
  */
 export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<PlayerObjectV3> {
-  const ratingTable = cachedPlayer.ratings ?? [];
+
+  // Drop 0s from history, but always keep the latest entry even if it's 0 (that's still worth knowing).
+  const allRatings = cachedPlayer.ratings ?? [];
+  const ratingTable = allRatings.length
+    ? [allRatings[0], ...allRatings.slice(1).filter((r) => r.rating !== 0)].slice(0, 50)
+    : [];
+
   const charTable = cachedPlayer.characterRatings ?? [];
   const teams = cachedPlayer.teams ?? [];
 
@@ -49,6 +55,16 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
   // `PlayerRating.season` just holds the schema default; the real season a rating happened in
   // has to be derived from its createdAt against seasonDates.
   const ratingSeasons = await resolveRatingSeasons(ratingTable);
+
+  const mostPlayedCharacter = charTable.length > 0
+    ? charTable.reduce((max, c) => (c.games > max.games ? c : max))
+    : null;
+
+  const highestWinrateCharacter = charTable.length > 0
+    ? charTable.reduce((max, c) =>
+        (c.games > 0 ? c.wins / c.games : 0) > (max.games > 0 ? max.wins / max.games : 0) ? c : max
+      )
+    : null;
 
   return {
     info: {
@@ -73,7 +89,6 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
       totalXp: cachedPlayer.totalXp,
     },
     latestRatings: ratingTable
-      .slice(0, 50)
       .map((r) => ({
         rating: r.rating,
         ranking: {
@@ -114,6 +129,10 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
         totalXp: c.totalXp,
       }))
     ,
+    accolades: {
+      bestCharacter: highestWinrateCharacter,
+      favCharacter: mostPlayedCharacter,
+    },
     teams,
     playStyle: playstyle,
     assets: {
@@ -200,7 +219,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
 
   // We do get the cachedPlayer, but we do not return him by himself because we need to check if he needs to be updated.
   // If he needs to be updated, we will return the updated player based on the cachedPlayerData instead of making multiple odyssey requests.
-  let cachedPlayer = await fetchCachedPlayer(decodedUser);
+  let cachedPlayer = await fetchCachedPlayer(decodedUser, undefined, 200);
 
   if (cachedPlayer) { 
     ensureLogger.debug(`Found Cached Data for: '${decodeURI(cachedPlayer?.username)}' with ${cachedPlayer?.ratings?.length} rating points.`);
@@ -273,7 +292,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
 
   // Add fallback for ID search using Odyssey Player.
   if (!cachedPlayer) {
-    cachedPlayer = await fetchCachedPlayer(undefined, odysseyPlayer.playerId);
+    cachedPlayer = await fetchCachedPlayer(undefined, odysseyPlayer.playerId, 200);
 
     // No players exist in database with that username or that userId.
     // BUT they do exist in Odyssey's database.
@@ -323,7 +342,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
         }
       });
 
-      const cached = await fetchCachedPlayer(odysseyPlayer.username);
+      const cached = await fetchCachedPlayer(odysseyPlayer.username, undefined, 200);
       const v3 = await fitV2UserToV3(cached);
 
       return {
@@ -395,7 +414,8 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
     isGhostProfile,
   }
 
-  const ignoreUpdates = shouldUpdateUser(updateParams);
+  const isNorms = (mode && mode == 'Normal');
+  const ignoreUpdates = shouldUpdateUser(updateParams, isNorms);
 
   if (odysseyPlayer.platformIds?.discord) {
     await checkDiscord(odysseyPlayer);
@@ -586,7 +606,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
     );
 
     ensureLogger.info(`Finished updating player '${name}'.`);
-    const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username);
+    const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username, undefined, 200);
     const v3 = await fitV2UserToV3(fullyUpdated);
 
     return {

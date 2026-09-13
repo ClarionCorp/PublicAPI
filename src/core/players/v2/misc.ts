@@ -36,7 +36,7 @@ export async function appendTeams() {
 
 // Returns data we have on specified player/id.
 // If it returns null, that player could not be found.
-export async function fetchCachedPlayer(username?: string, userId?: string): Promise<PlayerObjectType | null> {
+export async function fetchCachedPlayer(username?: string, userId?: string, take: number = 1000): Promise<PlayerObjectType | null> {
   try {
     if (!username && !userId) {
       throw new Error('No search parameters received!');
@@ -49,7 +49,7 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
         where: { username: { equals: username, mode: 'insensitive' } },
         include: {
           teams: { select: { team: { select: { teamName: true, teamTag: true, logo: true, series: true, season: true } } } },
-          ratings: { take: 1000, orderBy: { createdAt: 'desc' } },
+          ratings: { take, orderBy: { createdAt: 'desc' } },
           characterRatings: { take: 300, orderBy: { createdAt: 'desc' } }
         }
       });
@@ -100,7 +100,7 @@ export async function fetchCachedPlayer(username?: string, userId?: string): Pro
 
 // Whether or not we should query the rest of the endpoints
 // to update our data. (Or just return partially cached)
-export function shouldUpdateUser(data: UpdateRequirements): boolean {
+export function shouldUpdateUser(data: UpdateRequirements, norms?: boolean): boolean {
   const cachedPlayer = data.cachedPlayer;
   const playerMastery = data.playerMastery;
 
@@ -108,17 +108,17 @@ export function shouldUpdateUser(data: UpdateRequirements): boolean {
   // If ANY are false, force full updates.
   // Could probably localize this in the future for speed.
 
-  // console.log(`2: ${playerMastery.currentLevelXp === cachedPlayer.currentXp}`);
-  // console.log(`3: ${playerMastery.currentLevel === cachedPlayer.ratings[0]?.masteryLevel}`);
-  // console.log(`4: ${data.ensuredRegion?.player.rating === cachedPlayer.ratings[0]?.rating}`);
-  // console.log(`5: ${data.isGhostProfile === false}`);
-  // console.log(`Override: ${cachedPlayer.characterRatings.length == 0 && cachedPlayer.ratings.length > 0}`);
+  console.log(`2: ${playerMastery.currentLevelXp === cachedPlayer.currentXp}`);
+  console.log(`3: ${playerMastery.currentLevel === cachedPlayer.ratings[0]?.masteryLevel}`);
+  console.log(`4: ${(norms || data.ensuredRegion?.player.rating === cachedPlayer.ratings[0]?.rating)}`);
+  console.log(`5: ${data.isGhostProfile === false}`);
+  console.log(`Override: ${cachedPlayer.characterRatings.length == 0 && cachedPlayer.ratings.length > 0}`);
 
   let ignoreUpdates =
     cachedPlayer &&
     playerMastery.currentLevelXp === cachedPlayer.currentXp &&
     playerMastery.currentLevel === cachedPlayer.ratings[0]?.masteryLevel &&
-    data.ensuredRegion?.player.rating === cachedPlayer.ratings[0]?.rating &&
+    (norms || data.ensuredRegion?.player.rating === cachedPlayer.ratings[0]?.rating) &&
     (data.isGhostProfile === false) // AKA, the user is not a ghost profile, so don't worry about it
   ;
 
