@@ -140,7 +140,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
     playStyle: playstyle,
     smurfing: smurfResults,
     assets: {
-      nameplate: `${process.env.CDN_BASE_URL}/nameplate/${cachedPlayer.nameplateId}.webp`
+      nameplate: `${process.env.API_BASE_URL}/assets/nameplate/${cachedPlayer.nameplateId}.webp`
     },
     currentSeason: currentSeason.season,
     createdAt: cachedPlayer.createdAt,
