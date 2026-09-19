@@ -7,6 +7,7 @@ import { PlayerStatus } from '../../../prisma/client';
 import { PlayerObjectType } from '@/types/players';
 import { usernameSearch } from '@/core/players/v2/userSearch';
 import { getLatestSeason } from '@/core/cronjobs/seasons';
+import { guessIfSmurf } from '@/core/players/smurf';
 
 const tools: FastifyPluginAsync = async (fastify) => {
   fastify.get('/awakenings', async (req, reply) => {
@@ -128,40 +129,9 @@ const tools: FastifyPluginAsync = async (fastify) => {
     const { username } = req.params as { username: string };
     if (!username) { return reply.status(400).send({ error: "Missing username field" }); }
     try {
-      const pJson = await usernameSearch(username, req);
-      const player = pJson.data as PlayerObjectType;
+      const results = await guessIfSmurf(username);
 
-      let youngAccount = false;
-      let lowLevel = false;
-      let abnormalWinrate = false;
-
-      // Account Age Check
-      const oldestRating = player.ratings[player.ratings.length - 1];
-      const oneMonthAgo = new Date(); oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      if (new Date(oldestRating.createdAt) > oneMonthAgo) { youngAccount = true };
-
-      // Account Level Check
-      if (player.mastery.currentLevel < 30) { lowLevel = true };
-
-      // Abnormal Winrate Check (when paired with either above)
-      const latestRating = player.ratings[0];
-      if (latestRating.games > 0 && (latestRating.wins / latestRating.games) > 0.85) { abnormalWinrate = true };
-
-      let confidence: 'none' | 'low' | 'medium' | 'high' = 'none';
-
-      if (abnormalWinrate && youngAccount && lowLevel) {
-        confidence = 'high';
-      } else if (abnormalWinrate && (youngAccount || lowLevel)) {
-        confidence = 'medium';
-      } else if (youngAccount || lowLevel) {
-        confidence = 'low';
-      }
-
-      return reply.status(200).send({
-        username: player.username,
-        confidence,
-        signals: { youngAccount, lowLevel, abnormalWinrate }
-      });
+      return reply.status(200).send(results);
 
     } catch (e) {
       console.error(e);

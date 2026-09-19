@@ -1,3 +1,4 @@
+import { SmurfPrediction } from "@/core/players/smurf";
 import { Gamemode, Role } from "../../prisma/client"
 import { Team, TeamPlayers } from "./teams"
 
@@ -281,6 +282,7 @@ export type PlayerObjectV3 = {
     forward: RolePlaystyle,
     goalie: RolePlaystyle
   },
+  smurfing: SmurfPrediction,
   assets?: {
     nameplate?: string,
     emoticon?: string,

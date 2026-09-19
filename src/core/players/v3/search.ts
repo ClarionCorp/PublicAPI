@@ -13,6 +13,7 @@ import { getTitleFromID } from '@/core/tools/titles';
 import { ensurePlayerRegion, fetchCharacterMastery, fetchPlayerMastery, fetchPlayerStats } from '@/core/prometheus';
 import { OurRegions, PlayerObjectType, PlayerObjectV3, PlayerRatingObjectType, PlayerV3Season } from '@/types/players';
 import { getLatestSeason } from '@/core/cronjobs/seasons';
+import { guessIfSmurf } from '../smurf';
 
 const ensureLogger = appLogger('UserSearch')
 const statusName = 'SoveReigN'; // weird casing to distinguish status server
@@ -65,6 +66,8 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
         (c.games > 0 ? c.wins / c.games : 0) > (max.games > 0 ? max.wins / max.games : 0) ? c : max
       )
     : null;
+
+  const smurfResults = await guessIfSmurf(undefined, cachedPlayer);
 
   return {
     info: {
@@ -135,6 +138,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
     },
     teams,
     playStyle: playstyle,
+    smurfing: smurfResults,
     assets: {
       nameplate: `${process.env.CDN_BASE_URL}/nameplate/${cachedPlayer.nameplateId}.webp`
     },
@@ -177,7 +181,7 @@ export async function sliceRatingsBySeason(ratings: PlayerRatingObjectType[]): P
 
   return Array.from(buckets.entries())
     .map(([season, { peak, final }]) => ({ season, peakRating: peak, finalRating: final }))
-    .sort((a, b) => a.season - b.season);
+    .sort((a, b) => b.season - a.season);
 }
 
 
