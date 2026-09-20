@@ -42,7 +42,7 @@ export async function guessIfSmurf(username?: string, cachedPlayer?: PlayerObjec
     if (latestRating.masteryLevel < 30) { lowLevel = true };
 
     // Abnormal Winrate Check (when paired with either above)
-    if (latestRating.games > 0 && (latestRating.wins / latestRating.games) > 0.85) { abnormalWinrate = true };
+    if (latestRating.games >= 5 && (latestRating.wins / latestRating.games) > 0.85) { abnormalWinrate = true };
   }
 
   // Conclude findings
