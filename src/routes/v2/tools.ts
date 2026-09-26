@@ -181,6 +181,21 @@ const tools: FastifyPluginAsync = async (fastify) => {
       return reply.status(500).send({ error: "Something went wrong" });
     }
   });
+
+  // Get all seasons
+  fastify.get('/seasons', async (req, reply) => {
+    try {
+      const seasons = await prisma.seasonDates.findMany({
+        orderBy: { season: 'desc' }
+      });
+
+      return reply.status(200).send({ seasons });
+
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Something went wrong" });
+    }
+  });
 };
 
 export default tools;
