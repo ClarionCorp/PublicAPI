@@ -314,7 +314,7 @@ export type PlayerV3Season = {
 }
 
 export type PlayerV3CharacterStats = {
-  characterId: string,
+  character: string,
   role: Role,
   games: number,
   assists: number,
@@ -329,7 +329,7 @@ export type PlayerV3CharacterStats = {
 }
 
 export type PlayerV3CharacterMastery = {
-  characterId: string,
+  character: string,
   currentTier: number,
   currentTierXp: number,
   xpToNextTier: number,

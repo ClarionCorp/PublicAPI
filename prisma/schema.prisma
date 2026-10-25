@@ -178,7 +178,7 @@ model PlayerCharacterRating {
 
 model PlayerCharacterMastery {
   playerId                                  String
-  characterId                               String
+  character                                 String
   totalXp                                   Int                                     @default(0)
   maxTier                                   Int                                     @default(10)
   highestTierCollected                      Int                                     @default(0)
@@ -190,7 +190,7 @@ model PlayerCharacterMastery {
   updatedAt                                 DateTime                                @default(now()) @updatedAt
   player                                    Player                                  @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
-  @@id([playerId, characterId], name: "player_character_unique")
+  @@id([playerId, character], name: "player_character_unique")
 }
 
 model Leaderboard {

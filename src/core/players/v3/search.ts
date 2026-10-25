@@ -109,7 +109,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
     seasons: await sliceRatingsBySeason(ratingTable),
     characterStats: charTable
       .map((c) => ({
-        characterId: c.character,
+        character: c.character,
         role: c.role as Role,
         games: c.games,
         wins: c.wins,
@@ -125,7 +125,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
     ,
     characterMasteries: characterMasteries
       .map((c) => ({
-        characterId: c.characterId,
+        character: c.character,
         currentTier: c.currentTier,
         currentTierXp: c.currentTierXp,
         xpToNextTier: c.xpToNextTier,
@@ -584,7 +584,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
           where: {
             player_character_unique: {
               playerId: odysseyPlayer.playerId,
-              characterId: cm.characterAssetName,
+              character: cm.characterAssetName,
             },
           },
           update: {
@@ -597,7 +597,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
           },
           create: {
             playerId: odysseyPlayer.playerId,
-            characterId: cm.characterAssetName,
+            character: cm.characterAssetName,
             totalXp: cm.totalXp,
             maxTier: cm.maxTier,
             highestTierCollected: cm.idxHighestTierCollected,
