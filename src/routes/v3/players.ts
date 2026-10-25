@@ -20,8 +20,9 @@ const players: FastifyPluginAsync = async (fastify) => {
     const { username } = req.params as { username: string };
     let { region, cached, mode } = req.query as { region?: string; cached?: boolean; mode?: 'Ranked' | 'Normal' };
     if (region && (!regions.includes(region))) { region = 'Global' };
+    if (mode !== 'Ranked' && mode !== 'Normal') { mode = 'Ranked' };
 
-    const cacheKey = `${username}:${region ?? 'Global'}`;
+    const cacheKey = `${username}:${region ?? 'Global'}:${mode}`;
     const cachedEntry = playersV3Cache.get(cacheKey);
     if (cachedEntry && Date.now() < cachedEntry.expiresAt) { return reply.status(200).send(cachedEntry.data); };
 
