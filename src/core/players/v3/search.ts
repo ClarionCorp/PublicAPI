@@ -32,9 +32,10 @@ export interface UserResponse {
  * @param cachedPlayer - Result of fetchCachedPlayer(). PlayerObjectType is shared with v2 and
  * can't be widened, so the two pieces it doesn't carry (leveling columns, per-character mastery
  * rows) are fetched/cast here instead.
+ * @param mode - Searched gamemode. When set, characterStats and accolades only cover that mode.
  * @returns PlayerObjectV3 formatted for API responses.
  */
-export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<PlayerObjectV3> {
+export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Ranked' | 'Normal'): Promise<PlayerObjectV3> {
 
   // Drop 0s from history, but always keep the latest entry even if it's 0 (that's still worth knowing).
   const allRatings = cachedPlayer.ratings ?? [];
@@ -57,12 +58,17 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
   // has to be derived from its createdAt against seasonDates.
   const ratingSeasons = await resolveRatingSeasons(ratingTable);
 
-  const mostPlayedCharacter = charTable.length > 0
-    ? charTable.reduce((max, c) => (c.games > max.games ? c : max))
+  // Translate gamemodes, then only keep character rows for the searched mode (both if unspecified).
+  const modeChars = charTable
+    .map((c) => ({ ...c, gamemode: (c.gamemode == 'RankedInitial' ? 'Ranked' : 'Normal') as 'Ranked' | 'Normal' }))
+    .filter((c) => !mode || c.gamemode == mode);
+
+  const mostPlayedCharacter = modeChars.length > 0
+    ? modeChars.reduce((max, c) => (c.games > max.games ? c : max))
     : null;
 
-  const highestWinrateCharacter = charTable.length > 0
-    ? charTable.reduce((max, c) =>
+  const highestWinrateCharacter = modeChars.length > 0
+    ? modeChars.reduce((max, c) =>
         (c.games > 0 ? c.wins / c.games : 0) > (max.games > 0 ? max.wins / max.games : 0) ? c : max
       )
     : null;
@@ -107,7 +113,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
       }))
     ,
     seasons: await sliceRatingsBySeason(ratingTable),
-    characterStats: charTable
+    characterStats: modeChars
       .map((c) => ({
         character: c.character,
         role: c.role as Role,
@@ -119,7 +125,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType): Promise<Pla
         saves: c.saves,
         knockouts: c.knockouts,
         mvp: c.mvp,
-        gamemode: (c.gamemode == 'RankedInitial' ? 'Ranked' : 'Normal'),
+        gamemode: c.gamemode,
         createdAt: c.createdAt,
       }))
     ,
@@ -233,7 +239,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
       ensureLogger.info('Cached Player Requested. Returning cached data...');
       await sendToAnalytics('V2_PLAYERS_CACHED', req.ip, req.user?.id, `${cachedPlayer.username}`);
       return {
-        data: await fitV2UserToV3(cachedPlayer),
+        data: await fitV2UserToV3(cachedPlayer, mode),
         status: 200,
         ok: true
       };
@@ -347,7 +353,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
       });
 
       const cached = await fetchCachedPlayer(odysseyPlayer.username, undefined, 200);
-      const v3 = await fitV2UserToV3(cached);
+      const v3 = await fitV2UserToV3(cached, mode);
 
       return {
         data: v3,
@@ -429,7 +435,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
   if (ignoreUpdates) {
     if (name !== statusName) { ensureLogger.info(`Player Stats haven't changed since last update. Returning partially cached player.`); };
     const getTitle = getTitleFromID(odysseyPlayer.titleId);
-    const v3 = await fitV2UserToV3(cachedPlayer);
+    const v3 = await fitV2UserToV3(cachedPlayer, mode);
 
     return {
       data: {
@@ -611,7 +617,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
 
     ensureLogger.info(`Finished updating player '${name}'.`);
     const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username, undefined, 200);
-    const v3 = await fitV2UserToV3(fullyUpdated);
+    const v3 = await fitV2UserToV3(fullyUpdated, mode);
 
     return {
       data: v3,
