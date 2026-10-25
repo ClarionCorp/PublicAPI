@@ -63,19 +63,32 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
     .map((c) => ({ ...c, gamemode: (c.gamemode == 'RankedInitial' ? 'Ranked' : 'Normal') as 'Ranked' | 'Normal' }))
     .filter((c) => c.games > 0 && (!mode || c.gamemode == mode));
 
-  const mostPlayedCharacter = modeChars.length > 0
-    ? modeChars.reduce((max, c) => (c.games > max.games ? c : max))
+  type ModeChar = typeof modeChars[number];
+
+  const mostPlayed = (chars: ModeChar[]) => chars.length > 0
+    ? chars.reduce((max, c) => (c.games > max.games ? c : max))
     : null;
 
   // Ignore low sample sizes for winrate, unless that's all they've got.
-  const qualifiedChars = modeChars.filter((c) => c.games >= 3);
-  const bestCandidates = qualifiedChars.length > 0 ? qualifiedChars : modeChars;
+  const highestWinrate = (chars: ModeChar[]) => {
+    const qualified = chars.filter((c) => c.games >= 3);
+    const candidates = qualified.length > 0 ? qualified : chars;
 
-  const highestWinrateCharacter = bestCandidates.length > 0
-    ? bestCandidates.reduce((max, c) =>
-        (c.games > 0 ? c.wins / c.games : 0) > (max.games > 0 ? max.wins / max.games : 0) ? c : max
-      )
-    : null;
+    return candidates.length > 0
+      ? candidates.reduce((max, c) =>
+          (c.games > 0 ? c.wins / c.games : 0) > (max.games > 0 ? max.wins / max.games : 0) ? c : max
+        )
+      : null;
+  };
+
+  // One pick per role, skipping roles they haven't played.
+  const perRole = (pick: (chars: ModeChar[]) => ModeChar | null) =>
+    (['Forward', 'Goalie'] as const)
+      .map((role) => pick(modeChars.filter((c) => c.role == role)))
+      .filter((c): c is ModeChar => c !== null);
+
+  const mostPlayedCharacters = perRole(mostPlayed);
+  const highestWinrateCharacters = perRole(highestWinrate);
 
   const smurfResults = await guessIfSmurf(undefined, cachedPlayer);
 
@@ -143,8 +156,8 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
       }))
     ,
     accolades: {
-      bestCharacter: highestWinrateCharacter,
-      favCharacter: mostPlayedCharacter,
+      bestCharacter: highestWinrateCharacters,
+      favCharacter: mostPlayedCharacters,
     },
     teams,
     playStyle: playstyle,

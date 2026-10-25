@@ -274,8 +274,8 @@ export type PlayerObjectV3 = {
   characterStats: PlayerV3CharacterStats[],
   characterMasteries: PlayerV3CharacterMastery[],
   accolades: {
-    favCharacter: CharacterAccolade,
-    bestCharacter: CharacterAccolade
+    favCharacter: CharacterAccolade[], // one per role (Forward/Goalie), if played
+    bestCharacter: CharacterAccolade[]
   }
   teams?: Team[],
   playStyle?: {
