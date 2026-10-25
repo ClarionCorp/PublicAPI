@@ -1,5 +1,5 @@
 import { appLogger } from '@/plugins/logger';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import { regions } from '@/types/players';
 import { searchByUsername } from '@/core/players/v3/search';
 
@@ -14,15 +14,30 @@ setInterval(() => {
   }
 }, TTL);
 
-// Users must have a valid JWT to use this endpoint.
+// Users without a valid JWT can use this endpoint, but are forced to cached data.
 const players: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {
+
+  // Same checks as fastify.authenticate, but returns a boolean instead of rejecting the request.
+  const hasValidToken = async (req: FastifyRequest): Promise<boolean> => {
+    try {
+      await req.jwtVerify();
+      const entry = await fastify.prisma.userAccessToken.findUnique({ where: { id: req.user.id } });
+      return !!entry?.active;
+    } catch {
+      return false;
+    }
+  };
+
+  fastify.get('/:username', async (req, reply) => {
     const { username } = req.params as { username: string };
-    let { region, cached, mode } = req.query as { region?: string; cached?: boolean; mode?: 'Ranked' | 'Normal' };
+    let { region, cached: cachedParam, mode } = req.query as { region?: string; cached?: string | boolean; mode?: 'Ranked' | 'Normal' };
     if (region && (!regions.includes(region))) { region = 'Global' };
     if (mode !== 'Ranked' && mode !== 'Normal') { mode = 'Ranked' };
 
-    const cacheKey = `${username}:${region ?? 'Global'}:${mode}`;
+    // Authed users may choose (default false), unauthed users always get cached data.
+    const cached = (await hasValidToken(req)) ? (cachedParam === true || cachedParam === 'true') : true;
+
+    const cacheKey = `${username}:${region ?? 'Global'}:${mode}:${cached}`;
     const cachedEntry = playersV3Cache.get(cacheKey);
     if (cachedEntry && Date.now() < cachedEntry.expiresAt) { return reply.status(200).send(cachedEntry.data); };
 
