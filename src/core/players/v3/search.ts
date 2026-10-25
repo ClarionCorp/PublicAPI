@@ -58,17 +58,21 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
   // has to be derived from its createdAt against seasonDates.
   const ratingSeasons = await resolveRatingSeasons(ratingTable);
 
-  // Translate gamemodes, then only keep character rows for the searched mode (both if unspecified).
+  // Translate gamemodes, then only keep played character rows for the searched mode (both if unspecified).
   const modeChars = charTable
     .map((c) => ({ ...c, gamemode: (c.gamemode == 'RankedInitial' ? 'Ranked' : 'Normal') as 'Ranked' | 'Normal' }))
-    .filter((c) => !mode || c.gamemode == mode);
+    .filter((c) => c.games > 0 && (!mode || c.gamemode == mode));
 
   const mostPlayedCharacter = modeChars.length > 0
     ? modeChars.reduce((max, c) => (c.games > max.games ? c : max))
     : null;
 
-  const highestWinrateCharacter = modeChars.length > 0
-    ? modeChars.reduce((max, c) =>
+  // Ignore low sample sizes for winrate, unless that's all they've got.
+  const qualifiedChars = modeChars.filter((c) => c.games >= 3);
+  const bestCandidates = qualifiedChars.length > 0 ? qualifiedChars : modeChars;
+
+  const highestWinrateCharacter = bestCandidates.length > 0
+    ? bestCandidates.reduce((max, c) =>
         (c.games > 0 ? c.wins / c.games : 0) > (max.games > 0 ? max.wins / max.games : 0) ? c : max
       )
     : null;
