@@ -602,7 +602,9 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
     // Character Masteries
     const odyCharMast = await fetchCharacterMastery(odysseyPlayer.playerId);
     await prisma.$transaction(
-      odyCharMast.characterMasteries.map((cm) =>
+      odyCharMast.characterMasteries
+        .filter((cm) => cm.characterAssetName)
+        .map((cm) =>
         prisma.playerCharacterMastery.upsert({
           where: {
             player_character_unique: {
