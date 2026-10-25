@@ -39,9 +39,10 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
 
   // Drop 0s from history, but always keep the latest entry even if it's 0 (that's still worth knowing).
   const allRatings = cachedPlayer.ratings ?? [];
-  const ratingTable = allRatings.length
-    ? [allRatings[0], ...allRatings.slice(1).filter((r) => r.rating !== 0)].slice(0, 50)
+  const nonZeroRatings = allRatings.length
+    ? [allRatings[0], ...allRatings.slice(1).filter((r) => r.rating !== 0)]
     : [];
+  const ratingTable = nonZeroRatings.slice(0, 50);
 
   const charTable = cachedPlayer.characterRatings ?? [];
   const teams = cachedPlayer.teams ?? [];
@@ -129,7 +130,7 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
         createdAt: r.createdAt
       }))
     ,
-    seasons: await sliceRatingsBySeason(ratingTable),
+    seasons: await sliceRatingsBySeason(nonZeroRatings),
     characterStats: modeChars
       .map((c) => ({
         character: c.character,
@@ -246,7 +247,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
 
   // We do get the cachedPlayer, but we do not return him by himself because we need to check if he needs to be updated.
   // If he needs to be updated, we will return the updated player based on the cachedPlayerData instead of making multiple odyssey requests.
-  let cachedPlayer = await fetchCachedPlayer(decodedUser, undefined, 200);
+  let cachedPlayer = await fetchCachedPlayer(decodedUser, undefined, null);
 
   if (cachedPlayer) { 
     ensureLogger.debug(`Found Cached Data for: '${decodeURI(cachedPlayer?.username)}' with ${cachedPlayer?.ratings?.length} rating points.`);
@@ -319,7 +320,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
 
   // Add fallback for ID search using Odyssey Player.
   if (!cachedPlayer) {
-    cachedPlayer = await fetchCachedPlayer(undefined, odysseyPlayer.playerId, 200);
+    cachedPlayer = await fetchCachedPlayer(undefined, odysseyPlayer.playerId, null);
 
     // No players exist in database with that username or that userId.
     // BUT they do exist in Odyssey's database.
@@ -369,7 +370,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
         }
       });
 
-      const cached = await fetchCachedPlayer(odysseyPlayer.username, undefined, 200);
+      const cached = await fetchCachedPlayer(odysseyPlayer.username, undefined, null);
       const v3 = await fitV2UserToV3(cached, mode);
 
       return {
@@ -635,7 +636,7 @@ export async function searchByUsername(name: string, req: FastifyRequest, region
     );
 
     ensureLogger.info(`Finished updating player '${name}'.`);
-    const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username, undefined, 200);
+    const fullyUpdated = await fetchCachedPlayer(odysseyPlayer.username, undefined, null);
     const v3 = await fitV2UserToV3(fullyUpdated, mode);
 
     return {

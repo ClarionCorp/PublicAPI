@@ -36,7 +36,7 @@ export async function appendTeams() {
 
 // Returns data we have on specified player/id.
 // If it returns null, that player could not be found.
-export async function fetchCachedPlayer(username?: string, userId?: string, take: number = 1000): Promise<PlayerObjectType | null> {
+export async function fetchCachedPlayer(username?: string, userId?: string, take: number | null = 1000): Promise<PlayerObjectType | null> {
   try {
     if (!username && !userId) {
       throw new Error('No search parameters received!');
@@ -49,7 +49,7 @@ export async function fetchCachedPlayer(username?: string, userId?: string, take
         where: { username: { equals: username, mode: 'insensitive' } },
         include: {
           teams: { select: { team: { select: { teamName: true, teamTag: true, logo: true, series: true, season: true } } } },
-          ratings: { take, orderBy: { createdAt: 'desc' } },
+          ratings: { take: take ?? undefined, orderBy: { createdAt: 'desc' } },
           characterRatings: { take: 300, orderBy: { createdAt: 'desc' } }
         }
       });
