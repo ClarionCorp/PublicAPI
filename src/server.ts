@@ -103,7 +103,7 @@ const start = async () => {
 
     if (process.env?.MODE == 'PRODUCTION') {
       sleep(2000);
-      await fetchUsernameQuery('blals'); // run fetch to refresh tokens
+      await fetchUsernameQuery('bLaLs'); // run fetch to refresh tokens
 
       // sleep(2000); await steamRefresh();
 

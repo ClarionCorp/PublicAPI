@@ -13,7 +13,7 @@ import { getTitleFromID } from '@/core/tools/titles';
 import { ensurePlayerRegion, fetchPlayerMastery, fetchPlayerStats } from '@/core/prometheus';
 
 const ensureLogger = appLogger('UserSearch')
-const statusName = 'SoveReigN'; // weird casing to distinguish status server
+const statusName = 'bLaLs'; // weird casing to distinguish status server
 
 export interface UserResponse {
   data: any;
