@@ -1,10 +1,10 @@
 import { FastifyPluginAsync } from 'fastify';
-import { getCharacterFromDevName, getCharacterIdFromName } from '../../core/utils';
-import { getMapFromAppId, getMapNameFromId } from '../../objects/maps';
-import { getRankThresholdFromName } from '../../core/ranks';
-import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats, getSeasonDateRange, MatchSlice } from '../../core/matches';
-import { seasonCutoffs } from '../../objects/seasons';
-import { appLogger } from '../../plugins/logger';
+import { getCharacterFromDevName, getCharacterIdFromName } from '@/core/utils';
+import { getMapFromAppId, getMapNameFromId } from '@/objects/maps';
+import { getRankThresholdFromName } from '@/core/ranks';
+import { parseFirstMatchForCache, parseMatchHistory, extractUserIds, hasMatchHistory, calculateMapStats, getSeasonDateRange, MatchSlice } from '@/core/matches';
+import { seasonCutoffs } from '@/objects/seasons';
+import { appLogger } from '@/plugins/logger';
 
 const dev_mode = process.env.MODE !== 'PRODUCTION';
 const logger = appLogger('Matches');

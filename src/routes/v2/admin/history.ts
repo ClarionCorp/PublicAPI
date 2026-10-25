@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../../plugins/prisma';
-import { adminCheck } from '../../../core/adminCheck';
-import { appLogger } from '../../../plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { adminCheck } from '@/core/adminCheck';
+import { appLogger } from '@/plugins/logger';
 
 const logger = appLogger('Admin')
 

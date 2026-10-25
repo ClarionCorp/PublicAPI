@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
-import { appLogger } from '../../../plugins/logger';
-import { prisma } from '../../../plugins/prisma';
-import { adminCheck } from '../../../core/adminCheck';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { adminCheck } from '@/core/adminCheck';
 
 const logger = appLogger('Admin')
 const regions = new Set(['Global', 'NA East', 'NA West', 'Europe', 'Asia', 'Japan', 'Oceania']);

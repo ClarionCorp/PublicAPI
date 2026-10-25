@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
-import { twitchClient } from '../../core/cronjobs/twitch';
+import { prisma } from '@/plugins/prisma';
+import { twitchClient } from '@/core/cronjobs/twitch';
 
 const streams: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (req, reply) => {

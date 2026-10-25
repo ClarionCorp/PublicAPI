@@ -1,9 +1,9 @@
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
-import { OurRegions } from '../../types/players';
-import { timeAgo } from '../../core/utils';
-import { sendToAnalytics } from '../../core/analytics';
-import { getRankFromLP, getRankGroup, Rank } from '../../core/ranks';
+import { prisma } from '@/plugins/prisma';
+import { OurRegions } from '@/types/players';
+import { timeAgo } from '@/core/utils';
+import { sendToAnalytics } from '@/core/analytics';
+import { getRankFromLP, getRankGroup, Rank } from '@/core/ranks';
 import { Gamemode, Role } from '../../../prisma/client';
 
 interface PlayerProps {

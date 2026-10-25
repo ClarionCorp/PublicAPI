@@ -1,6 +1,6 @@
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
-import { fetchRankedPlayer } from '../prometheus';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { fetchRankedPlayer } from '@/core/prometheus';
 
 const tempLogger = appLogger('Tracking');
 

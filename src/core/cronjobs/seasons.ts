@@ -1,7 +1,7 @@
 import { SeasonDates } from '../../../prisma/client';
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
-import { fetchSeasonInfo } from '../prometheus';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
+import { fetchSeasonInfo } from '@/core/prometheus';
 
 const logger = appLogger('Season');
 

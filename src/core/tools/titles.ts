@@ -1,4 +1,4 @@
-import { Title, titles } from '../../objects/titles';
+import { Title, titles } from '@/objects/titles';
 
 export type TitleObject = {
   id: string,

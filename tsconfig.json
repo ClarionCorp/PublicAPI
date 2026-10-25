@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2022",
-    "module": "CommonJS",
+    "module": "nodenext",
     "lib": ["ES2021"],
     "outDir": "dist",
     "rootDir": "src",
@@ -10,12 +10,11 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "typeRoots": ["./src/types", "./node_modules/@types"],
-    "baseUrl": "src/",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],

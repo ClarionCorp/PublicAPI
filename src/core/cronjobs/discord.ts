@@ -1,6 +1,6 @@
 import { LinkedDiscordAccounts } from "@/types/ccui";
-import { appLogger } from "../../plugins/logger";
-import { prisma } from "../../plugins/prisma";
+import { appLogger } from "@/plugins/logger";
+import { prisma } from "@/plugins/prisma";
 
 const logger = appLogger('Discord');
 

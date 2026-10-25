@@ -1,7 +1,7 @@
 import pLimit from 'p-limit';
 import { Role } from '../../../prisma/client';
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
 
 const logger = appLogger('Roleboard')
 const threads = 4

@@ -194,7 +194,7 @@ export namespace PROMETHEUS {
         timestamp: string
         playerId: string
         characterMasteries: {
-          chracterAssetName: string
+          characterAssetName: string
           totalXp: number
           maxTier: number
           idxHighestTierCollected: number

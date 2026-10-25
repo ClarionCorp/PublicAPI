@@ -1,5 +1,5 @@
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 

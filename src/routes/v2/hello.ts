@@ -1,8 +1,8 @@
 // The default template of sorts lol
 
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
-import { fetchUsernameQuery } from '../../core/prometheus';
+import { prisma } from '@/plugins/prisma';
+import { fetchUsernameQuery } from '@/core/prometheus';
 
 const hello: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (req, reply) => {

@@ -1,4 +1,4 @@
-import Fastify from 'fastify';
+import Fastify, { LogController } from 'fastify';
 import routeLogger from './plugins/logger';
 import prismaPlugin from './plugins/prisma';
 import cronPlugin from './plugins/cron';
@@ -20,6 +20,7 @@ import updateMapRotation from './core/cronjobs/maps';
 import { updateRoleBoard } from './core/cronjobs/roleboard';
 import { fetchLinkedDiscord } from './core/cronjobs/discord';
 import { verifySeasonEnd } from './core/cronjobs/seasons';
+import v3Routes from './routes/v3';
 
 const fastify = Fastify({
   logger: {
@@ -39,7 +40,7 @@ const fastify = Fastify({
       }
     },
   },
-  disableRequestLogging: true,
+  logController: new LogController({ disableRequestLogging: true }),
 });
 
 const start = async () => {
@@ -88,6 +89,7 @@ const start = async () => {
 
     await fastify.register(v1Routes, { prefix: '/v1' });
     await fastify.register(v2Routes, { prefix: '/v2' });
+    await fastify.register(v3Routes, { prefix: '/v3' });
 
     // Health check route
     fastify.get('/health', async () => ({ ok: true }));
@@ -99,21 +101,23 @@ const start = async () => {
     console.log(chalk.greenBright(`[>] Server Startup Completed.`));
     console.log('');
 
-    sleep(2000);
-    await fetchUsernameQuery('blals'); // run fetch to refresh tokens
+    if (process.env?.MODE == 'PRODUCTION') {
+      sleep(2000);
+      await fetchUsernameQuery('blals'); // run fetch to refresh tokens
 
-    // sleep(2000); await steamRefresh();
+      // sleep(2000); await steamRefresh();
 
-    // sleep(2000); await updateTeams();
+      // sleep(2000); await updateTeams();
 
-    // sleep(2000); await updateMapRotation();
+      // sleep(2000); await updateMapRotation();
 
-    // sleep(2000); await updateLeaderboard();
+      // sleep(2000); await updateLeaderboard();
 
-    // sleep(2000); await updateRoleBoard();
+      // sleep(2000); await updateRoleBoard();
 
-    sleep(2000); await fetchLinkedDiscord();
-    sleep(2000); await verifySeasonEnd();
+      sleep(2000); await fetchLinkedDiscord();
+      sleep(2000); await verifySeasonEnd();
+    }
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

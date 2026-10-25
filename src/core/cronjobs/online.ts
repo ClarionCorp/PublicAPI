@@ -1,6 +1,6 @@
-import { appLogger } from "../../plugins/logger";
-import { fetchDiscordFriends } from "../prometheus";
-import { prisma } from "../../plugins/prisma";
+import { appLogger } from "@/plugins/logger";
+import { fetchDiscordFriends } from "@/core/prometheus";
+import { prisma } from "@/plugins/prisma";
 import { PlayerStatus } from "../../../prisma/client";
 
 const logger = appLogger('Online');

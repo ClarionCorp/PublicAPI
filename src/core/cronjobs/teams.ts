@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
-import { appLogger } from '../../plugins/logger';
-import { prisma } from '../../plugins/prisma';
+import { appLogger } from '@/plugins/logger';
+import { prisma } from '@/plugins/prisma';
 import path from 'path';
 
 const teamsLogger = appLogger('UpdateTeams');

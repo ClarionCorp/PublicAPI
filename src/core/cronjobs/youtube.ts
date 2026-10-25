@@ -1,4 +1,4 @@
-import { appLogger } from '../../plugins/logger';
+import { appLogger } from '@/plugins/logger';
 import axios from 'axios'
 import {
   TextCensor,
@@ -7,9 +7,9 @@ import {
   englishRecommendedTransformers,
   asteriskCensorStrategy
 } from 'obscenity'
-import { sleep } from '../utils';
+import { sleep } from '@/core/utils';
 import { YouTubeStreams } from '@/types/streams';
-import { prisma } from '../../plugins/prisma';
+import { prisma } from '@/plugins/prisma';
 
 const baseURL = 'https://www.googleapis.com/youtube/v3';
 const streamLogger = appLogger('FetchTwitch')

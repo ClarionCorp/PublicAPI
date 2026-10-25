@@ -1,10 +1,10 @@
-import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
+import { fetchOdyPlayer } from '@/core/players/v2/odysseyPlayers';
 import { FastifyPluginAsync } from 'fastify';
-import { fetchCachedPlayer } from '../../core/players/misc';
-import { PilotBadge, PilotDataType, RankDataType } from '../../types/overlay';
-import { prisma } from '../../plugins/prisma';
-import { getTitleFromID } from '../../core/tools/titles';
-import { fetchPlayerMastery, fetchPlayerStats, fetchRankedPlayer } from '../../core/prometheus';
+import { fetchCachedPlayer } from '@/core/players/v2/misc';
+import { PilotBadge, PilotDataType, RankDataType } from '@/types/overlay';
+import { prisma } from '@/plugins/prisma';
+import { getTitleFromID } from '@/core/tools/titles';
+import { fetchPlayerMastery, fetchPlayerStats, fetchRankedPlayer } from '@/core/prometheus';
 
 const overlay: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:username', { preHandler: [fastify.authenticate] }, async (req, reply) => {

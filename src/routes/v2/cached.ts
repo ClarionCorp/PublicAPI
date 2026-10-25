@@ -1,8 +1,8 @@
 // An alternative use for fetching "authenticated" cached data :)
 
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
-import { getTypeOfInput } from '../../core/utils';
+import { prisma } from '@/plugins/prisma';
+import { getTypeOfInput } from '@/core/utils';
 
 const cached: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (req, reply) => {

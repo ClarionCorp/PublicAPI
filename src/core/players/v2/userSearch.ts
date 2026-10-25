@@ -1,17 +1,16 @@
-import { checkDiscord, checkUpdatePlayer, createPlayer, fixMismatch, usernameChanges } from '../../core/players/databaseEdits';
-import { handleCorestrike } from '../../core/players/ghostPlayers';
-import { fetchCachedPlayer, shouldUpdateUser, UpdateRequirements } from '../../core/players/misc';
-import { fetchOdyPlayer } from '../../core/players/odysseyPlayers';
-import { PROMETHEUS } from '../../types/prometheus';
-import { appLogger } from '../../plugins/logger';
+import { checkDiscord, checkUpdatePlayer, createPlayer, fixMismatch, usernameChanges } from '@/core/players/v2/databaseEdits';
+import { handleCorestrike } from '@/core/players/v2/ghostPlayers';
+import { fetchCachedPlayer, shouldUpdateUser, UpdateRequirements } from '@/core/players/v2/misc';
+import { fetchOdyPlayer } from '@/core/players/v2/odysseyPlayers';
+import { PROMETHEUS } from '@/types/prometheus';
+import { appLogger } from '@/plugins/logger';
 import { FastifyRequest } from 'fastify';
-import { Gamemode } from '../../../prisma/client';
-import { prisma } from '../../plugins/prisma';
-import { sendToAnalytics } from '../../core/analytics';
+import { Gamemode } from '../../../../prisma/client';
+import { prisma } from '@/plugins/prisma';
+import { sendToAnalytics } from '@/core/analytics';
 import dayjs from 'dayjs';
-import { PlayerMasteryObjectType } from '@/types/players';
-import { getTitleFromID } from '../tools/titles';
-import { ensurePlayerRegion, fetchPlayerMastery, fetchPlayerStats } from '../prometheus';
+import { getTitleFromID } from '@/core/tools/titles';
+import { ensurePlayerRegion, fetchPlayerMastery, fetchPlayerStats } from '@/core/prometheus';
 
 const ensureLogger = appLogger('UserSearch')
 const statusName = 'SoveReigN'; // weird casing to distinguish status server

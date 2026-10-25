@@ -1,5 +1,5 @@
 import { AnalyticServices } from '../../prisma/client';
-import { prisma } from '../plugins/prisma';
+import { prisma } from '@/plugins/prisma';
 
 export async function sendToAnalytics(
   service: AnalyticServices,

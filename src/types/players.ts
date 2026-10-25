@@ -1,4 +1,5 @@
-import { Role } from "../../prisma/client"
+import { SmurfPrediction } from "@/core/players/smurf";
+import { Gamemode, Role } from "../../prisma/client"
 import { Team, TeamPlayers } from "./teams"
 
 export type OurRegions =
@@ -53,7 +54,11 @@ export type PlayerObjectType = {
   playerStatus: string
   socialUrl?: string | null
   discordId?: string | null
+  forcedDID?: boolean
   currentXp?: number
+  currentLevel?: number,
+  xpToNextLevel?: number,
+  totalXp?: number
   mastery?: PlayerMasteryObjectType
   characterRatings?: PlayerCharacterRatingObjectType[]
   characterMastery?: PlayerCharacterMasteryObjectType
@@ -110,6 +115,7 @@ export type PlayerRatingObjectType = {
   wins: number
   losses: number
   createdAt?: Date
+  season: number
 }
 
 export type PilotAutocompleteObjectType = {
@@ -133,7 +139,7 @@ export type PlayerCharacterRatingObjectType = {
   saves: number
   scores: number
   wins: number
-  gamemode: string
+  gamemode: Gamemode
   createdAt: Date
 }
 
@@ -237,4 +243,102 @@ export type RolePlaystyle = {
   knockouts: RoleCategoryPS
   scores: RoleCategoryPS
   saves: RoleCategoryPS
+}
+
+
+// New RETURN type for /v3/players
+export type PlayerObjectV3 = {
+  info: {
+    playerId: string,
+    username: string,
+    nameplateId: string | null,
+    emoticonId: string | null,
+    titleId: string | null,
+    title?: string,
+    region: string,
+    tags: string[],
+    socialUrl: string | null,
+    discord: {
+      id: string | null,
+      overwritten: boolean
+    },
+  },
+  leveling: {
+    currentLevel: number,
+    currentLevelXp: number, // same as currentXp from main info
+    xpToNextLevel: number,
+    totalXp: number
+  },
+  latestRatings: PlayerV3Rating[], // only shows recent 50 entries
+  seasons: PlayerV3Season[], // Season Ranks block on CCUI
+  characterStats: PlayerV3CharacterStats[],
+  characterMasteries: PlayerV3CharacterMastery[],
+  accolades: {
+    favCharacter: CharacterAccolade,
+    bestCharacter: CharacterAccolade
+  }
+  teams?: Team[],
+  playStyle?: {
+    forward: RolePlaystyle,
+    goalie: RolePlaystyle
+  },
+  smurfing: SmurfPrediction,
+  assets?: {
+    nameplate?: string,
+    emoticon?: string,
+  },
+
+  currentSeason: number, // just we don't have to do an additional fetch for this info
+  createdAt: Date,
+  updatedAt: Date,
+}
+
+export type PlayerV3Rating = {
+  rating: number,
+  ranking: {
+    global: number,
+    region: number,
+  },
+  region: OurRegions,
+  games: number,
+  wins: number,
+  losses: number,
+  season: number, // calculated at runtime
+  createdAt: Date,
+}
+
+export type PlayerV3Season = {
+  season: number,
+  peakRating: number,
+  finalRating: number,
+}
+
+export type PlayerV3CharacterStats = {
+  characterId: string,
+  role: Role,
+  games: number,
+  assists: number,
+  knockouts: number,
+  losses: number,
+  mvp: number,
+  saves: number,
+  scores: number,
+  wins: number,
+  gamemode: 'Normal' | 'Ranked',
+  createdAt: Date,
+}
+
+export type PlayerV3CharacterMastery = {
+  characterId: string,
+  currentTier: number,
+  currentTierXp: number,
+  xpToNextTier: number,
+  totalXp: number,
+}
+
+export type CharacterAccolade = {
+  character: string,
+  games: number,
+  wins: number,
+  losses: number,
 }

@@ -1,19 +1,19 @@
 import fp from 'fastify-plugin';
 import cron from 'node-cron';
 import { FastifyPluginAsync } from 'fastify';
-import steamRefresh from '../core/cronjobs/steam';
-import { updateTwitch } from '../core/cronjobs/twitch';
-import { updateYouTube } from '../core/cronjobs/youtube';
+import steamRefresh from '@/core/cronjobs/steam';
+import { updateTwitch } from '@/core/cronjobs/twitch';
+import { updateYouTube } from '@/core/cronjobs/youtube';
 import { appLogger } from './logger';
-import { checkTrackingUpdates } from '../core/cronjobs/tracking';
-import { updateLeaderboard } from '../core/cronjobs/leaderboard';
-import { updateCharacterBoard } from '../core/cronjobs/charboard';
-import { updateTeams } from '../core/cronjobs/teams';
-import updateMapRotation from '../core/cronjobs/maps';
-import { refreshPlayerCount } from '../core/cronjobs/online';
-import { updateRoleBoard } from '../core/cronjobs/roleboard';
-import { fetchLinkedDiscord } from '../core/cronjobs/discord';
-import { verifySeasonEnd } from '../core/cronjobs/seasons';
+import { checkTrackingUpdates } from '@/core/cronjobs/tracking';
+import { updateLeaderboard } from '@/core/cronjobs/leaderboard';
+import { updateCharacterBoard } from '@/core/cronjobs/charboard';
+import { updateTeams } from '@/core/cronjobs/teams';
+import updateMapRotation from '@/core/cronjobs/maps';
+import { refreshPlayerCount } from '@/core/cronjobs/online';
+import { updateRoleBoard } from '@/core/cronjobs/roleboard';
+import { fetchLinkedDiscord } from '@/core/cronjobs/discord';
+import { verifySeasonEnd } from '@/core/cronjobs/seasons';
 
 const logger = appLogger('Cron');
 

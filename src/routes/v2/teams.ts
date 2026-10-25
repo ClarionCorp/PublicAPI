@@ -2,7 +2,7 @@
 // For now, this endpoint does not. So if that breaks, just edit this lol.
 
 import { FastifyPluginAsync } from 'fastify';
-import { prisma } from '../../plugins/prisma';
+import { prisma } from '@/plugins/prisma';
 
 const teams: FastifyPluginAsync = async (fastify) => {
   fastify.get('/', async (req, reply) => {
