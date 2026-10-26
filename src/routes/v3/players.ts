@@ -30,9 +30,9 @@ const players: FastifyPluginAsync = async (fastify) => {
 
   fastify.get('/:username', async (req, reply) => {
     const { username } = req.params as { username: string };
-    let { region, cached: cachedParam, mode } = req.query as { region?: string; cached?: string | boolean; mode?: 'Ranked' | 'Normal' };
+    let { region, cached: cachedParam, mode } = req.query as { region?: string; cached?: string | boolean; mode?: 'Ranked' | 'Normal' | 'Any' };
     if (region && (!regions.includes(region))) { region = 'Global' };
-    if (mode !== 'Ranked' && mode !== 'Normal') { mode = 'Ranked' };
+    if (!mode) { mode = 'Any' };
 
     // Authed users may choose (default false), unauthed users always get cached data.
     const cached = (await hasValidToken(req)) ? (cachedParam === true || cachedParam === 'true') : true;

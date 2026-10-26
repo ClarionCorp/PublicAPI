@@ -35,7 +35,7 @@ export interface UserResponse {
  * @param mode - Searched gamemode. When set, characterStats and accolades only cover that mode.
  * @returns PlayerObjectV3 formatted for API responses.
  */
-export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Ranked' | 'Normal'): Promise<PlayerObjectV3> {
+export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Ranked' | 'Normal' | 'Any'): Promise<PlayerObjectV3> {
 
   // Drop 0s from history, but always keep the latest entry even if it's 0 (that's still worth knowing).
   const allRatings = cachedPlayer.ratings ?? [];
@@ -59,10 +59,10 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
   // has to be derived from its createdAt against seasonDates.
   const ratingSeasons = await resolveRatingSeasons(ratingTable);
 
-  // Translate gamemodes, then only keep played character rows for the searched mode (both if unspecified).
+  // Translate gamemodes, then only keep played character rows for the searched mode (both if unspecified or 'Any').
   const modeChars = charTable
     .map((c) => ({ ...c, gamemode: (c.gamemode == 'RankedInitial' ? 'Ranked' : 'Normal') as 'Ranked' | 'Normal' }))
-    .filter((c) => c.games > 0 && (!mode || c.gamemode == mode));
+    .filter((c) => c.games > 0 && (!mode || mode == 'Any' || c.gamemode == mode));
 
   type ModeChar = typeof modeChars[number];
 
@@ -82,10 +82,13 @@ export async function fitV2UserToV3(cachedPlayer: PlayerObjectType, mode?: 'Rank
       : null;
   };
 
-  // One pick per role, skipping roles they haven't played.
+  // One pick per role (and per gamemode when 'Any'), skipping combos they haven't played.
+  const accoladeModes: ('Ranked' | 'Normal' | null)[] = mode == 'Any' ? ['Ranked', 'Normal'] : [null];
   const perRole = (pick: (chars: ModeChar[]) => ModeChar | null) =>
-    (['Forward', 'Goalie'] as const)
-      .map((role) => pick(modeChars.filter((c) => c.role == role)))
+    accoladeModes
+      .flatMap((gamemode) => (['Forward', 'Goalie'] as const)
+        .map((role) => pick(modeChars.filter((c) => c.role == role && (!gamemode || c.gamemode == gamemode))))
+      )
       .filter((c): c is ModeChar => c !== null);
 
   const mostPlayedCharacters = perRole(mostPlayed);
@@ -236,7 +239,7 @@ async function resolveRatingSeasons(ratings: PlayerRatingObjectType[]): Promise<
   return result;
 }
 
-export async function searchByUsername(name: string, req: FastifyRequest, region?: string, cached?: boolean, mode?: 'Ranked' | 'Normal'): Promise<UserResponse> {
+export async function searchByUsername(name: string, req: FastifyRequest, region?: string, cached?: boolean, mode?: 'Ranked' | 'Normal' | 'Any'): Promise<UserResponse> {
   // Existing Username Fetching.
   const decodedUser = decodeURI(name);
   let regText = '';
