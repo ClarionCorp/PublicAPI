@@ -21,7 +21,12 @@ export async function guessIfSmurf(username?: string, cachedPlayer?: PlayerObjec
   } else {
     player = await prisma.player.findFirst({
       where: { username },
-      include: { ratings: true },
+      include: {
+        ratings: {
+          orderBy: { createdAt: 'desc' },
+          where: { rating: { not: 0 } }
+        }
+      },
     });
   }
 
