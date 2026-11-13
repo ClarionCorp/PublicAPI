@@ -174,7 +174,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
         // Save to database
         return fastify.prisma.matchHistory.upsert({
           where: { id: matchData.matchUniqueKey },
-          update: {},
+          update: matchData.region ? { region: matchData.region } : {},
           create: {
             id: matchData.matchUniqueKey,
             map: matchData.map,
@@ -184,6 +184,7 @@ const matches: FastifyPluginAsync = async (fastify) => {
             duration: matchData.duration,
             bans: matchData.bans,
             avgRank: matchData.avgRank,
+            region: matchData.region,
             playerId: matchData.playerId,
             mvpId: matchData.mvpId,
             playedAt: matchData.playedAt,

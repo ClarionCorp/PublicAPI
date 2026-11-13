@@ -449,6 +449,7 @@ model MatchHistory {
   duration                                      Int                                    // In seconds
   bans                                          String[]
   avgRank                                       String
+  region                                        String?
 
   playerId                                      String
   mvpId                                         String?

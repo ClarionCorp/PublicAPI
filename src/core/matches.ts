@@ -19,6 +19,9 @@ export interface PlayerStatData {
   mvp: boolean;
 }
 
+export type Region = 'Unknown' | 'North America' | 'Europe' | 'Asia' | 'South America' | 'Oceania' | 'Japan';
+const regions: Region[] = ['Unknown', 'North America', 'Europe', 'Asia', 'South America', 'Oceania', 'Japan'];
+
 export interface MatchData {
   matchUniqueKey: string;
   map: string;
@@ -28,6 +31,7 @@ export interface MatchData {
   duration: number;
   bans: string[];
   avgRank: string;
+  region: Region | null;
   playerId: string;
   mvpId: string | null;
   playedAt: Date;
@@ -168,6 +172,10 @@ export function parseMatchHistory(html: string, playerId: string): MatchData[] {
     // Average Tier
     const avgTier = matchCard.find('.match-tier .tier-name').text() || 'Unknown';
 
+    // Matchmaking Region (not always present)
+    const regionText = matchCard.find('.mm-region').text().trim();
+    const region: Region | null = regions.find(r => r === regionText) ?? null;
+
     // Awakenings
     const awakenings: string[] = [];
     matchCard.find('.match-awakenings img').each((_i: number, img: Element) => {
@@ -262,6 +270,7 @@ export function parseMatchHistory(html: string, playerId: string): MatchData[] {
       duration,
       bans,
       avgRank: avgTier,
+      region,
       playerId,
       mvpId,
       playedAt,
