@@ -33,6 +33,8 @@ export async function searchByID(playerId: string, req?: FastifyRequest, region?
   } else { 
     idLogger.warn(`Failed to find cached data for: '${playerId}'. Continuing...`);
     const lbData = await fetchRankedPlayer(playerId);
+    if (!lbData) { return { data: null, message: 'Player not found', status: 404, ok: false } }
+
     const basicData = lbData.players[0]
     username = basicData.username;
   }

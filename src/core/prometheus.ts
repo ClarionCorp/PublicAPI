@@ -39,6 +39,7 @@ function createClient(): AxiosInstance {
         await refreshTokens(client)
         return client.request(err.config!)
       }
+      if ([404].includes(err?.response?.status ?? 0)) { return client }; // handle on route
       return Promise.reject(err)
     }
   )
